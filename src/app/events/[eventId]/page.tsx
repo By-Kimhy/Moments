@@ -2,11 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { HostEvent, MembersResponse } from "@api/contract";
 import { removeMember, rotateHelperCode } from "@/app/actions/events";
+import { EventNav } from "@/components/event-nav";
 import { secondaryButtonClass } from "@/components/form";
 import { getLocale, getMessages } from "@/i18n";
 import { apiGet } from "@/lib/api";
 import { formatDateTime } from "@/lib/dates";
 import { CohostForm } from "./cohost-form";
+import { MediaSection } from "./media-section";
 
 export default async function EventPage({ params }: PageProps<"/events/[eventId]">) {
   const { eventId } = await params;
@@ -34,6 +36,8 @@ export default async function EventPage({ params }: PageProps<"/events/[eventId]
         </Link>
       </div>
 
+      <EventNav eventId={eventId} active="overview" t={t.nav} />
+
       <dl className="grid gap-3 rounded-xl border border-line p-4 sm:grid-cols-2">
         <div>
           <dt className="text-sm text-muted">{t.event.when}</dt>
@@ -46,6 +50,8 @@ export default async function EventPage({ params }: PageProps<"/events/[eventId]
           </div>
         )}
       </dl>
+
+      <MediaSection event={event} t={t.media} removeLabel={t.common.remove} />
 
       <section className="rounded-xl border border-line p-4">
         <h2 className="font-semibold">{t.event.helperCode}</h2>

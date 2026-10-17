@@ -1,3 +1,9 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// The repository root, from both src/ (tsx) and dist/ (built). Relative paths in .env resolve from here.
+const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+
 function required(name: string) {
   const value = process.env[name];
   if (!value) throw new Error(`${name} is not set`);
@@ -18,4 +24,15 @@ export const config = {
   redisUrl: () => process.env.REDIS_URL || null,
   smsProvider: () => process.env.SMS_PROVIDER ?? "mock",
   telegramBotToken: () => process.env.TELEGRAM_BOT_TOKEN || null,
+  uploadDir: () => path.resolve(repoRoot, process.env.UPLOAD_DIR || "./uploads"),
+  s3: () =>
+    process.env.S3_BUCKET
+      ? {
+          bucket: process.env.S3_BUCKET,
+          region: process.env.S3_REGION || "auto",
+          endpoint: process.env.S3_ENDPOINT || undefined,
+          accessKeyId: process.env.S3_ACCESS_KEY_ID || undefined,
+          secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || undefined,
+        }
+      : null,
 };

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { currentUser, requireUser } from "../auth.js";
-import { currentMember, eventAccess, isUuid, ownersOnly } from "../access.js";
+import { currentMember, isUuid, ownersOnly } from "../access.js";
 import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
 import { audit } from "../lib/audit.js";
@@ -10,7 +10,7 @@ import { normalizePhone } from "../lib/phone.js";
 
 /** /api/events: the signed-in host's events. */
 export const eventsRouter = Router();
-/** /api/events/:eventId: one event, for its members. */
+/** /api/events/:eventId: one event, for its members (mounted behind eventAccess in app.ts). */
 export const eventRouter = Router({ mergeParams: true });
 
 const optionalText = (max: number) =>
@@ -101,8 +101,6 @@ eventsRouter.post("/", requireUser, async (req, res) => {
   });
   res.status(201).json({ event: hostView(event) });
 });
-
-eventRouter.use(eventAccess);
 
 eventRouter.get("/", async (req, res) => {
   const member = currentMember(req);

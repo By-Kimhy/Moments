@@ -79,6 +79,37 @@ English and translates them to Khmer (`server/src/messages.ts`) when the request
 `Accept-Language: km`, which the web app does for Khmer visitors. Fonts: Kantumruy Pro,
 Battambang and Moul.
 
+## Photos and KHQR
+
+Owners upload up to 12 couple photos (the first is the invitation's cover) and the family's
+KHQR image on the event page. The API re-encodes every upload with sharp: photos become WebP
+of at most 1600 px, the KHQR stays lossless PNG so it scans, and phone metadata such as GPS
+location is removed. Files get unguessable keys and are served at `/api/files/<key>` (the web
+app forwards `/api/*` to the API).
+
+Without `S3_BUCKET` the files go to `UPLOAD_DIR` (default `./uploads`). For production set
+`S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and `S3_ENDPOINT` for
+Cloudflare R2 or MinIO. The S3 code path has not yet been run against a real bucket.
+
+## Guests
+
+At `/events/<id>/guests` owners see totals (guests, people invited, coming, not coming, no
+reply, opened), search by name or phone, filter by side, reply and group, and add or edit
+guests. Each guest has a personal invitation link (`/i/<token>`) with copy and Telegram share
+buttons; "Make a new link" stops the old one working.
+
+**Import:** upload a CSV or Excel (.xlsx) file whose first row is headings. Recognised
+columns, in English or Khmer: Name / ឈ្មោះ, Latin name / ឈ្មោះឡាតាំង, Phone / លេខទូរស័ព្ទ,
+Side / ខាង (bride, groom, ខាងស្រី, ខាងប្រុស, …), Group / ក្រុម, People / ចំនួន,
+Table / លេខតុ. Khmer digits work. The preview lists rows with problems and phone numbers
+already on the list (those are skipped); nothing is saved until you confirm. A sample file is
+at `/guests-sample.csv`.
+
+**Export:** "Download CSV" gives the whole list with invitation links, readable by Excel.
+
+A guest with a gift or check-in recorded can't be deleted, so money records always keep
+their guest.
+
 ## API
 
 | Method | Path | Who |
@@ -99,6 +130,18 @@ Battambang and Moul.
 | GET | `/api/events/:eventId/members` | owner |
 | POST | `/api/events/:eventId/cohosts` `{ phone, name }` | owner |
 | DELETE | `/api/events/:eventId/members/:memberId` | owner |
+| POST | `/api/events/:eventId/photos` (multipart `photos`) | owner |
+| DELETE | `/api/events/:eventId/photos/:key` | owner |
+| POST | `/api/events/:eventId/photos/:key/cover` | owner |
+| PUT, DELETE | `/api/events/:eventId/khqr` (multipart `image`) | owner |
+| GET | `/api/files/:key` | anyone |
+| GET, POST | `/api/events/:eventId/guests` (`?q=&side=&rsvp=&group=`) | owner |
+| GET | `/api/events/:eventId/guests/groups` | owner |
+| GET | `/api/events/:eventId/guests/export.csv` | owner |
+| POST | `/api/events/:eventId/guests/import/parse` (multipart `file`) | owner |
+| POST | `/api/events/:eventId/guests/bulk` `{ guests: [...] }` | owner |
+| GET, PATCH, DELETE | `/api/events/:eventId/guests/:guestId` | owner |
+| POST | `/api/events/:eventId/guests/:guestId/new-link` | owner |
 
 ## Tests
 
@@ -109,7 +152,8 @@ Each test signs in with fresh random phone numbers, so tests don't disturb other
 ## Status
 
 Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers and
-co-hosts, access control, event create/edit.
+co-hosts, access control, event create/edit, photo and KHQR uploads, guest list with
+CSV/Excel import and export.
 
-Next, in order: photo and KHQR uploads, guest list and import, invitation page and RSVP,
-check-in desk, gift book with offline sync, reports, Telegram notifications, PWA.
+Next, in order: invitation page and RSVP, check-in desk, gift book with offline sync,
+reports, Telegram notifications, PWA.

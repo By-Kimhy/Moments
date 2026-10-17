@@ -1,13 +1,16 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express from "express";
+import express, { Router } from "express";
 import helmet from "helmet";
+import { eventAccess } from "./access.js";
 import { loadAuth } from "./auth.js";
 import { config } from "./config.js";
 import { errorHandler, notFound } from "./errors.js";
 import { authRouter } from "./routes/auth.js";
 import { deskRouter } from "./routes/desk.js";
 import { eventRouter, eventsRouter } from "./routes/events.js";
+import { guestsRouter } from "./routes/guests.js";
+import { filesRouter, mediaRouter } from "./routes/media.js";
 import { templatesRouter } from "./routes/templates.js";
 
 export function createApp() {
@@ -29,7 +32,12 @@ export function createApp() {
   app.use("/api/desk", deskRouter);
   app.use("/api/templates", templatesRouter);
   app.use("/api/events", eventsRouter);
-  app.use("/api/events/:eventId", eventRouter);
+  app.use("/api/files", filesRouter);
+  // Everything about one event: eventAccess checks the caller belongs to it first.
+  const event = Router({ mergeParams: true });
+  event.use(eventAccess);
+  event.use(eventRouter, mediaRouter, guestsRouter);
+  app.use("/api/events/:eventId", event);
 
   app.use(notFound);
   app.use(errorHandler);

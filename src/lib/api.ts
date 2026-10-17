@@ -73,6 +73,7 @@ export async function apiGet<T>(path: string, { onUnauthorized = "/login" } = {}
 export const api = {
   get: <T>(path: string) => call<T>("GET", path),
   post: <T = unknown>(path: string, body: Body = {}) => call<T>("POST", path, body),
+  put: <T = unknown>(path: string, body: Body) => call<T>("PUT", path, body),
   patch: <T = unknown>(path: string, body: Body) => call<T>("PATCH", path, body),
   delete: (path: string) => call<void>("DELETE", path),
 };

@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import multer from "multer";
 import { z } from "zod";
 import { translate, translateFields } from "./messages.js";
 
@@ -31,6 +32,11 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
   const language = req.acceptsLanguages("en", "km");
   if (err instanceof HttpError) {
     res.status(err.status).json({ error: translate(err.message, language), fieldErrors: translateFields(err.fieldErrors, language) });
+    return;
+  }
+  if (err instanceof multer.MulterError) {
+    const message = err.code === "LIMIT_FILE_SIZE" ? "The file is too large." : err.code === "LIMIT_FILE_COUNT" ? "Too many files at once." : "The upload could not be read.";
+    res.status(400).json({ error: translate(message, language) });
     return;
   }
   if (err instanceof SyntaxError && "body" in err) {

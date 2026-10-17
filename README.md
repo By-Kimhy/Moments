@@ -345,6 +345,13 @@ Prices and limits live in `server/src/lib/plans.ts` (US cents, per event):
   run keep every feature.
 - All of these are paid the same way and confirmed in `/admin/payments`; prices are in
   `server/src/lib/plans.ts`.
+- **Automatic confirmation with Bakong** (optional): set `BAKONG_TOKEN` (from registering with
+  the NBC's Bakong Open API) and the platform's `BAKONG_ACCOUNT_ID` (e.g. `moments@aba`). Each
+  order then gets its own KHQR with the amount and reference built in; the API asks Bakong
+  every 30 seconds whether that QR was paid (by its MD5), and the payer's page checks every
+  5 seconds, so the plan, featured days or subscription switch on by themselves once the full
+  amount arrives. The payment is recorded with Bakong's transaction hash. Admins can still
+  confirm by hand. Ticket orders, paid to each organizer's own KHQR, stay manual.
 
 ## Telegram
 
@@ -499,6 +506,8 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | GET | `/api/events/:eventId/plan` | owner |
 | POST | `/api/events/:eventId/plan/orders` `{ plan }`, `/plan/orders/:orderId/cancel` | owner |
 | GET | `/api/platform/khqr` | anyone |
+| GET | `/api/platform/orders/:orderId/khqr.svg` | anyone (the order's own QR, with Bakong) |
+| POST | `/api/platform/orders/:orderId/check` | the payer |
 | GET | `/api/admin/plan-orders` (`?status=`) | platform admin |
 | POST | `/api/admin/plan-orders/:orderId/confirm`, `/cancel` | platform admin |
 | GET | `/api/admin/stats` | platform admin |

@@ -604,6 +604,8 @@ export const km = {
     hiddenReview: "លាក់ដោយក្រុមការងារ",
   },
   plans: {
+    autoHint: "ស្កេន KHQR នេះដោយកម្មវិធីធនាគាររបស់អ្នក ហើយបង់ {price}។ ការបង់ប្រាក់នឹងត្រូវបញ្ជាក់ដោយស្វ័យប្រវត្តិ។",
+    autoWaiting: "កំពុងពិនិត្យការបង់ប្រាក់ជាមួយ Bakong…",
     photoWall: "ផ្ទាំងរូបថតពីភ្ញៀវ",
     days: "{count} ថ្ងៃ",
     monthsCount: "{count} ខែ",

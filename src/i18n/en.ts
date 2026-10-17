@@ -605,6 +605,8 @@ export const en: Messages = {
     hiddenReview: "Hidden by the team",
   },
   plans: {
+    autoHint: "Scan this KHQR with your bank app and pay {price}. The payment is confirmed automatically.",
+    autoWaiting: "Checking with Bakong for your payment…",
     photoWall: "Photo wall from guests",
     days: "{count} days",
     monthsCount: "{count} months",

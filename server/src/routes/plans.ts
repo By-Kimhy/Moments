@@ -3,13 +3,15 @@
 import { Router } from "express";
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
-import { currentUser } from "../auth.js";
+import { currentUser, requireUser } from "../auth.js";
 import { currentMember, isUuid, ownersOnly } from "../access.js";
 import { config } from "../config.js";
 import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
 import { PLANS, PLAN_ORDER, effectivePlan, featuresOf, upgradePrice } from "../lib/plans.js";
-import { cancelOrder, orderView, placeOrder } from "../lib/platform-orders.js";
+import QRCode from "qrcode";
+import { cancelOrder, checkBakongPayment, orderView, placeOrder } from "../lib/platform-orders.js";
+import { rateLimit } from "../store.js";
 
 /** Mounted on /api/events/:eventId (after eventAccess). */
 export const eventPlanRouter = Router({ mergeParams: true });
@@ -58,6 +60,24 @@ eventPlanRouter.post("/plan/orders/:orderId/cancel", async (req, res) => {
   const order = isUuid(id) ? await prisma.planOrder.findFirst({ where: { id, eventId: member.eventId } }) : null;
   await cancelOrder(order, member.id);
   res.status(204).end();
+});
+
+// An order's own KHQR (with Bakong), as an image to scan.
+platformRouter.get("/orders/:orderId/khqr.svg", async (req, res) => {
+  const id = req.params.orderId;
+  const order = isUuid(id) ? await prisma.planOrder.findUnique({ where: { id } }) : null;
+  if (!order?.khqr || order.status !== "PENDING") throw new HttpError(404, "Not found.");
+  res.set("Cache-Control", "no-store");
+  res.type("image/svg+xml").send(await QRCode.toString(order.khqr, { type: "svg", margin: 2, errorCorrectionLevel: "M" }));
+});
+
+// "I've paid": the payer's page asks, and Bakong is checked right away.
+platformRouter.post("/orders/:orderId/check", requireUser, async (req, res) => {
+  const id = req.params.orderId;
+  const order = isUuid(id) ? await prisma.planOrder.findFirst({ where: { id, userId: currentUser(req).id } }) : null;
+  if (!order) throw new HttpError(404, "Order not found.");
+  await rateLimit(`bakong-check:${order.id}`, 30, 10 * 60, "Too many tries. Wait a few minutes and try again.");
+  res.json({ paid: await checkBakongPayment(order) });
 });
 
 // The platform's KHQR, for hosts paying for a plan.

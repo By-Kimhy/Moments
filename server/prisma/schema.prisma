@@ -631,6 +631,8 @@ model PlanOrder {
   amount         Int // minor units (for a plan: the new plan's price less what the event already paid)
   currency       Currency         @default(USD)
   reference      String           @unique @db.VarChar(12) // written in the payment note
+  khqr           String?          @db.VarChar(512) // with Bakong: this order's own QR, amount included
+  khqrMd5        String?          @db.VarChar(32) // how Bakong finds its payment
   status         PlanOrderStatus  @default(PENDING)
   requestedById  String?          @db.Uuid // EventMember, for event plans
   userId         String?          @db.Uuid // who asked (User)

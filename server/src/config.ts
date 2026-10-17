@@ -34,6 +34,11 @@ export const config = {
   platformFeePercent: () => Number(process.env.PLATFORM_FEE_PERCENT ?? 4),
   // The platform's own KHQR image (a PNG or JPEG file), shown to hosts paying for a plan.
   platformKhqrImage: () => (process.env.PLATFORM_KHQR_IMAGE ? path.resolve(repoRoot, process.env.PLATFORM_KHQR_IMAGE) : null),
+  // Bakong Open API, to confirm payments to the platform automatically.
+  bakongToken: () => process.env.BAKONG_TOKEN || null,
+  bakongAccountId: () => process.env.BAKONG_ACCOUNT_ID || null, // the platform's Bakong id, e.g. moments@aba
+  bakongMerchantName: () => process.env.BAKONG_MERCHANT_NAME || "Moments",
+  bakongApiBase: () => (process.env.BAKONG_API_URL || "https://api-bakong.nbc.gov.kh").replace(/\/$/, ""),
   // Comma-separated phone numbers (any format) of platform admins.
   adminPhones: () =>
     (process.env.ADMIN_PHONES ?? "")

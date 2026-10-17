@@ -5,6 +5,7 @@ import type { GuestGift, InvitationEvent, InvitationGuest } from "@api/contract"
 import type { Messages } from "@/i18n/km";
 import { invitationDate, localDigits } from "@/lib/dates";
 import { GuestGiftForm } from "./guest-gift-form";
+import { PhotoWall } from "./photo-wall";
 import { RsvpForm } from "./rsvp-form";
 
 const fileUrl = (key: string) => `/api/files/${key}`;
@@ -153,6 +154,13 @@ export function Invitation({ event, guest, gifts, thankYou, token, locale, t, la
                 <img key={photo.key} src={fileUrl(photo.key)} alt="" loading="lazy" className="aspect-square w-full rounded-xl object-cover" />
               ))}
             </div>
+          </section>
+        )}
+
+        {token && event.photoWall && (
+          <section className={card}>
+            <h2 className={sectionTitle}>{t.wallTitle}</h2>
+            <PhotoWall token={token} t={t} />
           </section>
         )}
 

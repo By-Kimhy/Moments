@@ -1,6 +1,7 @@
 // What a guest sees when they open their invitation link, and the RSVP rules.
 import type { Event, Guest, Organization, Template } from "@prisma/client";
 import { plannerBranding } from "./organizations.js";
+import { photoWallOpen } from "./photo-wall.js";
 import { featuresOf } from "./plans.js";
 import { z } from "zod";
 import type { Photo, ScheduleItem } from "./events.js";
@@ -43,6 +44,8 @@ export const publicEventView = (e: Event & { template: Template | null; organiza
   planner: plannerBranding(e.organization ?? null),
   // The free plan shows the Moments credit at the foot of the invitation.
   branding: featuresOf(e).branding,
+  // Guests can send photos to the wall now.
+  photoWall: featuresOf(e).photoWall && photoWallOpen(e),
 });
 
 export const publicGuestView = (g: Guest & { table?: { name: string } | null }) => ({

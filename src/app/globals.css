@@ -38,3 +38,13 @@ body {
 :lang(km) {
   line-height: 1.8;
 }
+
+/* The photo wall screen fades each photo in. */
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

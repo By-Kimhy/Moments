@@ -12,6 +12,11 @@ import { MAX_AMOUNT } from "../lib/money.js";
 import { publicEventView, publicGuestView, rsvpOpen, rsvpSchema } from "../lib/invitations.js";
 import { showThankYouCard, thankYouFor } from "../lib/thank-you.js";
 import { rateLimit } from "../store.js";
+import { imageUpload } from "../uploads.js";
+import { imageKey, processPhoto } from "../lib/images.js";
+import { MAX_PHOTOS_PER_GUEST, photoWallOpen, wallPhotoView } from "../lib/photo-wall.js";
+import { featuresOf } from "../lib/plans.js";
+import { storage } from "../providers/storage.js";
 
 export const invitationsRouter = Router();
 
@@ -141,4 +146,30 @@ invitationsRouter.get("/:token/qr.svg", async (req, res) => {
   const svg = await QRCode.toString(inviteUrl(guest.inviteToken), { type: "svg", margin: 1, errorCorrectionLevel: "M" });
   res.set("Cache-Control", "private, max-age=3600");
   res.type("image/svg+xml").send(svg);
+});
+
+// The photo wall, for guests: everyone's photos, newest first, and sending new ones.
+invitationsRouter.get("/:token/photos", async (req, res) => {
+  const { event } = await findInvitation(req);
+  if (!featuresOf(event).photoWall) throw new HttpError(404, "Not found.");
+  const photos = await prisma.guestPhoto.findMany({ where: { eventId: event.id, hiddenAt: null }, include: { guest: { select: { name: true } } }, orderBy: { createdAt: "desc" }, take: 300 });
+  res.json({ open: photoWallOpen(event), photos: photos.map((p) => ({ id: p.id, key: p.key, by: p.guest.name, createdAt: p.createdAt })) });
+});
+
+invitationsRouter.post("/:token/photos", imageUpload.array("photos", 10), async (req, res) => {
+  const { guest, event } = await findInvitation(req);
+  if (!featuresOf(event).photoWall || !photoWallOpen(event)) throw new HttpError(409, "The photo wall is closed.");
+  const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+  if (!files.length) throw new HttpError(400, "Choose at least one photo.", { photos: ["Choose at least one photo."] });
+  await rateLimit(`wall:${guest.id}`, 20, 60 * 60, "Too many photos at once. Try again later.");
+  const sent = await prisma.guestPhoto.count({ where: { guestId: guest.id } });
+  if (sent + files.length > MAX_PHOTOS_PER_GUEST) throw new HttpError(400, `You can send up to ${MAX_PHOTOS_PER_GUEST} photos.`);
+  const processed = await Promise.all(files.map((f) => processPhoto(f.buffer)));
+  const created = [];
+  for (const image of processed) {
+    const key = imageKey(event.id, "photo", image.ext);
+    await storage.put(key, image.body, image.contentType);
+    created.push(await prisma.guestPhoto.create({ data: { eventId: event.id, guestId: guest.id, key }, include: { guest: { select: { name: true } } } }));
+  }
+  res.status(201).json({ photos: created.map(wallPhotoView) });
 });

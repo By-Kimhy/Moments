@@ -144,6 +144,7 @@ model Event {
   vendorEnquiries VendorEnquiry[]
   eventVendors    EventVendor[]
   planOrders      PlanOrder[]
+  guestPhotos     GuestPhoto[]
 
   @@index([ownerId])
   @@index([organizationId, startsAt])
@@ -198,6 +199,7 @@ model Guest {
   gifts     Gift[]
   checkins  Checkin[]
   thankYous ThankYou[]
+  photos    GuestPhoto[]
 
   @@unique([eventId, clientId])
   @@index([eventId, tableId])
@@ -673,4 +675,20 @@ model Report {
   review VendorReview? @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
   @@index([resolvedAt, createdAt])
+}
+
+// Photo wall: photos guests take on the day, sent from their invitation link.
+model GuestPhoto {
+  id        String    @id @default(uuid()) @db.Uuid
+  eventId   String    @db.Uuid
+  guestId   String    @db.Uuid
+  key       String    @db.VarChar(300)
+  hiddenAt  DateTime? // hidden by a host
+  createdAt DateTime  @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  guest Guest @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, createdAt])
+  @@index([guestId])
 }

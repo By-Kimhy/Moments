@@ -25,7 +25,7 @@ export async function checkTemplateAllowed(templateId: string | null | undefined
 }
 
 /** For routes that only some plans include (after eventAccess). */
-export function requireFeature(feature: "seating", message: string) {
+export function requireFeature(feature: "seating" | "photoWall", message: string) {
   return async (req: Request, _res: Response, next: NextFunction) => {
     const features = await eventFeatures(currentMember(req).eventId);
     if (!features[feature]) throw new HttpError(402, message);

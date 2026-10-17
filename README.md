@@ -234,6 +234,15 @@ The "អរគុណ" tab, after the wedding:
 - **The invitation link** turns into a thank-you card 12 hours after the start (or when the
   event is finished): the reply and entry QR are replaced by the guest's thank-you.
 
+## Photo wall (Premium)
+
+- From 12 hours before the start until 7 days after, each guest's invitation shows a photo
+  wall: they send up to 30 photos from their phone (resized, location data removed) and see
+  everyone's, refreshed every 30 seconds.
+- Hosts see all of them on the "រូបថតភ្ញៀវ" tab, and can hide (or delete) any photo.
+- "Show on a screen" opens a full-screen slideshow of the newest photos for a projector or TV
+  at the venue; it picks up new photos every 15 seconds.
+
 ## Planner dashboard
 
 For wedding planners and venues ("សម្រាប់អ្នករៀបចំមង្គលការ" on the dashboard):
@@ -315,7 +324,7 @@ Prices and limits live in `server/src/lib/plans.ts` (US cents, per event):
 | ---- | ----- | ------ | --------- | ------------ | ----------------------------- |
 | Free | – | 100 | traditional | – | yes |
 | Standard | $20 | 1,000 | all | – | no |
-| Premium | $50 | 5,000 | all | yes | no |
+| Premium | $50 | 5,000 | all | yes (and the photo wall) | no |
 
 - New weddings start on Free; events that existed before plans became Standard. Events of a
   planner organization ("Planner") and ticketed events (which pay a fee per ticket) get every
@@ -498,6 +507,8 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | POST | `/api/vendors/mine/:vendorId/featured/orders` `{ days }`, `/featured/orders/:orderId/cancel` | vendor owner |
 | GET | `/api/organizations/:orgId/subscription` | org member |
 | POST | `/api/organizations/:orgId/subscription/orders` `{ months }`, `/subscription/orders/:orderId/cancel` | org owner |
+| GET, POST | `/api/invitations/:token/photos` (multipart `photos`) | anyone with the link |
+| GET | `/api/events/:eventId/photo-wall`; POST `/:photoId/hide`, `/show`; DELETE `/:photoId` | owner |
 | GET | `/api/events/:eventId/vendors` | owner |
 | PUT, DELETE | `/api/events/:eventId/vendors/:vendorId` `{ status, note }` | owner |
 | GET | `/api/admin/vendors` (`?status=`), `/api/admin/reviews` | platform admin |

@@ -17,6 +17,7 @@ import { guestsRouter } from "./routes/guests.js";
 import { invitationsRouter } from "./routes/invitations.js";
 import { filesRouter, mediaRouter } from "./routes/media.js";
 import { organizationsRouter } from "./routes/organizations.js";
+import { photoWallRouter } from "./routes/photo-wall.js";
 import { eventPlanRouter, platformRouter } from "./routes/plans.js";
 import { ordersRouter, publicEventsRouter } from "./routes/public-tickets.js";
 import { reportsRouter } from "./routes/reports.js";
@@ -58,7 +59,7 @@ export function createApp() {
   // Everything about one event: eventAccess checks the caller belongs to it first.
   const event = Router({ mergeParams: true });
   event.use(eventAccess);
-  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter, seatingRouter, thankYouRouter, ticketingRouter, eventVendorsRouter, eventPlanRouter);
+  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter, seatingRouter, thankYouRouter, ticketingRouter, eventVendorsRouter, eventPlanRouter, photoWallRouter);
   app.use("/api/events/:eventId", event);
 
   app.use(notFound);

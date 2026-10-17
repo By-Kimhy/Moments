@@ -233,3 +233,6 @@ export type AdminReportsResponse = {
     createdAt: Date;
   }[];
 };
+export type WallPhoto = ReturnType<typeof import("./lib/photo-wall.js")["wallPhotoView"]>;
+export type GuestWallResponse = { open: boolean; photos: Omit<WallPhoto, "hidden">[] };
+export type HostWallResponse = { open: boolean; photos: WallPhoto[] };

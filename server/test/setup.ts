@@ -6,7 +6,6 @@ import { prisma } from "../src/db.js";
 import { MemoryTelegramClient, setTelegramClient } from "../src/providers/telegram.js";
 
 process.env.SESSION_SECRET ||= "test-secret-test-secret-test-secret";
-process.env.SMS_PROVIDER = "mock";
 // Uploaded test images go to a temporary folder, never to S3 or the real uploads folder.
 process.env.UPLOAD_DIR = path.join(tmpdir(), "moments-test-uploads");
 process.env.S3_BUCKET = "";

@@ -10,7 +10,6 @@ import { newInviteToken } from "../lib/codes.js";
 import { MAX_AMOUNT } from "../lib/money.js";
 import { orderView, ticketHash } from "../lib/orders.js";
 import { lockTicketTypes, onSale, ticketCounts } from "../lib/tickets.js";
-import { notify } from "../jobs/notifications.js";
 import { translate } from "../messages.js";
 import { paymentProvider } from "../providers/payment.js";
 
@@ -175,7 +174,6 @@ ticketingRouter.post("/orders/:orderId/confirm", async (req, res) => {
     await audit(tx, { eventId: member.eventId, entity: "event", entityId: member.eventId, action: "order_paid", actorId: member.id, after: { orderId: order.id, reference: order.reference, total: order.total, currency: order.currency } });
     return after;
   });
-  await notify({ kind: "order_sms", orderId: order.id, stage: "paid" });
   res.json({ order: orderView(confirmed) });
 });
 

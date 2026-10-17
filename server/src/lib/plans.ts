@@ -8,14 +8,13 @@ export type PlanFeatures = {
   maxGuests: number;
   allTemplates: boolean; // FREE: the traditional template only
   seating: boolean;
-  thankYouSms: boolean;
   branding: boolean; // the "Moments" credit at the foot of invitations
 };
 
 export const PLANS: Record<Plan, { price: number } & PlanFeatures> = {
-  FREE: { price: 0, maxGuests: 100, allTemplates: false, seating: false, thankYouSms: false, branding: true },
-  STANDARD: { price: 2000, maxGuests: 1000, allTemplates: true, seating: false, thankYouSms: false, branding: false },
-  PREMIUM: { price: 5000, maxGuests: 5000, allTemplates: true, seating: true, thankYouSms: true, branding: false },
+  FREE: { price: 0, maxGuests: 100, allTemplates: false, seating: false, branding: true },
+  STANDARD: { price: 2000, maxGuests: 1000, allTemplates: true, seating: false, branding: false },
+  PREMIUM: { price: 5000, maxGuests: 5000, allTemplates: true, seating: true, branding: false },
 };
 export const PLAN_ORDER: Plan[] = ["FREE", "STANDARD", "PREMIUM"];
 export const FREE_TEMPLATE = "traditional";
@@ -35,7 +34,7 @@ export function effectivePlan(e: EventPlanFields): EffectivePlan {
 export function featuresOf(e: EventPlanFields): PlanFeatures {
   const plan = effectivePlan(e);
   const p = PLANS[plan === "PLANNER" ? "PREMIUM" : plan];
-  return { maxGuests: p.maxGuests, allTemplates: p.allTemplates, seating: p.seating, thankYouSms: p.thankYouSms, branding: p.branding };
+  return { maxGuests: p.maxGuests, allTemplates: p.allTemplates, seating: p.seating, branding: p.branding };
 }
 
 /** What moving from the current plan to a higher one costs: the difference in price. */

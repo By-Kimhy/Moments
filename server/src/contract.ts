@@ -77,13 +77,13 @@ export type ReportSummary = Omit<import("./reports/data.js").Report, "gifts">;
 
 export type SeatingPlan = Awaited<ReturnType<typeof import("./routes/seating.js")["seatingPlanForContract"]>>;
 
-type ThankYouRecord = { channel: "SMS" | "SHARE"; status: "QUEUED" | "SENT" | "FAILED"; sentAt: Date | null; error: string | null };
+type ThankYouRecord = { channel: "SHARE"; status: "QUEUED" | "SENT" | "FAILED"; sentAt: Date | null; error: string | null };
 export type ThankYouResponse = {
   settings: { thankYouKm: string | null; thankYouEn: string | null; defaults: { KM: string; EN: string } };
   canSend: boolean;
   counts: { ALL: number; ATTENDED: number; GAVE: number };
-  sent: { SMS: number; SHARE: number };
-  guests: { id: string; name: string; phone: string | null; inviteUrl: string; attended: boolean; gift: string; text: string; sms: ThankYouRecord | null; shared: ThankYouRecord | null }[];
+  sent: { SHARE: number };
+  guests: { id: string; name: string; phone: string | null; inviteUrl: string; attended: boolean; gift: string; text: string; shared: ThankYouRecord | null }[];
 };
 
 export type OrganizationSummary = { id: string; name: string; brandColor: string; logoKey: string | null; createdAt: Date };

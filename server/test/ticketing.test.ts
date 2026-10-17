@@ -3,9 +3,7 @@ import sharp from "sharp";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { prisma } from "../src/db.js";
-import { drainNotifications } from "../src/jobs/notifications.js";
 import { ticketHash } from "../src/lib/orders.js";
-import { MockSmsProvider, sms } from "../src/providers/sms.js";
 import { app, hostWithEvent, joinDesk, randomIp, randomPhone } from "./helpers.js";
 
 type TicketType = { id: string; name: string; available: number; sold: number; held: number };
@@ -84,20 +82,16 @@ describe("public ticket page and orders", () => {
 });
 
 describe("payment and tickets", () => {
-  it("issues tickets when the organizer confirms payment, and tells the buyer", async () => {
+  it("issues tickets when the organizer confirms payment", async () => {
     const { slug, vip, agent, base } = await concert();
     const phone = randomPhone();
     const { token } = (await buy(slug, [{ ticketTypeId: vip.id, quantity: 2 }], phone).expect(201)).body;
-    await drainNotifications();
-    expect((sms as MockSmsProvider).sent.get(`+855${phone.slice(1)}`)).toContain("KHQR");
 
     const list = (await agent.get(`${base}/orders?status=PENDING_PAYMENT`).expect(200)).body;
     const order = list.orders[0];
     const confirmed = await agent.post(`${base}/orders/${order.id}/confirm`).expect(200);
     expect(confirmed.body.order.status).toBe("PAID");
     await agent.post(`${base}/orders/${order.id}/confirm`).expect(409);
-    await drainNotifications();
-    expect((sms as MockSmsProvider).sent.get(`+855${phone.slice(1)}`)).toContain("tickets are ready");
 
     const page = (await request(app).get(`/api/orders/${token}`).expect(200)).body;
     expect(page.order.status).toBe("PAID");

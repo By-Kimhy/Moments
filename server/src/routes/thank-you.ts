@@ -1,5 +1,5 @@
-// Thank-you messages after the wedding. Owners write the text, choose who to thank, send by SMS
-// (queued) or share each one by hand; every guest's thank-you is recorded once per channel.
+// Thank-you messages after the wedding. Owners write the text, choose who to thank, and send
+// each one with the share button (Telegram or any app); each guest's thank-you is recorded.
 import type { Language } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
@@ -8,9 +8,7 @@ import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
 import { audit } from "../lib/audit.js";
 import { inviteUrl } from "../lib/guests.js";
-import { requireFeature } from "../lib/plan-limits.js";
 import { type Audience, DEFAULT_THANK_YOU, attended, gave, giftText, inAudience, thankYouFor } from "../lib/thank-you.js";
-import { notify } from "../jobs/notifications.js";
 
 /** Mounted on /api/events/:eventId (after eventAccess). */
 export const thankYouRouter = Router({ mergeParams: true });
@@ -26,7 +24,6 @@ const settingsSchema = z.object({ thankYouKm: text, thankYouEn: text });
 const audience = z.enum(["ALL", "ATTENDED", "GAVE"]).default("ALL");
 const language = z.enum(["KM", "EN"]).default("KM");
 const listQuery = z.object({ audience: audience.catch("ALL"), language: language.catch("KM") });
-const sendSchema = z.object({ audience, language });
 const sharedSchema = z.object({ language });
 
 const guestInclude = {
@@ -57,7 +54,6 @@ thankYouRouter.get("/thank-you", async (req, res) => {
       GAVE: guests.filter(gave).length,
     },
     sent: {
-      SMS: guests.filter((g) => g.thankYous.some((t) => t.channel === "SMS" && t.status === "SENT")).length,
       SHARE: guests.filter((g) => g.thankYous.some((t) => t.channel === "SHARE")).length,
     },
     guests: chosen.map((g) => ({
@@ -68,7 +64,6 @@ thankYouRouter.get("/thank-you", async (req, res) => {
       attended: attended(g),
       gift: giftText(g.gifts, q.language as Language),
       text: thankYouFor(event, g, q.language as Language, inviteUrl(g.inviteToken)),
-      sms: g.thankYous.find((t) => t.channel === "SMS") ?? null,
       shared: g.thankYous.find((t) => t.channel === "SHARE") ?? null,
     })),
   });
@@ -82,41 +77,6 @@ thankYouRouter.put("/thank-you/settings", async (req, res) => {
     await audit(tx, { eventId: member.eventId, entity: "event", entityId: member.eventId, action: "thank_you_text", actorId: member.id, after: data });
   });
   res.status(204).end();
-});
-
-// Queues an SMS for everyone in the audience with a phone number who hasn't had one yet
-// (failed ones are tried again).
-thankYouRouter.post("/thank-you/send", requireFeature("thankYouSms", "Sending thank-yous by SMS is part of the Premium plan."), async (req, res) => {
-  const member = currentMember(req);
-  const { audience: who, language: lang } = parse(sendSchema, req.body);
-  const { event, guests } = await load(member.eventId);
-  if (new Date() < event.startsAt) throw new HttpError(409, "Thank-you messages can be sent once the wedding has started.");
-
-  let alreadySent = 0;
-  let noPhone = 0;
-  const queued: string[] = [];
-  for (const guest of guests.filter((g) => inAudience(g, who))) {
-    if (!guest.phone) {
-      noPhone++;
-      continue;
-    }
-    if (guest.thankYous.some((t) => t.channel === "SMS" && t.status === "SENT")) {
-      alreadySent++;
-      continue;
-    }
-    const message = thankYouFor(event, guest, lang, inviteUrl(guest.inviteToken));
-    const row = await prisma.thankYou.upsert({
-      where: { guestId_channel: { guestId: guest.id, channel: "SMS" } },
-      create: { eventId: member.eventId, guestId: guest.id, channel: "SMS", language: lang, text: message },
-      update: { status: "QUEUED", language: lang, text: message, error: null },
-    });
-    queued.push(row.id);
-  }
-  await prisma.$transaction(async (tx) => {
-    await audit(tx, { eventId: member.eventId, entity: "event", entityId: member.eventId, action: "thank_you_send", actorId: member.id, after: { audience: who, language: lang, queued: queued.length } });
-  });
-  for (const id of queued) await notify({ kind: "thank_you_sms", thankYouId: id });
-  res.status(202).json({ queued: queued.length, alreadySent, noPhone });
 });
 
 // The host shared a thank-you by hand (Telegram share button): remember it.

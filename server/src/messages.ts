@@ -136,7 +136,6 @@ const km: Record<string, string> = {
   "Send this vendor an enquiry before reviewing them.": "សូមផ្ញើសំណួរទៅអ្នកផ្តល់សេវានេះ មុនពេលវាយតម្លៃ។",
   "This template needs a paid plan.": "គំរូនេះត្រូវការគម្រោងបង់ប្រាក់។",
   "The seating plan is part of the Premium plan.": "ប្លង់តុមាននៅក្នុងគម្រោង Premium។",
-  "Sending thank-yous by SMS is part of the Premium plan.": "ការផ្ញើសារអរគុណតាម SMS មាននៅក្នុងគម្រោង Premium។",
   "Choose a plan.": "សូមជ្រើសរើសគម្រោង។",
   "This event already has every feature.": "កម្មវិធីនេះមានមុខងារទាំងអស់រួចហើយ។",
   "The event is already on this plan or a higher one.": "កម្មវិធីនេះស្ថិតក្នុងគម្រោងនេះ ឬខ្ពស់ជាងរួចហើយ។",

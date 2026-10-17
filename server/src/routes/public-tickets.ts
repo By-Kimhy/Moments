@@ -122,7 +122,6 @@ publicEventsRouter.post("/:slug/orders", async (req, res) => {
       },
     });
   });
-  await notify({ kind: "order_sms", orderId: order.id, stage: "placed" });
   await notify({ kind: "order_placed", orderId: order.id });
   res.status(201).json({ token: order.token, url: orderUrl(order.token) });
 });

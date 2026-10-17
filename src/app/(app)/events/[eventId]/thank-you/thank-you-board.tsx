@@ -1,8 +1,8 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import type { ThankYouResponse } from "@api/contract";
-import { buttonClass, secondaryButtonClass } from "@/components/form";
+import { secondaryButtonClass } from "@/components/form";
 import type { Messages } from "@/i18n/km";
 import { fill } from "@/i18n/format";
 import { ClientApiError, clientApi } from "@/lib/client-api";
@@ -10,7 +10,7 @@ import { ClientApiError, clientApi } from "@/lib/client-api";
 type Audience = "ALL" | "ATTENDED" | "GAVE";
 type Language = "KM" | "EN";
 
-export function ThankYouBoard({ eventId, initial, t, upgrade }: { eventId: string; initial: ThankYouResponse; t: Messages["thanks"]; upgrade?: ReactNode }) {
+export function ThankYouBoard({ eventId, initial, t }: { eventId: string; initial: ThankYouResponse; t: Messages["thanks"] }) {
   const [data, setData] = useState(initial);
   const [audience, setAudience] = useState<Audience>("ALL");
   const [language, setLanguage] = useState<Language>("KM");
@@ -30,7 +30,6 @@ export function ThankYouBoard({ eventId, initial, t, upgrade }: { eventId: strin
       setBusy(false);
     }
   }
-  const withPhone = data.guests.filter((g) => g.phone && g.sms?.status !== "SENT").length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -96,28 +95,8 @@ export function ThankYouBoard({ eventId, initial, t, upgrade }: { eventId: strin
             </select>
           </label>
         </div>
-        <p className="text-sm text-muted">{fill(t.sentCount, { sms: data.sent.SMS, share: data.sent.SHARE })}</p>
-        {upgrade ? (
-          upgrade
-        ) : data.canSend ? (
-          <button
-            type="button"
-            className={`${buttonClass} self-start`}
-            disabled={busy || withPhone === 0}
-            onClick={() =>
-              window.confirm(t.sendConfirm) &&
-              run(async () => {
-                const r = await clientApi<{ queued: number; alreadySent: number; noPhone: number }>(`${base}/send`, { method: "POST", body: { audience, language } });
-                setNotice({ text: fill(t.sendResult, r), tone: "ok" });
-                await load();
-              })
-            }
-          >
-            {fill(t.sendSms, { count: withPhone })}
-          </button>
-        ) : (
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{t.notYet}</p>
-        )}
+        <p className="text-sm text-muted">{fill(t.sentCount, { share: data.sent.SHARE })}</p>
+        {!data.canSend && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{t.notYet}</p>}
         {notice && <p className={`rounded-lg px-3 py-2 text-sm ${notice.tone === "ok" ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800"}`}>{notice.text}</p>}
       </section>
 
@@ -130,11 +109,6 @@ export function ThankYouBoard({ eventId, initial, t, upgrade }: { eventId: strin
               <div className="flex items-start justify-between gap-2">
                 <span className="font-medium">{g.name}</span>
                 <span className="flex flex-wrap justify-end gap-1 text-xs">
-                  {g.sms && (
-                    <span className={`rounded-full px-2 py-0.5 ${g.sms.status === "SENT" ? "bg-emerald-100 text-emerald-800" : g.sms.status === "FAILED" ? "bg-red-100 text-red-800" : "bg-black/5"}`}>
-                      {g.sms.status === "SENT" ? t.smsSent : g.sms.status === "FAILED" ? t.smsFailed : t.smsQueued}
-                    </span>
-                  )}
                   {g.shared && <span className="rounded-full bg-sky-100 px-2 py-0.5 text-sky-800">{t.shared}</span>}
                 </span>
               </div>

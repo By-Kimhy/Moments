@@ -71,7 +71,6 @@ export default async function PlanPage({ params }: PageProps<"/events/[eventId]/
                   <li>✓ {fill(tp.guests, { count: count(p.maxGuests) })}</li>
                   <li>✓ {p.allTemplates ? tp.templatesAll : tp.templatesOne}</li>
                   <li className={p.seating ? "" : "text-muted line-through"}>{p.seating ? "✓" : "✗"} {tp.seating}</li>
-                  <li className={p.thankYouSms ? "" : "text-muted line-through"}>{p.thankYouSms ? "✓" : "✗"} {tp.thankYouSms}</li>
                   <li className={p.branding ? "text-muted line-through" : ""}>{p.branding ? "✗" : "✓"} {tp.noBranding}</li>
                 </ul>
                 {current ? (

@@ -47,10 +47,9 @@ describe("plans", () => {
     const signedIn = await signIn();
     await signedIn.agent.post("/api/events").send({ ...sampleEvent, templateId: modern.id }).expect(402);
 
-    // Seating and thank-you SMS: Premium. Reading the tables stays open.
+    // Seating: Premium. Reading the tables stays open.
     await agent.get(`${base}/seating`).expect(200);
     await agent.post(`${base}/tables`).send({ name: "1" }).expect(402);
-    await agent.post(`${base}/thank-you/send`).send({ audience: "ALL", language: "KM" }).expect(402);
 
     // Invitations carry the Moments credit.
     await agent.patch(base).send({ status: "PUBLISHED" }).expect(200);

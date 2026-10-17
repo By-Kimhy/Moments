@@ -223,15 +223,10 @@ The "អរគុណ" tab, after the wedding:
   "$៥០.០០ + ១០០,០០០៛"), `{couple}` and `{link}`; a default text is used when left empty.
 - **Who:** every guest except those who said no, those who came, or those who gave a gift.
   Each guest's own text is shown before sending.
-- **SMS:** sends to everyone in the group with a phone number, through the same queue as the
-  alerts (at most 10 messages a second). Each guest gets one SMS ever; failed ones are retried on
-  the next send. Sending only opens once the wedding has started.
-- **By hand:** "Send on Telegram" opens Telegram with the guest's text and link, and records it.
+- **Sending:** "Send on Telegram" next to each guest opens Telegram with the guest's text and
+  link to send in a chat with them, and marks the guest as thanked. Moments sends no SMS.
 - **The invitation link** turns into a thank-you card 12 hours after the start (or when the
   event is finished): the reply and entry QR are replaced by the guest's thank-you.
-
-SMS go through `server/src/providers/sms.ts`; with the mock provider they only appear in the
-API log.
 
 ## Planner dashboard
 
@@ -267,8 +262,8 @@ The event then has its own tabs: overview, tickets and door.
   short reference (e.g. `FHXS9C`, no look-alike characters) to write in the payment note. The
   organizer sees the order waiting, checks the bank app and taps "Received", which issues the
   tickets (a late payment on an expired hold is accepted if tickets are left). The page updates
-  by itself and shows one QR per ticket. The buyer gets an SMS when ordering and when the
-  tickets are ready; the organizer gets a Telegram alert for each new order.
+  by itself and shows one QR per ticket. Buyers keep their order link (it is
+  shown after ordering); the organizer gets a Telegram alert for each new order.
 - **Fee:** `PLATFORM_FEE_PERCENT` (default 4) of each order is recorded; the tickets tab shows
   revenue and fees per currency.
 - **Door:** the organizer ("ច្រកចូល" tab) and helpers with the event's helper code (at `/desk`)
@@ -291,7 +286,7 @@ The seed adds a demo concert at `/e/khmer-music-night` (door helper code `654321
   photos, then "send for review". A platform admin approves it (or sends it back with a note,
   or suspends it); only published listings are public.
 - **Enquiries:** a signed-in host sends their name, phone, event date and a message, optionally
-  for one of their events. The vendor gets an SMS and sees it in their inbox. Each enquiry is
+  for one of their events. The vendor gets a Telegram message from the bot and sees it in their inbox. Each enquiry is
   kept, so referrals can be counted.
 - **Reviews:** one per host per vendor (sending again edits it), 1–5 stars, only from hosts who
   sent that vendor an enquiry. The vendor can reply; admins can hide a review. The rating is
@@ -305,18 +300,18 @@ The seed adds a demo concert at `/e/khmer-music-night` (door helper code `654321
 
 Prices and limits live in `server/src/lib/plans.ts` (US cents, per event):
 
-| Plan | Price | Guests | Templates | Seating plan | Thank-you SMS | Moments credit on invitations |
-| ---- | ----- | ------ | --------- | ------------ | ------------- | ----------------------------- |
-| Free | – | 100 | traditional | – | – | yes |
-| Standard | $20 | 1,000 | all | – | – | no |
-| Premium | $50 | 5,000 | all | yes | yes | no |
+| Plan | Price | Guests | Templates | Seating plan | Moments credit on invitations |
+| ---- | ----- | ------ | --------- | ------------ | ----------------------------- |
+| Free | – | 100 | traditional | – | yes |
+| Standard | $20 | 1,000 | all | – | no |
+| Premium | $50 | 5,000 | all | yes | no |
 
 - New weddings start on Free; events that existed before plans became Standard. Events of a
   planner organization ("Planner") and ticketed events (which pay a fee per ticket) get every
   feature.
 - The API enforces the limits and answers 402 with the reason: adding or importing guests past
   the limit (walk-ins at the desk are never refused), choosing another template, arranging
-  tables, sending thank-yous by SMS. The web app shows an "upgrade" notice where it applies.
+  tables. The web app shows an "upgrade" notice where it applies.
 - **Upgrading:** the event's "Plan" page (from the overview) lists the plans; choosing one
   creates an order for the difference in price with a short reference, and shows the platform's
   KHQR (`PLATFORM_KHQR_IMAGE`). A platform admin checks the bank and taps "Money received" in
@@ -447,7 +442,6 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | GET | `/api/events/:eventId/seating/plan.pdf` (`?lang=`) | owner |
 | GET | `/api/events/:eventId/thank-you` (`?audience=ALL\|ATTENDED\|GAVE&language=KM\|EN`) | owner |
 | PUT | `/api/events/:eventId/thank-you/settings` `{ thankYouKm, thankYouEn }` | owner |
-| POST | `/api/events/:eventId/thank-you/send` `{ audience, language }` | owner |
 | POST | `/api/events/:eventId/thank-you/:guestId/shared` `{ language }` | owner |
 | GET, POST | `/api/organizations` | signed in |
 | GET, PATCH | `/api/organizations/:orgId` | org member (PATCH: org owner) |
@@ -504,6 +498,5 @@ MVP in `docs/PROPOSAL.md`.
 Phase 2 (`docs/PHASE2.md`) is done too: seating plan, thank-you messages, planner dashboard
 and ticketing. Phase 3 (`docs/PHASE3.md`) is done: the vendor marketplace and paid plans.
 
-Before a real wedding: connect a real SMS gateway (`server/src/providers/sms.ts`), set up the
-Telegram bot, S3/R2 storage and Chromium on the server, and run the app over https (the camera
+Before a real wedding: set up the Telegram bot (sign-in needs it), S3/R2 storage and Chromium on the server, and run the app over https (the camera
 scanner and the service worker need it).

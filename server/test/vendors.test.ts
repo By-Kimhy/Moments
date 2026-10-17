@@ -4,7 +4,7 @@ import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { prisma } from "../src/db.js";
 import { drainNotifications } from "../src/jobs/notifications.js";
-import { type MockSmsProvider, sms } from "../src/providers/sms.js";
+import { type MemoryTelegramClient, telegram } from "../src/providers/telegram.js";
 import { app, hostWithEvent, randomPhone, signIn } from "./helpers.js";
 
 const jpeg = () => sharp({ create: { width: 800, height: 600, channels: 3, background: "#8e44ad" } }).jpeg().toBuffer();
@@ -117,8 +117,8 @@ describe("platform admins", () => {
 });
 
 describe("enquiries and reviews", () => {
-  it("sends an enquiry by SMS to the vendor and lets the host review", async () => {
-    const { owner, vendor, phone } = await publishedVendor(`Enquiry ${randomBytes(3).toString("hex")}`);
+  it("sends an enquiry to the vendor on Telegram and lets the host review", async () => {
+    const { owner, vendor } = await publishedVendor(`Enquiry ${randomBytes(3).toString("hex")}`);
     const host = await hostWithEvent("Sophea");
 
     // No review before an enquiry.
@@ -133,7 +133,8 @@ describe("enquiries and reviews", () => {
       .send({ name: "Sophea", phone: "012 777 888", eventDate: "2026-12-20", message: "Are you free on 20 December?", eventId: host.event.id })
       .expect(201);
     await drainNotifications();
-    expect((sms as MockSmsProvider).sent.get(phone)).toContain("Sophea");
+    const alert = (telegram() as MemoryTelegramClient).sent.find((m) => m.chatId === String(owner.telegramId) && m.text.includes("Are you free"));
+    expect(alert?.text).toContain("Sophea · +85512777888 · 2026-12-20");
 
     const inbox = (await owner.agent.get(`/api/vendors/mine/${vendor.id}/enquiries`).expect(200)).body.enquiries;
     expect(inbox).toEqual([expect.objectContaining({ name: "Sophea", phone: "+85512777888", message: "Are you free on 20 December?", read: false })]);

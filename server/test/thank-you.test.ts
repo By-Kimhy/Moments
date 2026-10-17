@@ -2,12 +2,10 @@ import { randomUUID } from "node:crypto";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { prisma } from "../src/db.js";
-import { drainNotifications } from "../src/jobs/notifications.js";
 import { renderThankYou } from "../src/lib/thank-you.js";
-import { MockSmsProvider, sms } from "../src/providers/sms.js";
 import { app, hostWithEvent, randomPhone } from "./helpers.js";
 
-type Row = { id: string; name: string; text: string; gift: string; sms: { status: string } | null; shared: { status: string } | null };
+type Row = { id: string; name: string; text: string; gift: string; shared: { status: string } | null };
 
 /** A wedding that started yesterday: one guest came and gave, one came, one said no. */
 async function afterWedding() {
@@ -52,23 +50,6 @@ describe("thank-you messages", () => {
     expect(en.guests.map((g: Row) => g.text)).toEqual(["Thank you Sok Bora for $50.00 + 100,000៛! Dara & Sophea"]);
   });
 
-  it("sends each guest one SMS, skips those without a phone, and doesn't send twice", async () => {
-    const { agent, base, gaveGuest, cameGuest } = await afterWedding();
-    const first = await agent.post(`${base}/thank-you/send`).send({ audience: "ATTENDED" }).expect(202);
-    expect(first.body).toEqual({ queued: 2, alreadySent: 0, noPhone: 0 });
-    await drainNotifications();
-    const sent = (sms as MockSmsProvider).sent;
-    expect(sent.get(gaveGuest.phone)).toContain("សុខ បូរ៉ា");
-    expect(sent.get(cameGuest.phone)).toContain("ចាន់ នារី");
-
-    const again = await agent.post(`${base}/thank-you/send`).send({ audience: "ALL" }).expect(202);
-    expect(again.body).toEqual({ queued: 0, alreadySent: 2, noPhone: 1 });
-
-    const list = (await agent.get(`${base}/thank-you`).expect(200)).body;
-    expect(list.sent.SMS).toBe(2);
-    expect(list.guests.find((g: Row) => g.id === gaveGuest.id).sms.status).toBe("SENT");
-  });
-
   it("records thank-yous shared by hand", async () => {
     const { agent, base, noPhone } = await afterWedding();
     await agent.post(`${base}/thank-you/${noPhone.id}/shared`).send({ language: "KM" }).expect(204);
@@ -77,9 +58,9 @@ describe("thank-you messages", () => {
     expect(list.sent.SHARE).toBe(1);
   });
 
-  it("waits until the wedding has started", async () => {
+  it("has no SMS sending", async () => {
     const host = await hostWithEvent(undefined, "PREMIUM");
-    await host.agent.post(`/api/events/${host.event.id}/thank-you/send`).send({}).expect(409);
+    await host.agent.post(`/api/events/${host.event.id}/thank-you/send`).send({}).expect(404);
   });
 
   it("turns the invitation into a thank-you card after the wedding", async () => {

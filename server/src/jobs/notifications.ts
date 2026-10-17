@@ -9,16 +9,12 @@ import { prisma } from "../db.js";
 import { audit } from "../lib/audit.js";
 import { giftTotals } from "../lib/gifts.js";
 import { formatAmount } from "../lib/money.js";
-import { orderUrl } from "../lib/orders.js";
 import { digestMessage, guestGiftMessage, rsvpMessage, testMessage } from "../lib/notification-messages.js";
-import { sms } from "../providers/sms.js";
 import { TelegramError, telegram } from "../providers/telegram.js";
 
 export const DIGEST_MINUTES = 15;
 
 export type NotificationJob =
-  | { kind: "thank_you_sms"; thankYouId: string }
-  | { kind: "order_sms"; orderId: string; stage: "placed" | "paid" }
   | { kind: "order_placed"; orderId: string }
   | { kind: "vendor_enquiry"; enquiryId: string }
   | { kind: "rsvp"; guestId: string }
@@ -41,8 +37,8 @@ function getQueue() {
 
 /** Queues a notification. Never throws: an alert must not break the request that caused it. */
 export async function notify(job: NotificationJob, options: { delay?: number; jobId?: string } = {}) {
-  // Alerts to hosts need the bot; SMS don't.
-  if (job.kind !== "thank_you_sms" && job.kind !== "order_sms" && job.kind !== "vendor_enquiry" && !telegram()) return;
+  // Everything goes out through the Telegram bot.
+  if (!telegram()) return;
   try {
     if (queueEnabled()) {
       await getQueue().add(job.kind, job, options);
@@ -107,27 +103,21 @@ async function send(eventId: string, chatId: string, text: string) {
 }
 
 export async function handle(job: NotificationJob) {
-  if (job.kind === "thank_you_sms") {
-    await sendThankYouSms(job.thankYouId);
-  } else if (job.kind === "order_sms") {
-    const order = await prisma.order.findUnique({ where: { id: job.orderId }, include: { event: true } });
-    if (!order) return;
-    const amount = formatAmount(order.total, order.currency);
-    const link = orderUrl(order.token);
-    await sms.send(
-      order.buyerPhone,
-      job.stage === "placed"
-        ? `Moments: ${order.event.titleKm} — ${amount}. បង់តាម KHQR ហើយសរសេរ ${order.reference} ក្នុងកំណត់ចំណាំ។ Pay by KHQR with note ${order.reference}: ${link}`
-        : `Moments: សំបុត្ររបស់អ្នកសម្រាប់ ${order.event.titleKm} រួចរាល់ហើយ។ Your tickets are ready: ${link}`,
-    );
-  } else if (job.kind === "vendor_enquiry") {
-    const enquiry = await prisma.vendorEnquiry.findUnique({ where: { id: job.enquiryId }, include: { vendor: { include: { owner: { select: { phone: true } } } } } });
-    const phone = enquiry?.vendor.phone ?? enquiry?.vendor.owner.phone;
-    if (!enquiry || !phone) return;
-    await sms.send(
-      phone,
-      `Moments: សំណួរថ្មីពី ${enquiry.name} (${enquiry.phone}). New enquiry from ${enquiry.name}: ${config.appUrl()}/vendor/${enquiry.vendorId}`,
-    );
+  if (job.kind === "vendor_enquiry") {
+    // To the vendor's owner in their private chat with the bot (they signed in through it).
+    const enquiry = await prisma.vendorEnquiry.findUnique({ where: { id: job.enquiryId }, include: { vendor: { include: { owner: { select: { telegramId: true } } } } } });
+    const chatId = enquiry?.vendor.owner.telegramId;
+    if (!enquiry || !chatId) return;
+    const date = enquiry.eventDate ? ` · ${enquiry.eventDate.toISOString().slice(0, 10)}` : "";
+    try {
+      await telegram()!.sendMessage(
+        chatId.toString(),
+        `📩 ${enquiry.vendor.name}: សំណួរថ្មី · New enquiry\n${enquiry.name} · ${enquiry.phone}${date}\n\n${enquiry.message}\n\n${config.appUrl()}/vendor/${enquiry.vendorId}`,
+      );
+    } catch (e) {
+      // They blocked the bot: the enquiry is still in their inbox.
+      if (!(e instanceof TelegramError && e.permanent)) throw e;
+    }
   } else if (job.kind === "order_placed") {
     const order = await prisma.order.findUnique({ where: { id: job.orderId }, include: { items: { include: { ticketType: true } } } });
     if (!order) return;
@@ -199,23 +189,10 @@ export async function handle(job: NotificationJob) {
   }
 }
 
-/** Sends one queued thank-you by SMS and records how it went. */
-async function sendThankYouSms(thankYouId: string) {
-  const thankYou = await prisma.thankYou.findUnique({ where: { id: thankYouId }, include: { guest: { select: { phone: true } } } });
-  if (!thankYou || thankYou.status === "SENT") return;
-  try {
-    if (!thankYou.guest.phone) throw new Error("No phone number");
-    await sms.send(thankYou.guest.phone, thankYou.text);
-    await prisma.thankYou.update({ where: { id: thankYou.id }, data: { status: "SENT", sentAt: new Date(), error: null } });
-  } catch (e) {
-    await prisma.thankYou.update({ where: { id: thankYou.id }, data: { status: "FAILED", error: (e as Error).message.slice(0, 300) } });
-  }
-}
-
-/** Runs queued notifications and thank-you SMS (with Redis). Started by the API process. */
+/** Runs queued notifications (with Redis). Started by the API process. */
 export function startNotificationWorker() {
   if (!queueEnabled()) return null;
-  // At most 10 messages a second, to stay inside SMS gateway and Telegram limits.
+  // At most 10 messages a second, to stay inside Telegram's limits.
   const worker = new Worker<NotificationJob>(QUEUE, (job) => handle(job.data), { connection: connection(), concurrency: 5, limiter: { max: 10, duration: 1000 } });
   worker.on("failed", (job, err) => console.error(`notification ${job?.name} failed (attempt ${job?.attemptsMade})`, err.message));
   return worker;

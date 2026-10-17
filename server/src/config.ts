@@ -23,7 +23,6 @@ export const config = {
   appUrl: () => (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, ""),
   sessionSecret: () => required("SESSION_SECRET"),
   redisUrl: () => process.env.REDIS_URL || null,
-  smsProvider: () => process.env.SMS_PROVIDER ?? "mock",
   telegramBotToken: () => process.env.TELEGRAM_BOT_TOKEN || null,
   telegramBotUsername: () => (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "").replace(/^@/, "") || null,
   telegramApiBase: () => process.env.TELEGRAM_API_URL || "https://api.telegram.org",

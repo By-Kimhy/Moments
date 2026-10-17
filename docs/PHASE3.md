@@ -17,7 +17,7 @@ printing, across Cambodia's provinces.
   province, search by name; featured first, then by rating. **Profile** `/vendors/<slug>` with
   photos, contact buttons, reviews and "send an enquiry".
 - **Enquiries** (`VendorEnquiry`): a signed-in host sends name, phone, event date and a message,
-  optionally from one of their events. The vendor sees them in their inbox and gets an SMS. Each
+  optionally from one of their events. The vendor sees them in their inbox and gets a Telegram message. Each
   enquiry is a referral the platform can count (and later bill).
 - **Reviews** (`VendorReview`): one per host per vendor, rating 1–5 and text, only from hosts
   who sent that vendor an enquiry (so reviews come from real customers). The vendor can reply
@@ -31,9 +31,9 @@ Prices are the plan's starting assumptions and live in one place (`server/src/li
 
 | Plan | Who | Limits and features |
 | ---- | --- | ------------------- |
-| FREE | default for a new event | up to 100 guests, the traditional template only, Moments branding, no seating plan, no thank-you SMS |
+| FREE | default for a new event | up to 100 guests, the traditional template only, Moments branding, no seating plan |
 | STANDARD | $20 per event | up to 1,000 guests, all templates, gift book, check-in, reports |
-| PREMIUM | $50 per event | everything, including seating plan and thank-you SMS, up to 5,000 guests |
+| PREMIUM | $50 per event | everything, including the seating plan, up to 5,000 guests |
 | PLANNER | organizations | events of a planner organization get Premium features (so do ticketed events) |
 
 - `Event.plan` (default FREE). Limits are checked in the API: adding or importing guests past

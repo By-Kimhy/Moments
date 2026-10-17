@@ -293,6 +293,8 @@ The seed adds a demo concert at `/e/khmer-music-night` (door helper code `654321
   the average of visible reviews.
 - **Event shortlist:** "Save to an event" on a profile adds the vendor to the event's
   "អ្នកផ្តល់សេវា" tab as considering or booked, with a note and their contact details.
+- **Leads report** (`/admin/leads`): enquiries per vendor for each month, with a CSV download,
+  for charging vendors per lead.
 - **Admins** (`User.isAdmin`, or phone numbers in `ADMIN_PHONES`) use `/admin`: the review
   queue by status, approve, send back, suspend, feature for a number of days, hide reviews.
 
@@ -481,6 +483,7 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | GET | `/api/admin/plan-orders` (`?status=`) | platform admin |
 | POST | `/api/admin/plan-orders/:orderId/confirm`, `/cancel` | platform admin |
 | GET | `/api/admin/stats` | platform admin |
+| GET | `/api/admin/leads` (`?month=YYYY-MM&format=csv`) | platform admin |
 | GET | `/api/vendors/mine/:vendorId/featured` | vendor owner |
 | POST | `/api/vendors/mine/:vendorId/featured/orders` `{ days }`, `/featured/orders/:orderId/cancel` | vendor owner |
 | GET | `/api/organizations/:orgId/subscription` | org member |

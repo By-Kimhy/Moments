@@ -624,7 +624,11 @@ export const km = {
     adminOrder: "{reference} · {event} → {plan} · {price}",
   },
   admin: {
-    tabs: { overview: "ទិដ្ឋភាពទូទៅ", vendors: "អ្នកផ្តល់សេវា", payments: "ការបង់ប្រាក់", reviews: "ការវាយតម្លៃ" },
+    leadsTitle: "សំណួរតាមអ្នកផ្តល់សេវា",
+    leadsTotal: "សរុប {count} សំណួរ",
+    downloadCsv: "ទាញយក CSV",
+    enquiriesCol: "សំណួរ",
+    tabs: { overview: "ទិដ្ឋភាពទូទៅ", vendors: "អ្នកផ្តល់សេវា", payments: "ការបង់ប្រាក់", reviews: "ការវាយតម្លៃ", leads: "អតិថិជនសក្តានុពល" },
     users: "អ្នកប្រើប្រាស់",
     newUsers: "+{count} ក្នុង ៣០ ថ្ងៃ",
     weddings: "មង្គលការ",

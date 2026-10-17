@@ -625,7 +625,11 @@ export const en: Messages = {
     adminOrder: "{reference} · {event} → {plan} · {price}",
   },
   admin: {
-    tabs: { overview: "Overview", vendors: "Vendors", payments: "Payments", reviews: "Reviews" },
+    leadsTitle: "Enquiries per vendor",
+    leadsTotal: "{count} enquiries in total",
+    downloadCsv: "Download CSV",
+    enquiriesCol: "Enquiries",
+    tabs: { overview: "Overview", vendors: "Vendors", payments: "Payments", reviews: "Reviews", leads: "Leads" },
     users: "Users",
     newUsers: "+{count} in 30 days",
     weddings: "Weddings",

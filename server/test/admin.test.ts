@@ -40,3 +40,21 @@ describe("admin dashboard", () => {
     await someone.agent.get("/api/admin/stats").expect(404);
   });
 });
+
+describe("vendor leads", () => {
+  it("counts each vendor's enquiries in the month and downloads as CSV", async () => {
+    const a = await admin();
+    const owner = await signIn("Lead Vendor");
+    const vendor = await prisma.vendor.create({ data: { ownerId: owner.user.id, slug: `leads-${Date.now()}`, name: `Leads Co ${Date.now()}`, category: "MC", province: "kep", status: "PUBLISHED" } });
+    const host = await signIn();
+    for (let i = 0; i < 3; i++) await host.agent.post(`/api/vendors/${vendor.slug}/enquiries`).send({ name: "Dara", phone: "012 345 600", message: `Hi ${i}` }).expect(201);
+    const month = monthKeys().at(-1)!;
+    const report = (await a.agent.get("/api/admin/leads").expect(200)).body;
+    expect(report.month).toBe(month);
+    expect(report.leads.find((l: { id: string }) => l.id === vendor.id)).toMatchObject({ enquiries: 3, owner: { name: "Lead Vendor" } });
+    const csv = await a.agent.get(`/api/admin/leads?month=${month}&format=csv`).expect(200);
+    expect(csv.headers["content-disposition"]).toContain(`moments-leads-${month}.csv`);
+    expect(csv.text).toContain(`${vendor.name},MC,kep,Lead Vendor,`);
+    expect((await a.agent.get("/api/admin/leads?month=2020-01").expect(200)).body.leads).toEqual([]);
+  });
+});

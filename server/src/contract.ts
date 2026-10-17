@@ -219,3 +219,4 @@ export type VendorFeaturedResponse = PlatformPurchase & { featuredUntil: Date | 
 export type SubscriptionResponse = PlatformPurchase & { paidUntil: Date | null; active: boolean };
 
 export type AdminStats = Awaited<ReturnType<typeof import("./lib/admin-stats.js")["adminStats"]>>;
+export type AdminLeadsResponse = { month: string; months: string[]; total: number; leads: Awaited<ReturnType<typeof import("./lib/admin-stats.js")["vendorLeads"]>> };

@@ -7,7 +7,8 @@ import { currentUser, requireAdmin } from "../auth.js";
 import { isUuid } from "../access.js";
 import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
-import { adminStats } from "../lib/admin-stats.js";
+import { adminStats, monthKeys, vendorLeads } from "../lib/admin-stats.js";
+import { csvCell } from "../lib/csv.js";
 import { confirmOrder, describeOrders } from "../lib/platform-orders.js";
 import { ownerVendorView, ratings } from "../lib/vendors.js";
 import { planOrderView } from "./plans.js";
@@ -17,6 +18,21 @@ adminRouter.use(requireAdmin);
 
 adminRouter.get("/stats", async (_req, res) => {
   res.json(await adminStats());
+});
+
+const leadsSchema = z.object({ month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional().catch(undefined) });
+
+// Enquiries per vendor for a month: who to bill per lead. ?format=csv downloads it.
+adminRouter.get("/leads", async (req, res) => {
+  const month = parse(leadsSchema, req.query).month ?? monthKeys().at(-1)!;
+  const leads = await vendorLeads(month);
+  if (req.query.format === "csv") {
+    const lines = [["Vendor", "Category", "Province", "Owner", "Phone", "Enquiries"], ...leads.map((l) => [l.name, l.category, l.province, l.owner.name, l.owner.phone ?? "", String(l.enquiries)])];
+    res.attachment(`moments-leads-${month}.csv`);
+    res.type("text/csv; charset=utf-8").send(`\ufeff${lines.map((l) => l.map(csvCell).join(",")).join("\r\n")}\r\n`);
+    return;
+  }
+  res.json({ month, months: monthKeys(), leads, total: leads.reduce((s, l) => s + l.enquiries, 0) });
 });
 
 const listSchema = z.object({ status: z.enum(["DRAFT", "PENDING_REVIEW", "PUBLISHED", "SUSPENDED"]).default("PENDING_REVIEW").catch("PENDING_REVIEW") });

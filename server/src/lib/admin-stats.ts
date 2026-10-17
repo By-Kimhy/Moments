@@ -91,3 +91,18 @@ export async function adminStats() {
     months: series,
   };
 }
+
+/** Enquiries per vendor in one month ("YYYY-MM", Phnom Penh time), most first: the leads report. */
+export async function vendorLeads(month: string) {
+  const from = new Date(`${month}-01T00:00:00+07:00`);
+  const [y, m] = month.split("-").map(Number);
+  const to = new Date(`${new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7)}-01T00:00:00+07:00`);
+  const rows = await prisma.vendorEnquiry.groupBy({ by: ["vendorId"], where: { createdAt: { gte: from, lt: to } }, _count: { _all: true } });
+  const vendors = await prisma.vendor.findMany({
+    where: { id: { in: rows.map((r) => r.vendorId) } },
+    select: { id: true, name: true, slug: true, category: true, province: true, owner: { select: { name: true, phone: true } } },
+  });
+  return rows
+    .map((r) => ({ ...vendors.find((v) => v.id === r.vendorId)!, enquiries: r._count._all }))
+    .sort((a, b) => b.enquiries - a.enquiries || a.name.localeCompare(b.name));
+}

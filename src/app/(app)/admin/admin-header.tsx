@@ -5,6 +5,7 @@ const TABS = [
   ["overview", ""],
   ["vendors", "/vendors"],
   ["payments", "/payments"],
+  ["leads", "/leads"],
   ["reviews", "/reviews"],
 ] as const;
 

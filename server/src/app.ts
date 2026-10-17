@@ -15,11 +15,13 @@ import { guestsRouter } from "./routes/guests.js";
 import { invitationsRouter } from "./routes/invitations.js";
 import { filesRouter, mediaRouter } from "./routes/media.js";
 import { organizationsRouter } from "./routes/organizations.js";
+import { ordersRouter, publicEventsRouter } from "./routes/public-tickets.js";
 import { reportsRouter } from "./routes/reports.js";
 import { seatingRouter } from "./routes/seating.js";
 import { eventTelegramRouter, telegramWebhookRouter } from "./routes/telegram.js";
 import { templatesRouter } from "./routes/templates.js";
 import { thankYouRouter } from "./routes/thank-you.js";
+import { ticketingRouter } from "./routes/ticketing.js";
 
 export function createApp() {
   const app = express();
@@ -44,10 +46,12 @@ export function createApp() {
   app.use("/api/files", filesRouter);
   app.use("/api/invitations", invitationsRouter);
   app.use("/api/telegram", telegramWebhookRouter);
+  app.use("/api/public/events", publicEventsRouter);
+  app.use("/api/orders", ordersRouter);
   // Everything about one event: eventAccess checks the caller belongs to it first.
   const event = Router({ mergeParams: true });
   event.use(eventAccess);
-  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter, seatingRouter, thankYouRouter);
+  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter, seatingRouter, thankYouRouter, ticketingRouter);
   app.use("/api/events/:eventId", event);
 
   app.use(notFound);

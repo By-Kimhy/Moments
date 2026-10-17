@@ -40,7 +40,7 @@ export default async function EventPage({ params }: PageProps<"/events/[eventId]
         </Link>
       </div>
 
-      <EventNav eventId={eventId} active="overview" t={t.nav} />
+      <EventNav eventId={eventId} active="overview" t={t.nav} type={event.type} />
 
       {event.status === "DRAFT" && (
         <div className="flex flex-col gap-3 rounded-xl bg-amber-50 p-4 text-amber-900">
@@ -50,9 +50,17 @@ export default async function EventPage({ params }: PageProps<"/events/[eventId]
           </form>
         </div>
       )}
-      <Link href={`/events/${eventId}/preview`} className={`${secondaryButtonClass} self-start`}>
-        {t.event.preview}
-      </Link>
+      {event.type === "TICKETED" ? (
+        event.slug && (
+          <Link href={`/e/${event.slug}`} className={`${secondaryButtonClass} self-start`}>
+            {t.tickets.publicPage}
+          </Link>
+        )
+      ) : (
+        <Link href={`/events/${eventId}/preview`} className={`${secondaryButtonClass} self-start`}>
+          {t.event.preview}
+        </Link>
+      )}
 
       <dl className="grid gap-3 rounded-xl border border-line p-4 sm:grid-cols-2">
         <div>

@@ -47,6 +47,17 @@ const eventFields = {
     .refine((v) => v === null || /^https:\/\//.test(v), "Paste a link that starts with https://"),
   schedule: z.array(scheduleItem).max(20).default([]),
   khqrAccountName: optionalText(120),
+  // Ticketed events: the public page /e/<slug> and a description.
+  type: z.enum(["WEDDING", "TICKETED"]).optional(),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .nullish()
+    .transform((v) => v || null)
+    .refine((v) => v === null || /^[a-z0-9](?:[a-z0-9-]{1,58}[a-z0-9])$/.test(v), "Use 3–60 letters, numbers and dashes, like khmer-music-night."),
+  descriptionKm: optionalText(4000),
+  descriptionEn: optionalText(4000),
   templateId: z
     .string()
     .nullish()
@@ -67,6 +78,14 @@ const cohostSchema = z.object({
   }),
   name: z.string().trim().min(1, "Enter their name.").max(120),
 });
+
+/** A public link name another event already uses. */
+export function slugTaken(e: unknown): never {
+  if ((e as { code?: string; meta?: { target?: string[] } }).code === "P2002") {
+    throw new HttpError(409, "This link is already taken. Choose another.", { slug: ["This link is already taken. Choose another."] });
+  }
+  throw e;
+}
 
 async function checkTemplate(templateId: string | null | undefined) {
   if (!templateId) return;
@@ -105,7 +124,7 @@ eventsRouter.post("/", requireUser, async (req, res) => {
     });
     await audit(tx, { eventId: created.id, entity: "event", entityId: created.id, action: "create", actorId: created.members[0].id, after: hostView(created) });
     return created;
-  });
+  }).catch(slugTaken);
   res.status(201).json({ event: hostView(event) });
 });
 
@@ -124,7 +143,7 @@ eventRouter.patch("/", ownersOnly, async (req, res) => {
     const after = await tx.event.update({ where: { id: member.eventId }, data });
     await audit(tx, { eventId: member.eventId, entity: "event", entityId: member.eventId, action: "update", actorId: member.id, before: hostView(before), after: hostView(after) });
     return after;
-  });
+  }).catch(slugTaken);
   res.json({ event: hostView(event) });
 });
 

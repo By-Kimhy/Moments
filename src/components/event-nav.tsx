@@ -1,26 +1,33 @@
 import Link from "next/link";
 import type { Messages } from "@/i18n/km";
 
-/** Tabs across the top of an event's pages. */
-export function EventNav({ eventId, active, t }: { eventId: string; active: "overview" | "guests" | "checkin" | "gifts" | "reports" | "seating" | "thanks"; t: Messages["nav"] }) {
-  const tabs = [
-    { key: "overview", href: `/events/${eventId}`, label: t.overview },
-    { key: "guests", href: `/events/${eventId}/guests`, label: t.guests },
-    { key: "seating", href: `/events/${eventId}/seating`, label: t.seating },
-    { key: "checkin", href: `/events/${eventId}/checkin`, label: t.checkin },
-    { key: "gifts", href: `/events/${eventId}/gifts`, label: t.gifts },
-    { key: "reports", href: `/events/${eventId}/reports`, label: t.reports },
-    { key: "thanks", href: `/events/${eventId}/thank-you`, label: t.thanks },
-  ] as const;
+type Tab = "overview" | "guests" | "seating" | "checkin" | "gifts" | "reports" | "thanks" | "tickets" | "door";
+
+/** Tabs across the top of an event's pages; a ticketed event has its own set. */
+export function EventNav({ eventId, active, t, type = "WEDDING" }: { eventId: string; active: Tab; t: Messages["nav"]; type?: "WEDDING" | "TICKETED" }) {
+  const wedding: [Tab, string, string][] = [
+    ["overview", "", t.overview],
+    ["guests", "/guests", t.guests],
+    ["seating", "/seating", t.seating],
+    ["checkin", "/checkin", t.checkin],
+    ["gifts", "/gifts", t.gifts],
+    ["reports", "/reports", t.reports],
+    ["thanks", "/thank-you", t.thanks],
+  ];
+  const ticketed: [Tab, string, string][] = [
+    ["overview", "", t.overview],
+    ["tickets", "/tickets", t.tickets],
+    ["door", "/door", t.door],
+  ];
   return (
     <nav className="-mx-4 flex gap-1 overflow-x-auto border-b border-line px-4">
-      {tabs.map((tab) => (
+      {(type === "TICKETED" ? ticketed : wedding).map(([key, path, label]) => (
         <Link
-          key={tab.key}
-          href={tab.href}
-          className={`shrink-0 border-b-2 px-3 py-2 text-sm ${tab.key === active ? "border-accent font-semibold text-accent" : "border-transparent text-muted"}`}
+          key={key}
+          href={`/events/${eventId}${path}`}
+          className={`shrink-0 border-b-2 px-3 py-2 text-sm ${key === active ? "border-accent font-semibold text-accent" : "border-transparent text-muted"}`}
         >
-          {tab.label}
+          {label}
         </Link>
       ))}
     </nav>

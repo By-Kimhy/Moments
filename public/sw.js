@@ -4,7 +4,7 @@
 // - The desk pages (/desk, /events/<id>/checkin): network first, falling back to the copy kept
 //   from the last visit. The desk's data lives in IndexedDB (see src/lib/offline/outbox.ts).
 // - Everything else (other pages, the API, Server Actions) goes straight to the network.
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC = `static-${VERSION}`;
 const PAGES = `pages-${VERSION}`;
 const OFFLINE = "/offline.html";
@@ -53,7 +53,7 @@ async function warm(urls) {
   }
 }
 
-const isDeskPage = (url) => url.pathname === "/desk" || /^\/events\/[0-9a-f-]{36}\/checkin$/.test(url.pathname);
+const isDeskPage = (url) => url.pathname === "/desk" || /^\/events\/[0-9a-f-]{36}\/(checkin|door)$/.test(url.pathname);
 const isStatic = (url) => url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname.startsWith("/api/files/");
 
 self.addEventListener("fetch", (event) => {

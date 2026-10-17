@@ -4,6 +4,7 @@ import { getMessages } from "@/i18n";
 import { fill } from "@/i18n/format";
 import { ApiError, api } from "@/lib/api";
 import { DeskApp } from "@/components/desk/desk-app";
+import { DoorApp } from "@/components/desk/door-app";
 import { InstallButton } from "@/components/pwa";
 import { SignOutButton } from "@/components/sign-out";
 import { JoinForm } from "./join-form";
@@ -34,7 +35,11 @@ export default async function DeskPage() {
         <p className="text-sm text-muted">{fill(t.desk.welcome, { name: desk.helper.displayName })}</p>
         <h1 className="text-xl font-semibold">{desk.event.titleKm}</h1>
       </div>
-      <DeskApp eventId={desk.event.id} memberName={desk.helper.displayName} canSeeAllGifts={false} t={t.desk} sides={t.side} rsvp={t.rsvp} />
+      {desk.event.type === "TICKETED" ? (
+        <DoorApp eventId={desk.event.id} memberName={desk.helper.displayName} t={t.door} desk={t.desk} />
+      ) : (
+        <DeskApp eventId={desk.event.id} memberName={desk.helper.displayName} canSeeAllGifts={false} t={t.desk} sides={t.side} rsvp={t.rsvp} />
+      )}
       <div className="mt-6 flex flex-col items-start gap-3">
         <InstallButton label={t.pwa.install} iosHint={t.pwa.iosHint} />
         <SignOutButton action={leaveDesk} label={t.desk.leave} unsentWarning={t.pwa.unsent} />

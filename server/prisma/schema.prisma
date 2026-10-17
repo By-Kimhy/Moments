@@ -112,6 +112,9 @@ model Event {
   templateId      String?     @db.Uuid
   helperCode      String      @unique @db.VarChar(6)
   telegramChatId  BigInt? // where host alerts go
+  slug            String?     @unique @db.VarChar(60) // public ticket page /e/<slug>
+  descriptionKm   String?     @db.VarChar(4000)
+  descriptionEn   String?     @db.VarChar(4000)
   thankYouKm      String?     @db.VarChar(1000) // thank-you text; {name}, {gift}, {couple}, {link}
   thankYouEn      String?     @db.VarChar(1000)
   createdAt       DateTime    @default(now())
@@ -128,6 +131,9 @@ model Event {
   auditLogs    AuditLog[]
   tables       DiningTable[]
   thankYous    ThankYou[]
+  ticketTypes  TicketType[]
+  orders       Order[]
+  tickets      Ticket[]
 
   @@index([ownerId])
   @@index([organizationId, startsAt])
@@ -144,12 +150,13 @@ model EventMember {
   revokedAt       DateTime?
   createdAt       DateTime   @default(now())
 
-  event         Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user          User?      @relation(fields: [userId], references: [id])
-  giftsRecorded Gift[]     @relation("GiftRecordedBy")
-  giftsVoided   Gift[]     @relation("GiftVoidedBy")
-  checkins      Checkin[]
-  auditLogs     AuditLog[]
+  event          Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user           User?      @relation(fields: [userId], references: [id])
+  giftsRecorded  Gift[]     @relation("GiftRecordedBy")
+  giftsVoided    Gift[]     @relation("GiftVoidedBy")
+  checkins       Checkin[]
+  auditLogs      AuditLog[]
+  ticketsScanned Ticket[]
 
   @@unique([eventId, userId])
   @@index([eventId])
@@ -233,8 +240,9 @@ model Payment {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   gift  Gift?
+  order Order?
 
   @@unique([provider, reference])
   @@index([eventId, status])
@@ -366,4 +374,95 @@ model OrganizationMember {
 
   @@unique([organizationId, userId])
   @@index([userId])
+}
+
+// Ticketed events (concerts, seminars, workshops) -------------------------------------------
+
+model TicketType {
+  id          String    @id @default(uuid()) @db.Uuid
+  eventId     String    @db.Uuid
+  name        String    @db.VarChar(80) // "VIP", "ធម្មតា", "Early bird"
+  description String?   @db.VarChar(300)
+  price       Int // minor units of currency
+  currency    Currency
+  quantity    Int // tickets for sale in total
+  maxPerOrder Int       @default(10)
+  salesStart  DateTime?
+  salesEnd    DateTime?
+  active      Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  event   Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  items   OrderItem[]
+  tickets Ticket[]
+
+  @@index([eventId, sortOrder])
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  CANCELLED
+  EXPIRED
+}
+
+model Order {
+  id              String      @id @default(uuid()) @db.Uuid
+  eventId         String      @db.Uuid
+  token           String      @unique @db.VarChar(32) // the buyer's private order page /o/<token>
+  reference       String      @db.VarChar(12) // short code the buyer writes in the KHQR payment note
+  buyerName       String      @db.VarChar(120)
+  buyerPhone      String      @db.VarChar(20)
+  status          OrderStatus @default(PENDING_PAYMENT)
+  total           Int
+  currency        Currency
+  fee             Int         @default(0) // platform fee on this order, same currency
+  expiresAt       DateTime // tickets are held until then
+  paidAt          DateTime?
+  cancelledReason String?     @db.VarChar(300)
+  paymentId       String?     @unique @db.Uuid
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  event   Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  payment Payment?    @relation(fields: [paymentId], references: [id])
+  items   OrderItem[]
+  tickets Ticket[]
+
+  @@unique([eventId, reference])
+  @@index([eventId, status])
+}
+
+model OrderItem {
+  id           String @id @default(uuid()) @db.Uuid
+  orderId      String @db.Uuid
+  ticketTypeId String @db.Uuid
+  quantity     Int
+  unitPrice    Int
+
+  order      Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id])
+
+  @@index([ticketTypeId])
+}
+
+model Ticket {
+  id            String    @id @default(uuid()) @db.Uuid
+  eventId       String    @db.Uuid
+  orderId       String    @db.Uuid
+  ticketTypeId  String    @db.Uuid
+  code          String    @unique @db.VarChar(32) // in the QR; unguessable
+  checkedInAt   DateTime?
+  checkedInById String?   @db.Uuid
+  scanClientId  String?   @db.Uuid // the scanning phone's id for this entry, so a replay counts once
+  createdAt     DateTime  @default(now())
+
+  event       Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  ticketType  TicketType   @relation(fields: [ticketTypeId], references: [id])
+  checkedInBy EventMember? @relation(fields: [checkedInById], references: [id])
+
+  @@index([eventId])
 }

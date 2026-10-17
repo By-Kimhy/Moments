@@ -104,3 +104,71 @@ export type PlannerEvent = HostEvent & {
   upcoming: boolean;
 };
 export type PlannerEventsResponse = { organization: OrganizationSummary; upcoming: PlannerEvent[]; past: PlannerEvent[] };
+
+export type Currency = "USD" | "KHR";
+export type TicketTypeRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  currency: Currency;
+  quantity: number;
+  maxPerOrder: number;
+  salesStart: Date | null;
+  salesEnd: Date | null;
+  active: boolean;
+  sold: number;
+  held: number;
+  available: number;
+  onSale: boolean;
+};
+export type OrderStatus = "PENDING_PAYMENT" | "PAID" | "CANCELLED" | "EXPIRED";
+export type OrderRow = ReturnType<typeof import("./lib/orders.js")["orderView"]>;
+export type OrdersResponse = {
+  orders: OrderRow[];
+  summary: { paidOrders: number; ticketsSold: number; revenue: { USD: number; KHR: number }; fees: { USD: number; KHR: number }; waiting: number };
+};
+export type DoorTicket = { id: string; hash: string; type: string; buyerName: string; reference: string; checkedInAt: Date | null; checkedInBy: string | null };
+export type DoorTicketsResponse = { tickets: DoorTicket[]; stats: { sold: number; entered: number } };
+type Planner = { name: string; brandColor: string; logoKey: string | null } | null;
+export type PublicTicketEvent = {
+  event: {
+    slug: string;
+    titleKm: string;
+    titleEn: string | null;
+    descriptionKm: string | null;
+    descriptionEn: string | null;
+    startsAt: Date;
+    venueKm: string | null;
+    venueEn: string | null;
+    mapUrl: string | null;
+    photos: { key: string }[];
+    planner: Planner;
+  };
+  ticketTypes: { id: string; name: string; description: string | null; price: number; currency: Currency; maxPerOrder: number; available: number; onSale: boolean }[];
+};
+export type OrderPage = {
+  order: {
+    reference: string;
+    buyerName: string;
+    status: OrderStatus;
+    total: number;
+    currency: Currency;
+    expiresAt: Date;
+    paidAt: Date | null;
+    items: { name: string; quantity: number; unitPrice: number }[];
+    tickets: { code: string; type: string; used: boolean }[];
+  };
+  event: {
+    slug: string | null;
+    titleKm: string;
+    titleEn: string | null;
+    startsAt: Date;
+    venueKm: string | null;
+    venueEn: string | null;
+    mapUrl: string | null;
+    khqrImageKey: string | null;
+    khqrAccountName: string | null;
+    planner: Planner;
+  };
+};

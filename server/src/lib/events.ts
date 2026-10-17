@@ -35,6 +35,9 @@ export const hostView = (e: Event) => ({
   khqrAccountName: e.khqrAccountName,
   templateId: e.templateId,
   helperCode: e.helperCode,
+  slug: e.slug,
+  descriptionKm: e.descriptionKm,
+  descriptionEn: e.descriptionEn,
   telegramChatId: e.telegramChatId?.toString() ?? null,
   createdAt: e.createdAt,
   updatedAt: e.updatedAt,
@@ -43,6 +46,7 @@ export const hostView = (e: Event) => ({
 /** What a helper at the desk needs to know about the event. */
 export const deskView = (e: Event) => ({
   id: e.id,
+  type: e.type,
   status: e.status,
   titleKm: e.titleKm,
   titleEn: e.titleEn,

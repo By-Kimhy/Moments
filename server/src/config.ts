@@ -30,6 +30,8 @@ export const config = {
   telegramWebhookSecret: () => process.env.TELEGRAM_WEBHOOK_SECRET || null,
   // For development without a public URL: the API asks Telegram for updates instead.
   telegramPolling: () => process.env.TELEGRAM_POLLING === "true",
+  // Platform fee on ticket sales, in percent (recorded per order for billing).
+  platformFeePercent: () => Number(process.env.PLATFORM_FEE_PERCENT ?? 4),
   uploadDir: () => path.resolve(repoRoot, process.env.UPLOAD_DIR || "./uploads"),
   s3: () =>
     process.env.S3_BUCKET

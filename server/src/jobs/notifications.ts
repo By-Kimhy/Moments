@@ -8,6 +8,8 @@ import { config } from "../config.js";
 import { prisma } from "../db.js";
 import { audit } from "../lib/audit.js";
 import { giftTotals } from "../lib/gifts.js";
+import { formatAmount } from "../lib/money.js";
+import { orderUrl } from "../lib/orders.js";
 import { digestMessage, guestGiftMessage, rsvpMessage, testMessage } from "../lib/notification-messages.js";
 import { sms } from "../providers/sms.js";
 import { TelegramError, telegram } from "../providers/telegram.js";
@@ -16,6 +18,8 @@ export const DIGEST_MINUTES = 15;
 
 export type NotificationJob =
   | { kind: "thank_you_sms"; thankYouId: string }
+  | { kind: "order_sms"; orderId: string; stage: "placed" | "paid" }
+  | { kind: "order_placed"; orderId: string }
   | { kind: "rsvp"; guestId: string }
   | { kind: "guest_gift"; giftId: string }
   | { kind: "desk_digest"; eventId: string; windowEnd: number }
@@ -37,7 +41,7 @@ function getQueue() {
 /** Queues a notification. Never throws: an alert must not break the request that caused it. */
 export async function notify(job: NotificationJob, options: { delay?: number; jobId?: string } = {}) {
   // Alerts to hosts need the bot; thank-you SMS don't.
-  if (job.kind !== "thank_you_sms" && !telegram()) return;
+  if (job.kind !== "thank_you_sms" && job.kind !== "order_sms" && !telegram()) return;
   try {
     if (queueEnabled()) {
       await getQueue().add(job.kind, job, options);
@@ -104,6 +108,30 @@ async function send(eventId: string, chatId: string, text: string) {
 export async function handle(job: NotificationJob) {
   if (job.kind === "thank_you_sms") {
     await sendThankYouSms(job.thankYouId);
+  } else if (job.kind === "order_sms") {
+    const order = await prisma.order.findUnique({ where: { id: job.orderId }, include: { event: true } });
+    if (!order) return;
+    const amount = formatAmount(order.total, order.currency);
+    const link = orderUrl(order.token);
+    await sms.send(
+      order.buyerPhone,
+      job.stage === "placed"
+        ? `Moments: ${order.event.titleKm} — ${amount}. បង់តាម KHQR ហើយសរសេរ ${order.reference} ក្នុងកំណត់ចំណាំ។ Pay by KHQR with note ${order.reference}: ${link}`
+        : `Moments: សំបុត្ររបស់អ្នកសម្រាប់ ${order.event.titleKm} រួចរាល់ហើយ។ Your tickets are ready: ${link}`,
+    );
+  } else if (job.kind === "order_placed") {
+    const order = await prisma.order.findUnique({ where: { id: job.orderId }, include: { items: { include: { ticketType: true } } } });
+    if (!order) return;
+    const target = await eventFor(order.eventId);
+    if (!target) return;
+    const items = order.items.map((i) => `${i.quantity}× ${i.ticketType.name}`).join(", ");
+    await send(
+      order.eventId,
+      target.chatId,
+      target.lang === "KM"
+        ? `🎟 ការកុម្ម៉ង់ថ្មី ${order.reference}: ${items} — ${formatAmount(order.total, order.currency, true)}\n${order.buyerName} · ${order.buyerPhone}\nរង់ចាំការបង់ប្រាក់ — ${config.appUrl()}/events/${order.eventId}/tickets`
+        : `🎟 New order ${order.reference}: ${items} — ${formatAmount(order.total, order.currency)}\n${order.buyerName} · ${order.buyerPhone}\nWaiting for payment — ${config.appUrl()}/events/${order.eventId}/tickets`,
+    );
   } else if (job.kind === "rsvp") {
     const guest = await prisma.guest.findUnique({ where: { id: job.guestId } });
     if (!guest || guest.rsvpStatus === "PENDING") return;

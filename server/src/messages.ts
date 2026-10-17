@@ -97,6 +97,22 @@ const km: Record<string, string> = {
   "An organization needs at least one owner.": "ស្ថាប័នត្រូវមានម្ចាស់យ៉ាងហោចណាស់ម្នាក់។",
   "Choose an image.": "សូមជ្រើសរើសរូបភាព។",
   "This person has access through the planner's organization. Remove them there.": "អ្នកនេះមានសិទ្ធិតាមរយៈស្ថាប័នរៀបចំកម្មវិធី។ សូមដកពួកគេចេញនៅទីនោះ។",
+  "Use 3–60 letters, numbers and dashes, like khmer-music-night.": "សូមប្រើអក្សរឡាតាំង លេខ និងសញ្ញា - ពី ៣ ដល់ ៦០ តួ ដូចជា khmer-music-night។",
+  "This link is already taken. Choose another.": "តំណនេះមានគេប្រើរួចហើយ។ សូមជ្រើសរើសផ្សេង។",
+  "Ticket type not found.": "រកមិនឃើញប្រភេទសំបុត្រ។",
+  "Enter a ticket name.": "សូមបញ្ចូលឈ្មោះសំបុត្រ។",
+  "Enter how many tickets are for sale.": "សូមបញ្ចូលចំនួនសំបុត្រសម្រាប់លក់។",
+  "Tickets of this type have been ordered. Stop its sales instead of deleting it.": "សំបុត្រប្រភេទនេះមានគេកុម្ម៉ង់រួចហើយ។ សូមបញ្ឈប់ការលក់ ជំនួសឱ្យការលុប។",
+  "Event not found or not on sale.": "រកមិនឃើញកម្មវិធី ឬមិនទាន់លក់សំបុត្រ។",
+  "Choose at least one ticket.": "សូមជ្រើសរើសសំបុត្រយ៉ាងហោចណាស់មួយ។",
+  "All tickets in one order must be in the same currency.": "សំបុត្រទាំងអស់ក្នុងការកុម្ម៉ង់មួយ ត្រូវតែជារូបិយប័ណ្ណតែមួយ។",
+  "Some tickets are no longer available.": "សំបុត្រខ្លះលែងមានទៀតហើយ។",
+  "Order not found.": "រកមិនឃើញការកុម្ម៉ង់។",
+  "This order can't be confirmed.": "មិនអាចបញ្ជាក់ការកុម្ម៉ង់នេះបានទេ។",
+  "This order is already cancelled.": "ការកុម្ម៉ង់នេះត្រូវបានលុបចោលរួចហើយ។",
+  "Too many orders. Try again later.": "កុម្ម៉ង់ច្រើនពេក។ សូមព្យាយាមពេលក្រោយ។",
+  "Not a ticket for this event.": "មិនមែនជាសំបុត្រសម្រាប់កម្មវិធីនេះទេ។",
+  "This ticket has already been used.": "សំបុត្រនេះត្រូវបានប្រើរួចហើយ។",
 };
 
 const KHMER_DIGITS = "០១២៣៤៥៦៧៨៩";
@@ -104,6 +120,7 @@ const khmerNumber = (n: string) => n.replace(/\d/g, (d) => KHMER_DIGITS[Number(d
 
 // Messages with a number in them.
 const kmPatterns: [RegExp, (n: string) => string][] = [
+  [/^At most (\d+) tickets of this type per order\.$/, (n) => `យ៉ាងច្រើន ${khmerNumber(n)} សំបុត្រប្រភេទនេះ ក្នុងការកុម្ម៉ង់មួយ។`],
   [/^This invitation is for up to (\d+) people\.$/, (n) => `លិខិតអញ្ជើញនេះសម្រាប់មនុស្សយ៉ាងច្រើន ${khmerNumber(n)} នាក់។`],
 ];
 

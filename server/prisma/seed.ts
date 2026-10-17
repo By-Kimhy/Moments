@@ -1,7 +1,9 @@
 // Three invitation templates, plus (outside production) one demo wedding with 50 guests.
 // Safe to run again: templates are upserted and the demo wedding is rebuilt.
 import { PrismaClient, type Currency, type GiftMethod, type RsvpStatus, type Side } from "@prisma/client";
+import sharp from "sharp";
 import { newInviteToken } from "../src/lib/codes.js";
+import { storage } from "../src/providers/storage.js";
 
 const prisma = new PrismaClient();
 
@@ -29,6 +31,8 @@ const templates = [
 const DEMO_PHONE = "+85512345678";
 const DEMO_COHOST_PHONE = "+85598765432";
 const DEMO_HELPER_CODE = "123456";
+const DEMO_DOOR_CODE = "654321";
+const DEMO_SLUG = "khmer-music-night";
 
 const families = [
   ["សុខ", "Sok"], ["ចាន់", "Chan"], ["លី", "Ly"], ["ហេង", "Heng"], ["គឹម", "Kim"],
@@ -58,7 +62,8 @@ async function main() {
     create: { phone: DEMO_COHOST_PHONE, name: "ចាន់ សុភា" },
   });
   await prisma.event.deleteMany({ where: { ownerId: host.id } });
-  await prisma.event.deleteMany({ where: { helperCode: DEMO_HELPER_CODE } });
+  await prisma.event.deleteMany({ where: { helperCode: { in: [DEMO_HELPER_CODE, DEMO_DOOR_CODE] } } });
+  await prisma.event.deleteMany({ where: { slug: DEMO_SLUG } });
 
   const template = await prisma.template.findUniqueOrThrow({ where: { slug: "traditional" } });
   const event = await prisma.event.create({
@@ -137,6 +142,38 @@ async function main() {
       });
     }
   }
+  // A ticketed concert, with a stand-in KHQR image (replace it with a real one to test payments).
+  const khqr = await sharp({ create: { width: 400, height: 400, channels: 3, background: "#111111" } }).png().toBuffer();
+  const khqrKey = `demo-khqr-${Date.now()}.png`;
+  await storage.put(khqrKey, khqr, "image/png");
+  const concert = await prisma.event.create({
+    data: {
+      ownerId: host.id,
+      type: "TICKETED",
+      status: "PUBLISHED",
+      slug: DEMO_SLUG,
+      titleKm: "រាត្រីតន្ត្រីខ្មែរ",
+      titleEn: "Khmer Music Night",
+      descriptionKm: "តន្ត្រីបុរាណ និងសម័យថ្មី ពីតារាចម្រៀងល្បីៗ។",
+      descriptionEn: "Classic and modern Khmer music from well-known singers.",
+      startsAt: new Date("2026-12-31T12:00:00Z"), // 19:00 in Phnom Penh
+      venueKm: "មជ្ឈមណ្ឌលកោះពេជ្រ",
+      venueEn: "Koh Pich Center",
+      khqrImageKey: khqrKey,
+      khqrAccountName: "SOK DARA",
+      helperCode: DEMO_DOOR_CODE,
+      members: { create: { userId: host.id, role: "OWNER", displayName: host.name } },
+      ticketTypes: {
+        create: [
+          { name: "VIP", description: "កៅអីជួរមុខ · Front rows", price: 2500, currency: "USD", quantity: 50, maxPerOrder: 4, sortOrder: 1 },
+          { name: "ធម្មតា · Standard", price: 1000, currency: "USD", quantity: 300, sortOrder: 2 },
+          { name: "សិស្ស · Student", price: 20000, currency: "KHR", quantity: 100, sortOrder: 3 },
+        ],
+      },
+    },
+  });
+  console.log(`Demo concert: /e/${concert.slug} (door helper code ${DEMO_DOOR_CODE})`);
+
   console.log(`Demo wedding: ${event.titleEn} (host ${DEMO_PHONE}, co-host ${DEMO_COHOST_PHONE}, helper code ${DEMO_HELPER_CODE})`);
 }
 

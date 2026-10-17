@@ -40,6 +40,8 @@ Open http://localhost:3000. Both parts read the one `.env` at the repository roo
 | Host | Phone `012 345 678` |
 | Co-host (bride's side) | Phone `098 765 432` |
 | Helper | Go to `/desk`, helper code `123456`, any name |
+| Concert door | Go to `/desk`, helper code `654321` |
+| Ticket buyer | Open `/e/khmer-music-night` |
 
 With `SMS_PROVIDER="mock"` (the default) no SMS is sent: the code is printed in the API log
 and shown on the login screen.
@@ -243,6 +245,35 @@ For wedding planners and venues ("សម្រាប់អ្នករៀបច�
 - **Branding:** invitations of the organization's events end with its logo and
   "រៀបចំដោយ <name>" instead of the Moments footer.
 
+## Ticketed events (concerts, seminars, workshops)
+
+Create an event and choose "Ticketed event"; give it a link name (`slug`) and a description,
+upload your KHQR on the overview page, add ticket types on the "សំបុត្រ" tab and publish.
+The event then has its own tabs: overview, tickets and door.
+
+- **Ticket page** `/e/<slug>` (Khmer/English, link preview with the cover photo): ticket types
+  with price, what's left and sales windows; buyers choose quantities (one currency per order,
+  a maximum per order per type) and give a name and phone number — no account.
+- **Hold and stock:** an order holds its tickets for 30 minutes. Stock is checked with the
+  ticket types locked in the database transaction, so tickets are never oversold, even when
+  buyers race for the last ones. Expired holds go back on sale.
+- **Paying:** the buyer's order page `/o/<token>` shows the amount, the organizer's KHQR and a
+  short reference (e.g. `FHXS9C`, no look-alike characters) to write in the payment note. The
+  organizer sees the order waiting, checks the bank app and taps "Received", which issues the
+  tickets (a late payment on an expired hold is accepted if tickets are left). The page updates
+  by itself and shows one QR per ticket. The buyer gets an SMS when ordering and when the
+  tickets are ready; the organizer gets a Telegram alert for each new order.
+- **Fee:** `PLATFORM_FEE_PERCENT` (default 4) of each order is recorded; the tickets tab shows
+  revenue and fees per currency.
+- **Door:** the organizer ("ច្រកចូល" tab) and helpers with the event's helper code (at `/desk`)
+  scan tickets. Each ticket lets one person in once; a second scan shows when and by whom it was
+  used; cancelled orders' tickets are refused. Someone can also be let in from the list by name
+  or reference. Like the guest desk it works offline (ticket list kept on the phone, entries
+  queued and synced; the scanner only receives hashes of ticket codes).
+- **Cancel** an order (unpaid, or refunded): its tickets stop working.
+
+The seed adds a demo concert at `/e/khmer-music-night` (door helper code `654321`).
+
 ## Telegram
 
 One bot does both the hosts' Telegram login and their alerts.
@@ -376,6 +407,15 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | POST, DELETE | `/api/organizations/:orgId/members[/:memberId]` | org owner |
 | GET, POST | `/api/organizations/:orgId/events` | org member |
 | POST | `/api/organizations/:orgId/events/:eventId/attach` | org member who owns the event |
+| GET, POST | `/api/events/:eventId/ticket-types` | owner |
+| PATCH, DELETE | `/api/events/:eventId/ticket-types/:typeId` | owner |
+| GET | `/api/events/:eventId/orders` (`?status=&q=`) | owner |
+| POST | `/api/events/:eventId/orders/:orderId/confirm`, `/cancel` `{ reason }` | owner |
+| GET | `/api/events/:eventId/door/tickets` | owner, helper |
+| POST | `/api/events/:eventId/door/scan` `{ code, clientId, scannedAt? }`, `/door/admit` `{ ticketId, clientId }` | owner, helper |
+| GET | `/api/public/events/:slug` | anyone |
+| POST | `/api/public/events/:slug/orders` `{ buyerName, buyerPhone, items }` | anyone |
+| GET | `/api/orders/:token`, `/api/orders/:token/tickets/:code/qr.svg` | anyone with the order link |
 | GET, DELETE | `/api/events/:eventId/telegram` | owner |
 | POST | `/api/events/:eventId/telegram/link` | owner |
 | POST | `/api/events/:eventId/telegram/test` | owner |
@@ -394,8 +434,8 @@ co-hosts, access control, event create/edit, photo and KHQR uploads, guest list 
 CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts, installable PWA. This completes the
 MVP in `docs/PROPOSAL.md`.
 
-Phase 2 (`docs/PHASE2.md`): seating plan, thank-you messages and planner dashboard done;
-next ticketing.
+Phase 2 (`docs/PHASE2.md`) is done too: seating plan, thank-you messages, planner dashboard
+and ticketing.
 
 Before a real wedding: connect a real SMS gateway (`server/src/providers/sms.ts`), set up the
 Telegram bot, S3/R2 storage and Chromium on the server, and run the app over https (the camera

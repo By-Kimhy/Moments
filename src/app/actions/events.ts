@@ -30,6 +30,10 @@ const TEXT_FIELDS = [
   "mapUrl",
   "khqrAccountName",
   "templateId",
+  "type",
+  "slug",
+  "descriptionKm",
+  "descriptionEn",
 ] as const;
 
 function eventBody(formData: FormData) {

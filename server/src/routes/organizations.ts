@@ -15,7 +15,7 @@ import { organizationView } from "../lib/organizations.js";
 import { normalizePhone } from "../lib/phone.js";
 import { storage } from "../providers/storage.js";
 import { imageUpload } from "../uploads.js";
-import { createEventSchema } from "./events.js";
+import { createEventSchema, slugTaken } from "./events.js";
 
 export const organizationsRouter = Router();
 organizationsRouter.use(requireUser);
@@ -200,7 +200,7 @@ organizationsRouter.post("/:orgId/events", async (req, res) => {
       }
     }
     return created;
-  });
+  }).catch(slugTaken);
   res.status(201).json({ event: hostView(event) });
 });
 

@@ -35,6 +35,10 @@ export function EventForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      <Select label={t.type} name="type" defaultValue={v?.type ?? event?.type ?? "WEDDING"}>
+        <option value="WEDDING">{t.types.WEDDING}</option>
+        <option value="TICKETED">{t.types.TICKETED}</option>
+      </Select>
       <Field label={t.titleKm} name="titleKm" defaultValue={value("titleKm")} errors={e?.titleKm} required />
       <Field label={t.titleEn} name="titleEn" defaultValue={value("titleEn")} errors={e?.titleEn} />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -49,6 +53,14 @@ export function EventForm({
       </div>
       <Field label={t.mapUrl} name="mapUrl" type="url" inputMode="url" defaultValue={value("mapUrl")} errors={e?.mapUrl} />
       <TextArea label={t.schedule} name="schedule" hint={t.scheduleHint} defaultValue={schedule} errors={e?.schedule} rows={5} />
+      <details className="rounded-xl border border-line p-3" open={(v?.type ?? event?.type) === "TICKETED"}>
+        <summary className="cursor-pointer text-sm font-medium">{t.types.TICKETED}</summary>
+        <div className="mt-3 flex flex-col gap-3">
+          <Field label={t.slug} name="slug" hint={t.slugHint} defaultValue={value("slug")} errors={e?.slug} />
+          <TextArea label={t.descriptionKm} name="descriptionKm" defaultValue={value("descriptionKm")} errors={e?.descriptionKm} />
+          <TextArea label={t.descriptionEn} name="descriptionEn" defaultValue={value("descriptionEn")} errors={e?.descriptionEn} />
+        </div>
+      </details>
       <Field label={t.khqrAccountName} name="khqrAccountName" defaultValue={value("khqrAccountName")} errors={e?.khqrAccountName} />
       <Select label={t.template} name="templateId" defaultValue={value("templateId")} errors={e?.templateId}>
         <option value="">—</option>

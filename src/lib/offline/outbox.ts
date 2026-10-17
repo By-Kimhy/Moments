@@ -6,7 +6,7 @@ import { type DBSchema, type IDBPDatabase, openDB } from "idb";
 import type { DeskGuestsResponse } from "@api/contract";
 import { ClientApiError, clientApi } from "@/lib/client-api";
 
-export type OutboxKind = "checkin" | "walkin" | "gift";
+export type OutboxKind = "checkin" | "walkin" | "gift" | "scan";
 
 export type OutboxOp = {
   clientId: string;
@@ -20,7 +20,8 @@ export type OutboxOp = {
 };
 
 interface DeskDB extends DBSchema {
-  snapshots: { key: string; value: { eventId: string; data: DeskGuestsResponse; savedAt: number } };
+  // Keyed by event id (the desk) or "door:<event id>" (the ticket door).
+  snapshots: { key: string; value: { eventId: string; data: unknown; savedAt: number } };
   outbox: { key: string; value: OutboxOp; indexes: { byEvent: string } };
 }
 
@@ -36,12 +37,12 @@ function db() {
   return dbPromise;
 }
 
-export async function saveSnapshot(eventId: string, data: DeskGuestsResponse) {
-  await (await db()).put("snapshots", { eventId, data, savedAt: Date.now() });
+export async function saveSnapshot<T = DeskGuestsResponse>(key: string, data: T) {
+  await (await db()).put("snapshots", { eventId: key, data, savedAt: Date.now() });
 }
 
-export async function loadSnapshot(eventId: string) {
-  return (await (await db()).get("snapshots", eventId))?.data ?? null;
+export async function loadSnapshot<T = DeskGuestsResponse>(key: string) {
+  return ((await (await db()).get("snapshots", key))?.data as T | undefined) ?? null;
 }
 
 export async function enqueue(op: OutboxOp) {
@@ -83,7 +84,7 @@ export function flush(eventId: string): Promise<FlushResult> {
           result.offline = true;
           break;
         }
-        if (e.status === 409 && op.kind === "checkin") {
+        if (e.status === 409 && (op.kind === "checkin" || op.kind === "scan")) {
           await removeOp(op.clientId);
           result.conflicts.push({ op, message: e.message });
         } else if (e.status >= 500 || e.status === 401 || e.status === 429) {

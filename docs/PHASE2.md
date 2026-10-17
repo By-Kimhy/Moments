@@ -3,7 +3,8 @@
 Builds on the MVP (`docs/PROPOSAL.md`). Same rules: every event-owned row carries `eventId`,
 money is integer minor units with a currency, changes to money and attendance are audited.
 
-Order of work: seating plan → thank-you messages → planner dashboard → ticketing.
+Order of work: seating plan → thank-you messages → planner dashboard → ticketing. All four are
+built; the README describes how each works.
 
 ## 1. Seating plan
 

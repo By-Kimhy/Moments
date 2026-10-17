@@ -1,53 +1,26 @@
 import { Router } from "express";
 import { z } from "zod";
-import {
-  clearDeskCookie,
-  clearSessionCookie,
-  currentUser,
-  requireUser,
-  setSessionCookie,
-  signUserSession,
-  toCurrentUser,
-} from "../auth.js";
+import { clearDeskCookie, clearSessionCookie, currentUser, requireUser, setSessionCookie, signUserSession, toCurrentUser } from "../auth.js";
 import { config } from "../config.js";
 import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
-import { randomDigits, safeEqual, sha256 } from "../lib/codes.js";
 import { normalizePhone } from "../lib/phone.js";
-import { verifyTelegramLogin } from "../lib/telegram-login.js";
-import { sms } from "../providers/sms.js";
-import { rateLimit, store } from "../store.js";
+import { LOGIN_TTL, completeLogin, consumeLogin, loginStatus, newLoginToken } from "../lib/telegram-auth.js";
+import { telegram } from "../providers/telegram.js";
+import { rateLimit } from "../store.js";
 
 export const authRouter = Router();
 
-const OTP_TTL = 5 * 60; // seconds
-const OTP_MAX_ATTEMPTS = 5;
-
-const phoneField = z
-  .string({ message: "Enter your phone number." })
-  .transform((v, ctx) => {
+const pollSchema = z.object({ token: z.string().max(64) });
+// Development without a bot: the login page confirms with a phone number and name instead.
+const devConfirmSchema = z.object({
+  token: z.string().max(64),
+  phone: z.string({ message: "Enter your phone number." }).transform((v, ctx) => {
     const phone = normalizePhone(v);
     if (!phone) ctx.addIssue({ code: "custom", message: "Enter a valid phone number." });
     return phone ?? "";
-  });
-
-const requestOtpSchema = z.object({ phone: phoneField });
-
-const verifyOtpSchema = z.object({
-  phone: phoneField,
-  code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code."),
-  // Only needed the first time a phone number signs in.
+  }),
   name: z.string().trim().max(120).optional(),
-});
-
-const telegramSchema = z.object({
-  id: z.coerce.string().regex(/^\d+$/),
-  first_name: z.string().max(200).optional(),
-  last_name: z.string().max(200).optional(),
-  username: z.string().max(200).optional(),
-  photo_url: z.string().max(500).optional(),
-  auth_date: z.coerce.string().regex(/^\d+$/),
-  hash: z.string().regex(/^[0-9a-f]{64}$/),
 });
 
 const updateMeSchema = z.object({
@@ -55,66 +28,42 @@ const updateMeSchema = z.object({
   language: z.enum(["KM", "EN"]).optional(),
 });
 
-type OtpRecord = { hash: string; attempts: number };
-const otpKey = (phone: string) => `otp:${phone}`;
+const devLogin = () => !telegram() && !config.production;
 
-// Sends a 6-digit code by SMS. With the mock provider outside production the response also
-// carries the code, so the login screen can be tested without a phone.
-authRouter.post("/otp/request", async (req, res) => {
-  const { phone } = parse(requestOtpSchema, req.body);
-  await rateLimit(`otp-phone:${phone}`, 3, 10 * 60, "Too many codes requested. Try again in a few minutes.");
-  await rateLimit(`otp-ip:${req.ip}`, 20, 60 * 60, "Too many codes requested. Try again later.");
-
-  const code = randomDigits(6);
-  const record: OtpRecord = { hash: sha256(`${phone}:${code}`), attempts: 0 };
-  await store.set(otpKey(phone), JSON.stringify(record), OTP_TTL);
-  await sms.send(phone, `Moments: your login code is ${code}. It expires in 5 minutes.`);
-
-  const showCode = config.smsProvider() === "mock" && !config.production;
-  res.json({ phone, expiresIn: OTP_TTL, ...(showCode ? { devCode: code } : {}) });
+// Step 1: a one-time login token and the bot link to open with it.
+authRouter.post("/telegram/start", async (req, res) => {
+  await rateLimit(`tglogin-ip:${req.ip}`, 30, 60 * 60, "Too many tries. Wait a few minutes and try again.");
+  if (!telegram() && !devLogin()) throw new HttpError(503, "Telegram is not set up on this server.");
+  const token = await newLoginToken();
+  const bot = config.telegramBotUsername();
+  res.json({ token, expiresIn: LOGIN_TTL, url: bot ? `https://t.me/${bot}?start=login_${token}` : null, dev: devLogin() });
 });
 
-authRouter.post("/otp/verify", async (req, res) => {
-  const { phone, code, name } = parse(verifyOtpSchema, req.body);
-  const raw = await store.get(otpKey(phone));
-  if (!raw) throw new HttpError(400, "The code has expired. Ask for a new one.", { code: ["The code has expired. Ask for a new one."] });
-
-  const record = JSON.parse(raw) as OtpRecord;
-  if (!safeEqual(record.hash, sha256(`${phone}:${code}`))) {
-    record.attempts += 1;
-    if (record.attempts >= OTP_MAX_ATTEMPTS) await store.del(otpKey(phone));
-    else await store.set(otpKey(phone), JSON.stringify(record), OTP_TTL);
-    throw new HttpError(400, "That code is not correct.", { code: ["That code is not correct."] });
+// Step 2: the page asks until the bot has confirmed the person's phone number.
+authRouter.post("/telegram/poll", async (req, res) => {
+  const { token } = parse(pollSchema, req.body);
+  const record = await loginStatus(token);
+  if (!record) throw new HttpError(410, "This sign-in has expired. Start again.");
+  if (record.status === "pending") {
+    res.status(202).json({ status: "pending" });
+    return;
   }
-
-  let user = await prisma.user.findUnique({ where: { phone } });
-  if (!user) {
-    // Keep the code valid so the person can retry with their name.
-    if (!name) throw new HttpError(400, "Enter your name to create your account.", { name: ["Enter your name."] });
-    user = await prisma.user.create({ data: { phone, name } });
-  }
-  await store.del(otpKey(phone));
-
-  const token = await signUserSession(user.id);
-  setSessionCookie(res, token);
-  res.json({ user: toCurrentUser(user), token });
+  await consumeLogin(token);
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: record.userId } });
+  const session = await signUserSession(user.id);
+  setSessionCookie(res, session);
+  res.json({ status: "done", user: toCurrentUser(user), token: session });
 });
 
-authRouter.post("/telegram", async (req, res) => {
-  const botToken = config.telegramBotToken();
-  if (!botToken) throw new HttpError(503, "Telegram login is not set up.");
-  const data = parse(telegramSchema, req.body);
-  if (!verifyTelegramLogin(data, botToken)) throw new HttpError(401, "Telegram login could not be verified.");
-
-  const telegramId = BigInt(data.id);
-  const name = [data.first_name, data.last_name].filter(Boolean).join(" ") || data.username || "Telegram user";
-  const user =
-    (await prisma.user.findUnique({ where: { telegramId } })) ??
-    (await prisma.user.create({ data: { telegramId, name: name.slice(0, 120) } }));
-
-  const token = await signUserSession(user.id);
-  setSessionCookie(res, token);
-  res.json({ user: toCurrentUser(user), token });
+authRouter.post("/telegram/dev-confirm", async (req, res) => {
+  if (!devLogin()) throw new HttpError(404, "Not found.");
+  const { token, phone, name } = parse(devConfirmSchema, req.body);
+  const existing = await prisma.user.findUnique({ where: { phone } });
+  if (!existing && !name) throw new HttpError(400, "Enter your name to create your account.", { name: ["Enter your name."] });
+  // A stand-in Telegram id from the phone number, so the same number is the same account.
+  const user = await completeLogin(token, { telegramId: existing?.telegramId ?? BigInt(phone.replace(/\D/g, "")), phone, name: name || existing?.name || phone });
+  if (!user) throw new HttpError(410, "This sign-in has expired. Start again.");
+  res.status(204).end();
 });
 
 authRouter.post("/logout", (_req, res) => {

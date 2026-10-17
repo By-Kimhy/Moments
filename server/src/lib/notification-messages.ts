@@ -64,3 +64,11 @@ export const startHelp =
 
 export const badCodeMessage =
   "លេខកូដនេះមិនត្រឹមត្រូវ ឬផុតកំណត់ហើយ។ សូមបង្កើតលេខកូដថ្មីនៅលើទំព័រកម្មវិធី។\n\nThis code is wrong or expired. Make a new one on the event page.";
+
+export const loginAskContact =
+  "សូមចុចប៊ូតុង «ចែករំលែកលេខទូរស័ព្ទ» ខាងក្រោម ដើម្បីចូល Moments។\n\nPress “Share my phone number” below to sign in to Moments.";
+export const loginShareButton = "📱 ចែករំលែកលេខទូរស័ព្ទ · Share my phone number";
+export const loginDone = "✅ បានចូលហើយ! សូមត្រឡប់ទៅកម្មវិធីរុករកវិញ។\n\nSigned in! Go back to your browser.";
+export const loginExpired =
+  "តំណចូលនេះផុតកំណត់ហើយ។ សូមចុច «ចូលតាម Telegram» ម្តងទៀតនៅលើទំព័រ Moments។\n\nThis sign-in link has expired. Press “Sign in with Telegram” again on the Moments page.";
+export const loginNotYourContact = "សូមចែករំលែកលេខទូរស័ព្ទរបស់អ្នកផ្ទាល់ ដោយប្រើប៊ូតុងខាងក្រោម។\n\nPlease share your own number with the button below.";

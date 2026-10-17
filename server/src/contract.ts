@@ -19,7 +19,6 @@ export type DeskEvent = ReturnType<typeof deskView>;
 export type ApiErrorBody = { error: string; fieldErrors?: Record<string, string[] | undefined> };
 
 export type AuthResponse = { user: CurrentUser; token: string };
-export type OtpRequestResponse = { phone: string; expiresIn: number; devCode?: string };
 export type EventsResponse = { events: (HostEvent & { guestCount: number })[] };
 export type EventResponse = { event: HostEvent; role: "OWNER" } | { event: DeskEvent; role: "HELPER" };
 export type MembersResponse = {

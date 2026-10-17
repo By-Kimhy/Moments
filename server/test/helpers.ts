@@ -2,6 +2,8 @@ import { randomInt } from "node:crypto";
 import request from "supertest";
 import { createApp } from "../src/app.js";
 import { prisma } from "../src/db.js";
+import { normalizePhone } from "../src/lib/phone.js";
+import { handleTelegramUpdate } from "../src/routes/telegram.js";
 
 export const app = createApp();
 
@@ -11,15 +13,36 @@ export const randomPhone = () => `0${randomInt(10, 99)}${String(randomInt(0, 1_0
 // Each caller gets its own address so rate limits per IP don't trip across tests.
 export const randomIp = () => `10.${randomInt(256)}.${randomInt(256)}.${randomInt(1, 255)}`;
 
-/** Signs in with a fresh phone number and returns a supertest agent that keeps the session cookie. */
-export async function signIn(name = "Test Host", phone = randomPhone()) {
+/** A unique stand-in Telegram user id. */
+export const randomTelegramId = () => 10_000_000_000 + randomInt(0, 2 ** 47 - 1);
+
+/** What Telegram sends the bot when a person shares their own phone number. */
+export const contactUpdate = (telegramId: number, phone: string, firstName = "Test", lastName?: string) => ({
+  update_id: randomInt(1, 2 ** 31),
+  message: {
+    chat: { id: telegramId, type: "private" },
+    from: { id: telegramId, first_name: firstName },
+    contact: { phone_number: phone, user_id: telegramId, first_name: firstName, last_name: lastName },
+  },
+});
+
+/**
+ * Signs in the way a person does: the page starts a login, the person presses Start in the bot
+ * and shares their phone number, and the page's poll gets the session cookie.
+ */
+export async function signIn(name = "Test Host", phone = randomPhone(), telegramId = randomTelegramId()) {
   const agent = request.agent(app);
   const ip = randomIp();
-  const otp = await agent.post("/api/auth/otp/request").set("X-Forwarded-For", ip).send({ phone });
-  if (otp.status !== 200) throw new Error(`otp request failed: ${otp.status} ${JSON.stringify(otp.body)}`);
-  const res = await agent.post("/api/auth/otp/verify").set("X-Forwarded-For", ip).send({ phone, code: otp.body.devCode, name });
-  if (res.status !== 200) throw new Error(`otp verify failed: ${res.status} ${JSON.stringify(res.body)}`);
-  return { agent, phone: otp.body.phone as string, user: res.body.user as { id: string; name: string }, token: res.body.token as string };
+  const start = await agent.post("/api/auth/telegram/start").set("X-Forwarded-For", ip);
+  if (start.status !== 200) throw new Error(`login start failed: ${start.status} ${JSON.stringify(start.body)}`);
+  await handleTelegramUpdate({ update_id: 1, message: { chat: { id: telegramId, type: "private" }, from: { id: telegramId }, text: `/start login_${start.body.token}` } });
+  // Telegram sends numbers without the "+".
+  const e164 = normalizePhone(phone)!;
+  const [first, ...rest] = name.split(" ");
+  await handleTelegramUpdate(contactUpdate(telegramId, e164.slice(1), first, rest.join(" ") || undefined));
+  const res = await agent.post("/api/auth/telegram/poll").send({ token: start.body.token });
+  if (res.status !== 200) throw new Error(`login failed: ${res.status} ${JSON.stringify(res.body)}`);
+  return { agent, phone: e164, telegramId, user: res.body.user as { id: string; name: string }, token: res.body.token as string };
 }
 
 export const sampleEvent = {

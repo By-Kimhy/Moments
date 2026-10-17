@@ -111,11 +111,12 @@ describe("alerts", () => {
 
   it("sends nothing for events without a linked chat", async () => {
     const host = await hostWithEvent();
+    const before = bot.sent.length; // signing in talks to the bot too
     await host.agent.patch(`/api/events/${host.event.id}`).send({ status: "PUBLISHED" }).expect(200);
     const { body } = await host.agent.post(`/api/events/${host.event.id}/guests`).send({ name: "x" }).expect(201);
     await request(app).post(`/api/invitations/${body.guest.inviteToken}/rsvp`).send({ status: "DECLINED" }).expect(200);
     await drainNotifications();
-    expect(bot.sent).toEqual([]);
+    expect(bot.sent.slice(before)).toEqual([]);
   });
 
   it("unlinks a chat the bot can no longer write to", async () => {

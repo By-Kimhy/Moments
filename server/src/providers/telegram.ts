@@ -1,8 +1,13 @@
 // Sends messages with the Telegram Bot API. Without TELEGRAM_BOT_TOKEN nothing is sent.
 import { config } from "../config.js";
 
+/** A reply keyboard button that asks for the person's phone number, or one that removes it. */
+export type ReplyMarkup =
+  | { keyboard: { text: string; request_contact?: boolean }[][]; resize_keyboard?: boolean; one_time_keyboard?: boolean }
+  | { remove_keyboard: true };
+
 export interface TelegramClient {
-  sendMessage(chatId: string, text: string): Promise<void>;
+  sendMessage(chatId: string, text: string, replyMarkup?: ReplyMarkup): Promise<void>;
 }
 
 export class TelegramError extends Error {
@@ -36,17 +41,17 @@ export class HttpTelegramClient implements TelegramClient {
     return data.result as T;
   }
 
-  async sendMessage(chatId: string, text: string) {
-    await this.call("sendMessage", { chat_id: chatId, text, disable_web_page_preview: true });
+  async sendMessage(chatId: string, text: string, replyMarkup?: ReplyMarkup) {
+    await this.call("sendMessage", { chat_id: chatId, text, disable_web_page_preview: true, ...(replyMarkup ? { reply_markup: replyMarkup } : {}) });
   }
 }
 
 /** Keeps messages in memory; tests read them. */
 export class MemoryTelegramClient implements TelegramClient {
-  readonly sent: { chatId: string; text: string }[] = [];
+  readonly sent: { chatId: string; text: string; replyMarkup?: ReplyMarkup }[] = [];
 
-  async sendMessage(chatId: string, text: string) {
-    this.sent.push({ chatId, text });
+  async sendMessage(chatId: string, text: string, replyMarkup?: ReplyMarkup) {
+    this.sent.push({ chatId, text, replyMarkup });
   }
 }
 

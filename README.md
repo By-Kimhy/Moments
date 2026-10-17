@@ -46,17 +46,20 @@ Open http://localhost:3000. Both parts read the one `.env` at the repository roo
 | Plans | The demo wedding is on Premium; new events start on Free |
 | Vendor | Phone `077 777 777` (owns the demo listings at `/vendors`) |
 
-With `SMS_PROVIDER="mock"` (the default) no SMS is sent: the code is printed in the API log
-and shown on the login screen.
+Without a Telegram bot (`TELEGRAM_BOT_TOKEN` empty) and outside production, the login page
+shows a test form instead: type one of the phone numbers above. With a bot, sign in with the
+Telegram account whose phone number matches.
 
 ## How sign-in works
 
-- **Hosts** sign in with their phone number and a 6-digit code, or with Telegram. Codes are
-  kept in Redis for 5 minutes and burn after 5 wrong tries; requests are rate-limited per
-  number and per IP. A new number is asked for a name on first sign-in.
-- **Telegram:** set `TELEGRAM_BOT_TOKEN` and `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`, and set the
-  bot's domain with @BotFather (`/setdomain`). The widget sends people to `/auth/telegram`,
-  and the API checks the signature.
+- **Hosts, planners and vendors sign in with Telegram only** — no passwords, no SMS. "Sign in
+  with Telegram" opens the bot with a one-time token (`t.me/<bot>?start=login_<token>`, valid
+  10 minutes). In Telegram they press Start, then "Share my phone number"; Telegram vouches for
+  the number, and the bot accepts only the person's own contact. The login page asks every two
+  seconds and signs in as soon as the bot has confirmed.
+- Accounts are found by Telegram id, then by phone number, so someone added by phone (a
+  co-host, planner staff, a planner's client) finds their events the first time they sign in.
+  Their Telegram name is used for a new account.
 - **Helpers** need no account. The host shares the event's 6-digit helper code; a helper
   enters it with their name at `/desk` and gets a session for that one event. Hosts can
   remove a helper or make a new code.
@@ -322,12 +325,11 @@ Prices and limits live in `server/src/lib/plans.ts` (US cents, per event):
 
 ## Telegram
 
-One bot does both the hosts' Telegram login and their alerts.
+One bot does both sign-in and the hosts' alerts. Sign-in needs the bot, so set it up first.
 
 1. Create a bot with [@BotFather](https://t.me/BotFather); put its token in `TELEGRAM_BOT_TOKEN` and its
    username in `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`.
-2. For the login button, send `/setdomain` to BotFather with your site's domain.
-3. For alerts, Telegram must reach the API. In production set `TELEGRAM_WEBHOOK_SECRET` and
+2. Telegram must reach the API (for sign-in and alerts). In production set `TELEGRAM_WEBHOOK_SECRET` and
    register the webhook once:
    ```bash
    curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
@@ -388,9 +390,9 @@ saved pages from the phone, because phones get passed around at weddings. After 
 
 | Method | Path | Who |
 | ------ | ---- | --- |
-| POST | `/api/auth/otp/request` `{ phone }` | anyone |
-| POST | `/api/auth/otp/verify` `{ phone, code, name? }` | anyone |
-| POST | `/api/auth/telegram` (widget fields) | anyone |
+| POST | `/api/auth/telegram/start` | anyone |
+| POST | `/api/auth/telegram/poll` `{ token }` (202 while waiting) | anyone with the token |
+| POST | `/api/auth/telegram/dev-confirm` `{ token, phone, name? }` | development without a bot |
 | GET, PATCH | `/api/auth/me` | host |
 | POST | `/api/auth/logout` | anyone |
 | POST | `/api/desk/join` `{ code, name }` | anyone |

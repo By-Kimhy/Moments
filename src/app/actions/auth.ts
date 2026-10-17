@@ -1,31 +1,29 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import type { AuthResponse, OtpRequestResponse } from "@api/contract";
-import { type FormState, api, attempt, field } from "@/lib/api";
+import type { AuthResponse } from "@api/contract";
+import { ApiError, api } from "@/lib/api";
 import { createSession, deleteDeskSession, deleteSession } from "@/lib/session";
-
-export type LoginState = (NonNullable<FormState> & { step?: "phone" | "code"; phone?: string; devCode?: string }) | undefined;
 
 // Only allow same-site relative paths, so `?next=` can't redirect off-site.
 function safeNext(value: string) {
   return value.startsWith("/") && !value.startsWith("//") ? value : "/dashboard";
 }
 
-export async function requestCode(_state: LoginState, formData: FormData): Promise<LoginState> {
-  const phone = field(formData, "phone");
-  const result = await attempt(() => api.post<OtpRequestResponse>("/auth/otp/request", { phone }));
-  if (!result.ok) return { ...result.state, step: "phone", values: { phone } };
-  return { step: "code", phone: result.data.phone, devCode: result.data.devCode };
-}
-
-export async function verifyCode(state: LoginState, formData: FormData): Promise<LoginState> {
-  const body = { phone: field(formData, "phone"), code: field(formData, "code"), name: field(formData, "name") || undefined };
-  const result = await attempt(() => api.post<AuthResponse>("/auth/otp/verify", body));
-  if (!result.ok) return { ...result.state, step: "code", phone: body.phone, devCode: state?.devCode, values: { name: body.name ?? "" } };
-
-  await createSession(result.data.token);
-  redirect(safeNext(field(formData, "next")));
+/**
+ * Asks the API whether the bot has confirmed this login. Once it has, the session cookie is
+ * set here (on the web app's own domain) and the page is told where to go.
+ */
+export async function finishTelegramLogin(token: string, next: string): Promise<{ status: "pending" | "expired" } | { status: "done"; next: string }> {
+  try {
+    const res = await api.post<{ status: "pending" } | ({ status: "done" } & AuthResponse)>("/auth/telegram/poll", { token });
+    if (res.status === "pending") return res;
+    await createSession(res.token);
+    return { status: "done", next: safeNext(next) };
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 410) return { status: "expired" };
+    throw e;
+  }
 }
 
 export async function logout() {

@@ -19,6 +19,7 @@ const km: Record<string, string> = {
   "That code is not correct.": "លេខកូដមិនត្រឹមត្រូវ។",
   "Too many codes requested. Try again in a few minutes.": "ស្នើលេខកូដច្រើនពេក។ សូមរង់ចាំប៉ុន្មាននាទី។",
   "Too many codes requested. Try again later.": "ស្នើលេខកូដច្រើនពេក។ សូមព្យាយាមពេលក្រោយ។",
+  "This sign-in has expired. Start again.": "ការចូលនេះផុតកំណត់ហើយ។ សូមចាប់ផ្តើមម្តងទៀត។",
   "Telegram login is not set up.": "ការចូលតាម Telegram មិនទាន់បានរៀបចំទេ។",
   "Telegram login could not be verified.": "មិនអាចផ្ទៀងផ្ទាត់ការចូលតាម Telegram បានទេ។",
   "Enter a title in Khmer.": "សូមបញ្ចូលចំណងជើងជាភាសាខ្មែរ។",

@@ -27,6 +27,7 @@ import { templatesRouter } from "./routes/templates.js";
 import { thankYouRouter } from "./routes/thank-you.js";
 import { ticketingRouter } from "./routes/ticketing.js";
 import { vendorsRouter } from "./routes/vendors.js";
+import { wishesRouter } from "./routes/wishes.js";
 
 export function createApp() {
   const app = express();
@@ -59,7 +60,7 @@ export function createApp() {
   // Everything about one event: eventAccess checks the caller belongs to it first.
   const event = Router({ mergeParams: true });
   event.use(eventAccess);
-  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter, seatingRouter, thankYouRouter, ticketingRouter, eventVendorsRouter, eventPlanRouter, photoWallRouter);
+  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter, seatingRouter, thankYouRouter, ticketingRouter, eventVendorsRouter, eventPlanRouter, photoWallRouter, wishesRouter);
   app.use("/api/events/:eventId", event);
 
   app.use(notFound);

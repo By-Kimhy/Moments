@@ -146,6 +146,7 @@ model Event {
   planOrders      PlanOrder[]
   guestPhotos     GuestPhoto[]
   reminders       EventReminder[]
+  wishes          Wish[]
 
   @@index([ownerId])
   @@index([organizationId, startsAt])
@@ -201,6 +202,7 @@ model Guest {
   checkins  Checkin[]
   thankYous ThankYou[]
   photos    GuestPhoto[]
+  wishes    Wish[]
 
   @@unique([eventId, clientId])
   @@index([eventId, tableId])
@@ -712,4 +714,20 @@ model EventReminder {
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, kind])
+}
+
+// A guest's wish for the couple, written on their invitation page (also after the day).
+model Wish {
+  id        String    @id @default(uuid()) @db.Uuid
+  eventId   String    @db.Uuid
+  guestId   String    @db.Uuid
+  text      String    @db.VarChar(1000)
+  hiddenAt  DateTime? // hidden by a host (it stays out of the wish book)
+  createdAt DateTime  @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  guest Guest @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, createdAt])
+  @@index([guestId])
 }

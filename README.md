@@ -236,6 +236,14 @@ The "អរគុណ" tab, after the wedding:
 - **The invitation link** turns into a thank-you card 12 hours after the start (or when the
   event is finished): the reply and entry QR are replaced by the guest's thank-you.
 
+## Wishes
+
+- Each invitation has a "ពាក្យជូនពរ" box: guests write a wish for the couple (up to 5), also
+  after the day, until the event is archived.
+- Hosts see every wish on the "ពាក្យជូនពរ" tab, together with the messages guests wrote with
+  their reply or their gift, and can hide a wish.
+- "Download the wish book" prints them all as a PDF, one card per wish, to keep or print.
+
 ## Photo wall (Premium)
 
 - From 12 hours before the start until 7 days after, each guest's invitation shows a photo
@@ -530,6 +538,8 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | GET | `/api/organizations/:orgId/subscription` | org member |
 | POST | `/api/organizations/:orgId/subscription/orders` `{ months }`, `/subscription/orders/:orderId/cancel` | org owner |
 | GET, POST | `/api/invitations/:token/photos` (multipart `photos`) | anyone with the link |
+| GET, POST | `/api/invitations/:token/wishes` `{ text }` | anyone with the link |
+| GET | `/api/events/:eventId/wishes`, `/wishes/book.pdf`; POST `/wishes/:wishId/hide`, `/show` | owner |
 | GET | `/api/events/:eventId/photo-wall`; POST `/:photoId/hide`, `/show`; DELETE `/:photoId` | owner |
 | GET | `/api/events/:eventId/vendors` | owner |
 | PUT, DELETE | `/api/events/:eventId/vendors/:vendorId` `{ status, note }` | owner |
@@ -551,7 +561,7 @@ Each test signs in with fresh random phone numbers, so tests don't disturb other
 
 `npm run e2e` runs browser tests of the main journeys on a phone-sized screen (Playwright, in
 `e2e/`): signing in, a guest replying and being checked in with a gift at the desk, buying
-concert tickets, the vendor directory and an enquiry, and upgrading a plan. They need the
+concert tickets, the vendor directory and an enquiry, upgrading a plan, and a guest's wish. They need the
 seeded database and the built app running without a Telegram bot, so the login page offers
 its test form:
 

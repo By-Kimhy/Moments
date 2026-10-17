@@ -236,3 +236,6 @@ export type AdminReportsResponse = {
 export type WallPhoto = ReturnType<typeof import("./lib/photo-wall.js")["wallPhotoView"]>;
 export type GuestWallResponse = { open: boolean; photos: Omit<WallPhoto, "hidden">[] };
 export type HostWallResponse = { open: boolean; photos: WallPhoto[] };
+export type WishItem = import("./lib/wishes.js").WishItem;
+export type WishesResponse = { wishes: WishItem[] };
+export type GuestWishesResponse = { wishes: { id: string; text: string; createdAt: Date }[] };

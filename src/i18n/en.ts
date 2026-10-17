@@ -85,7 +85,7 @@ export const en: Messages = {
     publish: "Publish",
     draftHint: "This event is a draft. Publish it so guests can open their links.",
   },
-  nav: { overview: "Overview", guests: "Guests", checkin: "Guest desk", gifts: "Gifts", reports: "Reports", seating: "Seating", thanks: "Thank-yous", tickets: "Tickets", door: "Door", vendors: "Vendors", photos: "Guest photos" },
+  nav: { overview: "Overview", guests: "Guests", checkin: "Guest desk", gifts: "Gifts", reports: "Reports", seating: "Seating", thanks: "Thank-yous", tickets: "Tickets", door: "Door", vendors: "Vendors", photos: "Guest photos", wishes: "Wishes" },
   media: {
     photos: "Couple photos",
     photosHint: "The first photo is the invitation's cover. Up to 12 photos.",
@@ -150,6 +150,11 @@ export const en: Messages = {
     another: "Choose another file",
   },
   invite: {
+    wishTitle: "💌 Wishes",
+    wishHint: "Write a wish for the couple.",
+    wishSend: "Send wish",
+    wishSent: "Thank you for your wish!",
+    yourWishes: "Your wishes",
     wallTitle: "📸 Photo wall",
     wallHint: "Send photos of the day to share them with the guests and the hosts.",
     wallSend: "Send photos",
@@ -653,6 +658,16 @@ export const en: Messages = {
     delete: "Delete",
     hidden: "Hidden",
     by: "by {name}",
+  },
+  wishes: {
+    title: "Wishes",
+    hint: "Guests' wishes, including what they wrote with their reply or gift.",
+    empty: "No wishes yet.",
+    download: "Download the wish book (PDF)",
+    kinds: { WISH: "Wish", RSVP: "With reply", GIFT: "With gift" },
+    hide: "Hide",
+    show: "Show again",
+    hidden: "Hidden",
   },
   account: {
     title: "My account",

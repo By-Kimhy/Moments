@@ -149,6 +149,7 @@ const km: Record<string, string> = {
   "The photo wall is closed.": "ផ្ទាំងរូបថតបានបិទហើយ។",
   "The photo wall is part of the Premium plan.": "ផ្ទាំងរូបថតមាននៅក្នុងគម្រោង Premium។",
   "Too many photos at once. Try again later.": "ផ្ញើរូបថតច្រើនពេក។ សូមព្យាយាមពេលក្រោយ។",
+  "This event is closed.": "កម្មវិធីនេះបានបិទហើយ។",
   "Type DELETE to confirm.": "សូមវាយ DELETE ដើម្បីបញ្ជាក់។",
   "This order has changed. Reload and try again.": "ការកុម្ម៉ង់នេះបានផ្លាស់ប្តូរ។ សូមផ្ទុកឡើងវិញ ហើយព្យាយាមម្តងទៀត។",
   "This listing has changed. Reload and try again.": "ព័ត៌មាននេះបានផ្លាស់ប្តូរ។ សូមផ្ទុកឡើងវិញ ហើយព្យាយាមម្តងទៀត។",
@@ -164,6 +165,7 @@ const kmPatterns: [RegExp, (n: string) => string][] = [
   [/^This plan allows up to (\d+) guests\. Upgrade to add more\.$/, (n) => `គម្រោងនេះអនុញ្ញាតភ្ញៀវបានច្រើនបំផុត ${khmerNumber(n)} នាក់។ សូមដំឡើងគម្រោង ដើម្បីបន្ថែមទៀត។`],
   [/^Make someone else an owner of (.+) first\.$/, (name) => `សូមដាក់អ្នកផ្សេងជាម្ចាស់ ${name} ជាមុនសិន។`],
   [/^You can send up to (\d+) photos\.$/, (n) => `អ្នកអាចផ្ញើរូបថតបានច្រើនបំផុត ${khmerNumber(n)}។`],
+  [/^You can send up to (\d+) wishes\.$/, (n) => `អ្នកអាចផ្ញើពាក្យជូនពរបានច្រើនបំផុត ${khmerNumber(n)}។`],
   [/^This invitation is for up to (\d+) people\.$/, (n) => `លិខិតអញ្ជើញនេះសម្រាប់មនុស្សយ៉ាងច្រើន ${khmerNumber(n)} នាក់។`],
 ];
 

@@ -16,6 +16,7 @@ import { imageUpload } from "../uploads.js";
 import { imageKey, processPhoto } from "../lib/images.js";
 import { MAX_PHOTOS_PER_GUEST, photoWallOpen, wallPhotoView } from "../lib/photo-wall.js";
 import { featuresOf } from "../lib/plans.js";
+import { MAX_WISHES_PER_GUEST } from "../lib/wishes.js";
 import { storage } from "../providers/storage.js";
 
 export const invitationsRouter = Router();
@@ -172,4 +173,23 @@ invitationsRouter.post("/:token/photos", imageUpload.array("photos", 10), async 
     created.push(await prisma.guestPhoto.create({ data: { eventId: event.id, guestId: guest.id, key }, include: { guest: { select: { name: true } } } }));
   }
   res.status(201).json({ photos: created.map(wallPhotoView) });
+});
+
+// A guest's own wishes for the couple, and writing a new one (also after the day).
+const wishSchema = z.object({ text: z.string().trim().min(1, "Write a message.").max(1000, "Keep the message under 1000 characters.") });
+
+invitationsRouter.get("/:token/wishes", async (req, res) => {
+  const { guest } = await findInvitation(req);
+  const wishes = await prisma.wish.findMany({ where: { guestId: guest.id }, orderBy: { createdAt: "asc" }, select: { id: true, text: true, createdAt: true } });
+  res.json({ wishes });
+});
+
+invitationsRouter.post("/:token/wishes", async (req, res) => {
+  const { guest, event } = await findInvitation(req);
+  if (event.status === "ARCHIVED") throw new HttpError(409, "This event is closed.");
+  const { text } = parse(wishSchema, req.body);
+  await rateLimit(`wish:${guest.id}`, 10, 60 * 60, "Too many replies. Try again later.");
+  if ((await prisma.wish.count({ where: { guestId: guest.id } })) >= MAX_WISHES_PER_GUEST) throw new HttpError(400, `You can send up to ${MAX_WISHES_PER_GUEST} wishes.`);
+  const wish = await prisma.wish.create({ data: { eventId: event.id, guestId: guest.id, text }, select: { id: true, text: true, createdAt: true } });
+  res.status(201).json({ wish });
 });

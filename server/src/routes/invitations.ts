@@ -10,6 +10,7 @@ import { inviteUrl } from "../lib/guests.js";
 import { notify } from "../jobs/notifications.js";
 import { MAX_AMOUNT } from "../lib/money.js";
 import { publicEventView, publicGuestView, rsvpOpen, rsvpSchema } from "../lib/invitations.js";
+import { showThankYouCard, thankYouFor } from "../lib/thank-you.js";
 import { rateLimit } from "../store.js";
 
 export const invitationsRouter = Router();
@@ -59,7 +60,17 @@ const guestGifts = (guestId: string) =>
 invitationsRouter.get("/:token", async (req, res) => {
   const { guest, event } = await findInvitation(req);
   res.set("Cache-Control", "no-store");
-  res.json({ event: publicEventView(event), guest: publicGuestView(guest), gifts: await guestGifts(guest.id), inviteUrl: inviteUrl(guest.inviteToken) });
+  // After the wedding the page becomes a thank-you card, in both languages.
+  let thankYou: { km: string; en: string } | null = null;
+  if (showThankYouCard(event)) {
+    const detail = await prisma.guest.findUniqueOrThrow({
+      where: { id: guest.id },
+      include: { checkins: { select: { id: true } }, gifts: { select: { amount: true, currency: true, status: true, voidedAt: true } } },
+    });
+    // No link inside the card: the guest is already on their page.
+    thankYou = { km: thankYouFor(event, detail, "KM", "").trim(), en: thankYouFor(event, detail, "EN", "").trim() };
+  }
+  res.json({ event: publicEventView(event), guest: publicGuestView(guest), gifts: await guestGifts(guest.id), thankYou, inviteUrl: inviteUrl(guest.inviteToken) });
 });
 
 // A guest says they sent a gift by KHQR. It waits for a host to confirm the money arrived;

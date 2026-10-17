@@ -207,6 +207,24 @@ The "ប្លង់តុ" tab:
 - The guest's table shows on their invitation, at the desk, in the guest list, in the Excel
   report, and the guest spreadsheet's Table column fills tables on import (created if needed).
 
+## Thank-you messages
+
+The "អរគុណ" tab, after the wedding:
+
+- **Text** in Khmer and English with `{name}`, `{gift}` (their confirmed gifts, e.g.
+  "$៥០.០០ + ១០០,០០០៛"), `{couple}` and `{link}`; a default text is used when left empty.
+- **Who:** every guest except those who said no, those who came, or those who gave a gift.
+  Each guest's own text is shown before sending.
+- **SMS:** sends to everyone in the group with a phone number, through the same queue as the
+  alerts (at most 10 messages a second). Each guest gets one SMS ever; failed ones are retried on
+  the next send. Sending only opens once the wedding has started.
+- **By hand:** "Send on Telegram" opens Telegram with the guest's text and link, and records it.
+- **The invitation link** turns into a thank-you card 12 hours after the start (or when the
+  event is finished): the reply and entry QR are replaced by the guest's thank-you.
+
+SMS go through `server/src/providers/sms.ts`; with the mock provider they only appear in the
+API log.
+
 ## Telegram
 
 One bot does both the hosts' Telegram login and their alerts.
@@ -330,6 +348,10 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | POST | `/api/events/:eventId/seating/assign` `{ guestIds, tableId \| null }` | owner |
 | POST | `/api/events/:eventId/seating/auto` `{ mode: "unassigned" \| "all" }` | owner |
 | GET | `/api/events/:eventId/seating/plan.pdf` (`?lang=`) | owner |
+| GET | `/api/events/:eventId/thank-you` (`?audience=ALL\|ATTENDED\|GAVE&language=KM\|EN`) | owner |
+| PUT | `/api/events/:eventId/thank-you/settings` `{ thankYouKm, thankYouEn }` | owner |
+| POST | `/api/events/:eventId/thank-you/send` `{ audience, language }` | owner |
+| POST | `/api/events/:eventId/thank-you/:guestId/shared` `{ language }` | owner |
 | GET, DELETE | `/api/events/:eventId/telegram` | owner |
 | POST | `/api/events/:eventId/telegram/link` | owner |
 | POST | `/api/events/:eventId/telegram/test` | owner |
@@ -348,8 +370,8 @@ co-hosts, access control, event create/edit, photo and KHQR uploads, guest list 
 CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts, installable PWA. This completes the
 MVP in `docs/PROPOSAL.md`.
 
-Phase 2 (`docs/PHASE2.md`): seating plan done; next thank-you messages, planner dashboard,
-ticketing.
+Phase 2 (`docs/PHASE2.md`): seating plan and thank-you messages done; next planner
+dashboard, ticketing.
 
 Before a real wedding: connect a real SMS gateway (`server/src/providers/sms.ts`), set up the
 Telegram bot, S3/R2 storage and Chromium on the server, and run the app over https (the camera

@@ -110,6 +110,8 @@ model Event {
   templateId      String?     @db.Uuid
   helperCode      String      @unique @db.VarChar(6)
   telegramChatId  BigInt? // where host alerts go
+  thankYouKm      String?     @db.VarChar(1000) // thank-you text; {name}, {gift}, {couple}, {link}
+  thankYouEn      String?     @db.VarChar(1000)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -122,6 +124,7 @@ model Event {
   checkins  Checkin[]
   auditLogs AuditLog[]
   tables    DiningTable[]
+  thankYous ThankYou[]
 
   @@index([ownerId])
 }
@@ -169,8 +172,9 @@ model Guest {
 
   event    Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   table    DiningTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
-  gifts    Gift[]
-  checkins Checkin[]
+  gifts     Gift[]
+  checkins  Checkin[]
+  thankYous ThankYou[]
 
   @@unique([eventId, clientId])
   @@index([eventId, tableId])
@@ -291,4 +295,36 @@ model DiningTable {
 
   @@unique([eventId, name])
   @@index([eventId, sortOrder])
+}
+
+enum ThankYouChannel {
+  SMS
+  SHARE // sent by hand (Telegram share button), marked as sent by the host
+}
+
+enum ThankYouStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+// One thank-you per guest per channel, so nobody is thanked twice by mistake.
+model ThankYou {
+  id        String          @id @default(uuid()) @db.Uuid
+  eventId   String          @db.Uuid
+  guestId   String          @db.Uuid
+  channel   ThankYouChannel
+  status    ThankYouStatus  @default(QUEUED)
+  language  Language        @default(KM)
+  text      String          @db.VarChar(1600)
+  error     String?         @db.VarChar(300)
+  sentAt    DateTime?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  guest Guest @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@unique([guestId, channel])
+  @@index([eventId, status])
 }

@@ -87,6 +87,8 @@ const km: Record<string, string> = {
   "Enter a table name.": "សូមបញ្ចូលឈ្មោះតុ។",
   "At least 1 seat.": "យ៉ាងហោចណាស់ ១ កៅអី។",
   "At most 100 seats.": "យ៉ាងច្រើន ១០០ កៅអី។",
+  "Keep the message under 1000 characters.": "សារត្រូវតិចជាង ១០០០ តួអក្សរ។",
+  "Thank-you messages can be sent once the wedding has started.": "អាចផ្ញើសារអរគុណបាន បន្ទាប់ពីពិធីមង្គលការបានចាប់ផ្តើម។",
 };
 
 const KHMER_DIGITS = "០១២៣៤៥៦៧៨៩";

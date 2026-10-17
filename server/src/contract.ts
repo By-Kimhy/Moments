@@ -56,7 +56,7 @@ export type BulkImportResponse = { created: number; skipped: number };
 export type InvitationEvent = ReturnType<typeof publicEventView>;
 export type InvitationGuest = ReturnType<typeof publicGuestView>;
 export type GuestGift = { id: string; amount: number; currency: "USD" | "KHR"; status: "PENDING" | "CONFIRMED" | "REJECTED"; createdAt: Date };
-export type InvitationResponse = { event: InvitationEvent; guest: InvitationGuest; gifts: GuestGift[]; inviteUrl: string };
+export type InvitationResponse = { event: InvitationEvent; guest: InvitationGuest; gifts: GuestGift[]; thankYou: { km: string; en: string } | null; inviteUrl: string };
 
 export type DeskGuest = ReturnType<typeof deskGuestView>;
 export type DeskStats = {
@@ -77,3 +77,12 @@ export type GiftsResponse = { gifts: GiftView[]; totals: GiftTotals };
 export type ReportSummary = Omit<import("./reports/data.js").Report, "gifts">;
 
 export type SeatingPlan = Awaited<ReturnType<typeof import("./routes/seating.js")["seatingPlanForContract"]>>;
+
+type ThankYouRecord = { channel: "SMS" | "SHARE"; status: "QUEUED" | "SENT" | "FAILED"; sentAt: Date | null; error: string | null };
+export type ThankYouResponse = {
+  settings: { thankYouKm: string | null; thankYouEn: string | null; defaults: { KM: string; EN: string } };
+  canSend: boolean;
+  counts: { ALL: number; ATTENDED: number; GAVE: number };
+  sent: { SMS: number; SHARE: number };
+  guests: { id: string; name: string; phone: string | null; inviteUrl: string; attended: boolean; gift: string; text: string; sms: ThankYouRecord | null; shared: ThankYouRecord | null }[];
+};

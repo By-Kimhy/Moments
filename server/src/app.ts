@@ -18,6 +18,7 @@ import { reportsRouter } from "./routes/reports.js";
 import { seatingRouter } from "./routes/seating.js";
 import { eventTelegramRouter, telegramWebhookRouter } from "./routes/telegram.js";
 import { templatesRouter } from "./routes/templates.js";
+import { thankYouRouter } from "./routes/thank-you.js";
 
 export function createApp() {
   const app = express();
@@ -44,7 +45,7 @@ export function createApp() {
   // Everything about one event: eventAccess checks the caller belongs to it first.
   const event = Router({ mergeParams: true });
   event.use(eventAccess);
-  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter, seatingRouter);
+  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter, seatingRouter, thankYouRouter);
   app.use("/api/events/:eventId", event);
 
   app.use(notFound);

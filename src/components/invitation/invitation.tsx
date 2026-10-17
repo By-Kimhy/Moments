@@ -15,6 +15,8 @@ type Props = {
   event: InvitationEvent;
   guest: InvitationGuest;
   gifts: GuestGift[];
+  /** After the wedding: the thank-you text for this guest; replaces the reply and entry QR. */
+  thankYou?: string | null;
   token: string | null; // null for the host's preview
   locale: "km" | "en";
   t: Messages["invite"];
@@ -22,7 +24,7 @@ type Props = {
   notice?: string;
 };
 
-export function Invitation({ event, guest, gifts, token, locale, t, langSwitch, notice }: Props) {
+export function Invitation({ event, guest, gifts, thankYou, token, locale, t, langSwitch, notice }: Props) {
   const { style, config } = event.template;
   const km = locale === "km";
   const pick = (kmText: string | null, enText: string | null) => (km ? kmText || enText : enText || kmText) ?? "";
@@ -88,6 +90,13 @@ export function Invitation({ event, guest, gifts, token, locale, t, langSwitch, 
           )}
         </section>
 
+        {thankYou && (
+          <section className={`${card} flex flex-col gap-3 text-center`}>
+            <h2 className={sectionTitle}>🙏 {t.thankYou}</h2>
+            <p className="whitespace-pre-line">{thankYou}</p>
+          </section>
+        )}
+
         <section className={`${card} flex flex-col gap-3 text-center`}>
           <div>
             <p className="text-xs opacity-70">{t.date}</p>
@@ -128,10 +137,12 @@ export function Invitation({ event, guest, gifts, token, locale, t, langSwitch, 
           </section>
         )}
 
-        <section className={card}>
-          <h2 className={sectionTitle}>{t.rsvpTitle}</h2>
-          <RsvpForm token={token} guest={guest} open={event.rsvpOpen} language={locale} t={t} />
-        </section>
+        {!thankYou && (
+          <section className={card}>
+            <h2 className={sectionTitle}>{t.rsvpTitle}</h2>
+            <RsvpForm token={token} guest={guest} open={event.rsvpOpen} language={locale} t={t} />
+          </section>
+        )}
 
         {gallery.length > 0 && (
           <section>
@@ -163,7 +174,7 @@ export function Invitation({ event, guest, gifts, token, locale, t, langSwitch, 
           </section>
         )}
 
-        {token && (
+        {token && !thankYou && (
           <section className={`${card} flex flex-col items-center gap-3 text-center`}>
             <h2 className={sectionTitle}>{t.entry}</h2>
             {/* eslint-disable-next-line @next/next/no-img-element -- SVG from the API */}

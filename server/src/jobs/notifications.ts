@@ -9,11 +9,13 @@ import { prisma } from "../db.js";
 import { audit } from "../lib/audit.js";
 import { giftTotals } from "../lib/gifts.js";
 import { digestMessage, guestGiftMessage, rsvpMessage, testMessage } from "../lib/notification-messages.js";
+import { sms } from "../providers/sms.js";
 import { TelegramError, telegram } from "../providers/telegram.js";
 
 export const DIGEST_MINUTES = 15;
 
 export type NotificationJob =
+  | { kind: "thank_you_sms"; thankYouId: string }
   | { kind: "rsvp"; guestId: string }
   | { kind: "guest_gift"; giftId: string }
   | { kind: "desk_digest"; eventId: string; windowEnd: number }
@@ -34,7 +36,8 @@ function getQueue() {
 
 /** Queues a notification. Never throws: an alert must not break the request that caused it. */
 export async function notify(job: NotificationJob, options: { delay?: number; jobId?: string } = {}) {
-  if (!telegram()) return;
+  // Alerts to hosts need the bot; thank-you SMS don't.
+  if (job.kind !== "thank_you_sms" && !telegram()) return;
   try {
     if (queueEnabled()) {
       await getQueue().add(job.kind, job, options);
@@ -99,7 +102,9 @@ async function send(eventId: string, chatId: string, text: string) {
 }
 
 export async function handle(job: NotificationJob) {
-  if (job.kind === "rsvp") {
+  if (job.kind === "thank_you_sms") {
+    await sendThankYouSms(job.thankYouId);
+  } else if (job.kind === "rsvp") {
     const guest = await prisma.guest.findUnique({ where: { id: job.guestId } });
     if (!guest || guest.rsvpStatus === "PENDING") return;
     const target = await eventFor(guest.eventId);
@@ -157,10 +162,24 @@ export async function handle(job: NotificationJob) {
   }
 }
 
-/** Runs queued notifications (with Redis). Started by the API process. */
+/** Sends one queued thank-you by SMS and records how it went. */
+async function sendThankYouSms(thankYouId: string) {
+  const thankYou = await prisma.thankYou.findUnique({ where: { id: thankYouId }, include: { guest: { select: { phone: true } } } });
+  if (!thankYou || thankYou.status === "SENT") return;
+  try {
+    if (!thankYou.guest.phone) throw new Error("No phone number");
+    await sms.send(thankYou.guest.phone, thankYou.text);
+    await prisma.thankYou.update({ where: { id: thankYou.id }, data: { status: "SENT", sentAt: new Date(), error: null } });
+  } catch (e) {
+    await prisma.thankYou.update({ where: { id: thankYou.id }, data: { status: "FAILED", error: (e as Error).message.slice(0, 300) } });
+  }
+}
+
+/** Runs queued notifications and thank-you SMS (with Redis). Started by the API process. */
 export function startNotificationWorker() {
-  if (!queueEnabled() || !telegram()) return null;
-  const worker = new Worker<NotificationJob>(QUEUE, (job) => handle(job.data), { connection: connection(), concurrency: 5 });
+  if (!queueEnabled()) return null;
+  // At most 10 messages a second, to stay inside SMS gateway and Telegram limits.
+  const worker = new Worker<NotificationJob>(QUEUE, (job) => handle(job.data), { connection: connection(), concurrency: 5, limiter: { max: 10, duration: 1000 } });
   worker.on("failed", (job, err) => console.error(`notification ${job?.name} failed (attempt ${job?.attemptsMade})`, err.message));
   return worker;
 }

@@ -65,6 +65,19 @@ const km: Record<string, string> = {
   "Enter how many people arrived.": "សូមបញ្ចូលចំនួនមនុស្សដែលបានមកដល់។",
   "Choose a guest.": "សូមជ្រើសរើសភ្ញៀវ។",
   "That time is not valid.": "ពេលវេលានោះមិនត្រឹមត្រូវ។",
+  "Gift not found.": "រកមិនឃើញចំណងដៃ។",
+  "Enter the amount.": "សូមបញ្ចូលចំនួនទឹកប្រាក់។",
+  "Enter the amount in cents or riel.": "ចំនួនទឹកប្រាក់មិនត្រឹមត្រូវ។",
+  "The amount must be more than 0.": "ចំនួនទឹកប្រាក់ត្រូវតែធំជាង ០។",
+  "Choose USD or KHR.": "សូមជ្រើសរើស ដុល្លារ ឬ រៀល។",
+  "That amount is too large.": "ចំនួនទឹកប្រាក់ធំពេក។",
+  "Choose a guest or enter the giver's name.": "សូមជ្រើសរើសភ្ញៀវ ឬបញ្ចូលឈ្មោះអ្នកជូន។",
+  "Give a reason.": "សូមបញ្ជាក់មូលហេតុ។",
+  "This gift was cancelled and can't be changed.": "ចំណងដៃនេះត្រូវបានលុបចោល ហើយមិនអាចកែប្រែបានទេ។",
+  "Only gifts waiting for confirmation can be confirmed.": "អាចបញ្ជាក់បានតែចំណងដៃដែលកំពុងរង់ចាំប៉ុណ្ណោះ។",
+  "Only gifts waiting for confirmation can be rejected.": "អាចបដិសេធបានតែចំណងដៃដែលកំពុងរង់ចាំប៉ុណ្ណោះ។",
+  "Too many gifts sent. Try again later.": "បានផ្ញើច្រើនដងពេក។ សូមព្យាយាមពេលក្រោយ។",
+  "This event no longer accepts gifts here.": "កម្មវិធីនេះលែងទទួលចំណងដៃតាមទីនេះទៀតហើយ។",
 };
 
 const KHMER_DIGITS = "០១២៣៤៥៦៧៨៩";

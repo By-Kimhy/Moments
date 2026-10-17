@@ -148,8 +148,47 @@ Helpers use `/desk` after joining with the helper code; hosts use the "Guest des
   number invited). A second phone checking the same guest is told who already did it and
   when. Mistakes can be undone. Every check-in and undo is in the audit log.
 - **Walk-ins:** someone not on the list is added (marked as a walk-in) and checked in at once.
-- Every write carries an id made on the phone, so a request sent twice is saved once; this
-  is what the offline queue (next module) builds on.
+- Every write carries an id made on the phone, so a request sent twice is saved once.
+
+## Gift book (chamnang dai)
+
+- **At the desk:** in a guest's panel, a helper enters the amount (quick buttons for common
+  amounts like $50 or 100,000៛; Khmer digits work), USD or riel, cash or KHQR, and a note. The
+  panel warns when the guest already gave, so an envelope isn't recorded twice. "Gift from
+  someone not on the list" records a giver by name only.
+- **Cash box:** each helper sees the gifts they recorded and their total, to count against
+  the cash in their box. Hosts see every gift.
+- **Gift book page** (hosts, "ចំណងដៃ" tab): totals in USD and KHR (never converted), by side
+  and by method; search and filters; add a gift by hand; each gift has a page with edit,
+  cancel (with a reason) and its full history.
+- **KHQR gifts from guests:** under the KHQR on the invitation, a guest can say how much they
+  sent. It waits as "pending" and is not counted until a host checks their bank app and taps
+  "Received" (or "Not received"). The guest's page shows the status. Confirmation goes through
+  a `PaymentProvider` (`server/src/providers/payment.ts`); today that is the manual one, which
+  records a `payments` row. An automatic Bakong/bank provider can replace it later.
+- **Nothing is lost or silently changed:** gifts can't be deleted. Edits keep the before and
+  after, cancelled gifts stay in the book crossed out, and confirm/reject are logged. Helpers can
+  only correct or cancel their own entries.
+- **Money** is stored in cents (USD) or riel (KHR) as whole numbers (`server/src/lib/money.ts`,
+  shared with the web app).
+
+## Offline desk
+
+Venue wifi is often weak, so the desk saves everything on the phone first (IndexedDB,
+`src/lib/offline/outbox.ts`) and sends it when it can:
+
+- The guest list is kept from the last download, so search and QR matching work without
+  internet.
+- Check-ins, walk-ins and gifts go into an outbox, show at once (marked "waiting to send"),
+  and are sent in order every 10 seconds and when the connection comes back. A walk-in added
+  offline and a gift for them sync correctly: the gift finds the guest by the id the phone gave
+  them.
+- The bar at the top shows online/offline and how many items are waiting. If the API refuses
+  an item (not a network problem), it stays on the phone with the reason until someone discards
+  it; it is never dropped silently. A check-in another phone already made is dropped with a
+  message.
+- Opening the desk page itself without internet needs the PWA service worker (module 10); a
+  desk that is already open keeps working.
 
 ## API
 
@@ -194,6 +233,13 @@ Helpers use `/desk` after joining with the helper code; hosts use the "Guest des
 | POST | `/api/events/:eventId/checkins` `{ guestId, peopleCount, clientId?, checkedInAt? }` | owner, helper |
 | DELETE | `/api/events/:eventId/checkins/:guestId` | owner, helper |
 | POST | `/api/events/:eventId/desk/walk-ins` `{ name, side, phone?, peopleCount, clientId }` | owner, helper |
+| GET | `/api/events/:eventId/gifts` (`?q=&status=&currency=&method=`) | owner (all), helper (own) |
+| POST | `/api/events/:eventId/gifts` `{ guestId \| guestClientId \| giverName, amount, currency, method, note?, clientId, recordedAt? }` | owner, helper |
+| PATCH | `/api/events/:eventId/gifts/:giftId` | owner, helper (own) |
+| POST | `/api/events/:eventId/gifts/:giftId/void` `{ reason }` | owner, helper (own) |
+| POST | `/api/events/:eventId/gifts/:giftId/confirm`, `/reject` | owner |
+| GET | `/api/events/:eventId/gifts/:giftId/history` | owner |
+| POST | `/api/invitations/:token/gift` `{ amount, currency, note? }` | anyone with the link |
 
 ## Tests
 
@@ -205,6 +251,6 @@ Each test signs in with fresh random phone numbers, so tests don't disturb other
 
 Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers and
 co-hosts, access control, event create/edit, photo and KHQR uploads, guest list with
-CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in.
+CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk.
 
-Next, in order: gift book with offline sync, reports, Telegram notifications, PWA.
+Next, in order: reports (Excel/PDF), Telegram notifications, PWA.

@@ -31,7 +31,7 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/i/[
 
 export default async function InvitationPage({ params, searchParams }: PageProps<"/i/[token]">) {
   const [{ token }, { lang }] = await Promise.all([params, searchParams]);
-  const [{ event, guest }, locale] = await Promise.all([getInvitation(token), invitationLocale(lang)]);
+  const [{ event, guest, gifts }, locale] = await Promise.all([getInvitation(token), invitationLocale(lang)]);
   const t = await getMessages(locale);
   const other = locale === "km" ? "en" : "km";
   return (
@@ -40,6 +40,7 @@ export default async function InvitationPage({ params, searchParams }: PageProps
       <Invitation
         event={event}
         guest={guest}
+        gifts={gifts}
         token={token}
         locale={locale}
         t={t.invite}

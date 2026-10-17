@@ -32,7 +32,7 @@ export default async function DeskPage() {
         <p className="text-sm text-muted">{fill(t.desk.welcome, { name: desk.helper.displayName })}</p>
         <h1 className="text-xl font-semibold">{desk.event.titleKm}</h1>
       </div>
-      <DeskApp eventId={desk.event.id} t={t.desk} sides={t.side} rsvp={t.rsvp} />
+      <DeskApp eventId={desk.event.id} memberName={desk.helper.displayName} canSeeAllGifts={false} t={t.desk} sides={t.side} rsvp={t.rsvp} />
       <form action={leaveDesk} className="mt-6">
         <button className="text-sm text-muted underline">{t.desk.leave}</button>
       </form>

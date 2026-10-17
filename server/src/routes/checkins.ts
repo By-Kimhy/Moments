@@ -21,7 +21,9 @@ type CheckinWithMember = Checkin & { checkedInBy: { displayName: string } };
  * A guest as the desk sees it. The invitation token itself stays private (it opens the guest's
  * page); the desk gets a hash of it to match scanned QR codes, even offline.
  */
-export const deskGuestView = (g: Guest & { checkins: CheckinWithMember[] }) => ({
+type DeskGift = { id: string; amount: number; currency: "USD" | "KHR"; method: "CASH" | "KHQR"; status: string };
+
+export const deskGuestView = (g: Guest & { checkins: CheckinWithMember[]; gifts?: DeskGift[] }) => ({
   id: g.id,
   name: g.name,
   nameAlt: g.nameAlt,
@@ -35,6 +37,8 @@ export const deskGuestView = (g: Guest & { checkins: CheckinWithMember[] }) => (
   walkIn: g.walkIn,
   tokenHash: tokenHash(g.inviteToken),
   checkin: g.checkins[0] ? checkinView(g.checkins[0]) : null,
+  // So the desk sees a guest already gave, and doesn't record the same envelope twice.
+  gifts: (g.gifts ?? []).map((x) => ({ id: x.id, amount: x.amount, currency: x.currency, method: x.method, status: x.status })),
 });
 
 export const tokenHash = (token: string) => sha256(token).slice(0, 20);
@@ -46,7 +50,10 @@ const checkinView = (c: CheckinWithMember) => ({
   checkedInBy: c.checkedInBy.displayName,
 });
 
-const withCheckin = { checkins: { include: { checkedInBy: { select: { displayName: true } } } } } as const;
+const withCheckin = {
+  checkins: { include: { checkedInBy: { select: { displayName: true } } } },
+  gifts: { where: { voidedAt: null, status: { not: "REJECTED" } }, select: { id: true, amount: true, currency: true, method: true, status: true } },
+} as const;
 
 // The time the phone recorded it; offline check-ins arrive later. Must be within the last week
 // and not (much) in the future.

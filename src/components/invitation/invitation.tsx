@@ -1,9 +1,10 @@
 // The invitation card guests see, in one of three styles. Colours and fonts come from the
 // template's config; the layout differs a little per style.
 import type { CSSProperties, ReactNode } from "react";
-import type { InvitationEvent, InvitationGuest } from "@api/contract";
+import type { GuestGift, InvitationEvent, InvitationGuest } from "@api/contract";
 import type { Messages } from "@/i18n/km";
 import { invitationDate, localDigits } from "@/lib/dates";
+import { GuestGiftForm } from "./guest-gift-form";
 import { RsvpForm } from "./rsvp-form";
 
 const fileUrl = (key: string) => `/api/files/${key}`;
@@ -13,6 +14,7 @@ const FONT_CLASS: Record<string, string> = { Moul: "font-moul", Battambang: "fon
 type Props = {
   event: InvitationEvent;
   guest: InvitationGuest;
+  gifts: GuestGift[];
   token: string | null; // null for the host's preview
   locale: "km" | "en";
   t: Messages["invite"];
@@ -20,7 +22,7 @@ type Props = {
   notice?: string;
 };
 
-export function Invitation({ event, guest, token, locale, t, langSwitch, notice }: Props) {
+export function Invitation({ event, guest, gifts, token, locale, t, langSwitch, notice }: Props) {
   const { style, config } = event.template;
   const km = locale === "km";
   const pick = (kmText: string | null, enText: string | null) => (km ? kmText || enText : enText || kmText) ?? "";
@@ -152,6 +154,7 @@ export function Invitation({ event, guest, token, locale, t, langSwitch, notice 
             <a href={fileUrl(event.khqrImageKey)} download="khqr.png" className="text-sm underline">
               {t.saveQr}
             </a>
+            {token && event.status !== "ARCHIVED" && <GuestGiftForm token={token} gifts={gifts} language={locale} t={t} />}
           </section>
         )}
 

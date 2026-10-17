@@ -4,6 +4,7 @@ import type { deskView, hostView } from "./lib/events.js";
 import type { guestView } from "./lib/guests.js";
 import type { publicEventView, publicGuestView } from "./lib/invitations.js";
 import type { deskGuestView } from "./routes/checkins.js";
+import type { giftView } from "./routes/gifts.js";
 import type { CurrentUser } from "./auth.js";
 
 export type { CurrentUser };
@@ -53,7 +54,8 @@ export type BulkImportResponse = { created: number; skipped: number };
 
 export type InvitationEvent = ReturnType<typeof publicEventView>;
 export type InvitationGuest = ReturnType<typeof publicGuestView>;
-export type InvitationResponse = { event: InvitationEvent; guest: InvitationGuest; inviteUrl: string };
+export type GuestGift = { id: string; amount: number; currency: "USD" | "KHR"; status: "PENDING" | "CONFIRMED" | "REJECTED"; createdAt: Date };
+export type InvitationResponse = { event: InvitationEvent; guest: InvitationGuest; gifts: GuestGift[]; inviteUrl: string };
 
 export type DeskGuest = ReturnType<typeof deskGuestView>;
 export type DeskStats = {
@@ -66,3 +68,7 @@ export type DeskStats = {
   recent: { guestId: string; name: string; id: string; peopleCount: number; checkedInAt: Date; checkedInBy: string }[];
 };
 export type DeskGuestsResponse = { guests: DeskGuest[]; stats: DeskStats; at: Date };
+
+export type GiftView = ReturnType<typeof giftView>;
+export type GiftTotals = import("./lib/gifts.js").GiftTotals;
+export type GiftsResponse = { gifts: GiftView[]; totals: GiftTotals };

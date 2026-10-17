@@ -1,11 +1,13 @@
 // The public side of an invitation: anyone holding a guest's link (/i/<token>) can open it and
 // reply. No login. The token is the only key, so it must never be listed anywhere public.
 import { Router, type Request } from "express";
+import { z } from "zod";
 import QRCode from "qrcode";
 import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
 import { audit } from "../lib/audit.js";
 import { inviteUrl } from "../lib/guests.js";
+import { MAX_AMOUNT } from "../lib/money.js";
 import { publicEventView, publicGuestView, rsvpOpen, rsvpSchema } from "../lib/invitations.js";
 import { rateLimit } from "../store.js";
 
@@ -32,10 +34,47 @@ async function findInvitation(req: Request) {
   return { guest, event: guest.event, owner };
 }
 
+const giftSchema = z
+  .object({
+    amount: z.coerce.number({ message: "Enter the amount." }).int("Enter the amount in cents or riel.").positive("The amount must be more than 0."),
+    currency: z.enum(["USD", "KHR"], { message: "Choose USD or KHR." }),
+    note: z
+      .string()
+      .trim()
+      .max(500, "Keep the message under 500 characters.")
+      .nullish()
+      .transform((v) => v || null),
+  })
+  .refine((v) => v.amount <= MAX_AMOUNT[v.currency], { path: ["amount"], message: "That amount is too large." });
+
+/** The KHQR gifts this guest told us about, so their page can show "waiting" or "received". */
+const guestGifts = (guestId: string) =>
+  prisma.gift.findMany({
+    where: { guestId, source: "GUEST", voidedAt: null },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, amount: true, currency: true, status: true, createdAt: true },
+  });
+
 invitationsRouter.get("/:token", async (req, res) => {
   const { guest, event } = await findInvitation(req);
   res.set("Cache-Control", "no-store");
-  res.json({ event: publicEventView(event), guest: publicGuestView(guest), inviteUrl: inviteUrl(guest.inviteToken) });
+  res.json({ event: publicEventView(event), guest: publicGuestView(guest), gifts: await guestGifts(guest.id), inviteUrl: inviteUrl(guest.inviteToken) });
+});
+
+// A guest says they sent a gift by KHQR. It waits for a host to confirm the money arrived;
+// until then it isn't counted in the totals.
+invitationsRouter.post("/:token/gift", async (req, res) => {
+  const { guest, event } = await findInvitation(req);
+  if (event.status === "ARCHIVED" || !event.khqrImageKey) throw new HttpError(409, "This event no longer accepts gifts here.");
+  const data = parse(giftSchema, req.body);
+  await rateLimit(`guest-gift:${guest.id}`, 5, 60 * 60, "Too many gifts sent. Try again later.");
+  await prisma.$transaction(async (tx) => {
+    const gift = await tx.gift.create({
+      data: { eventId: guest.eventId, guestId: guest.id, amount: data.amount, currency: data.currency, method: "KHQR", status: "PENDING", source: "GUEST", note: data.note },
+    });
+    await audit(tx, { eventId: guest.eventId, entity: "gift", entityId: gift.id, action: "guest_submit", actorId: null, after: { amount: data.amount, currency: data.currency, note: data.note } });
+  });
+  res.status(201).json({ gifts: await guestGifts(guest.id) });
 });
 
 // The page calls this from the browser once it has loaded. Link-preview bots (Telegram,

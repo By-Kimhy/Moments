@@ -24,6 +24,7 @@ export default async function PreviewPage({ params, searchParams }: PageProps<"/
       <Invitation
         event={data.event}
         guest={data.guest}
+        gifts={[]}
         token={null}
         locale={locale}
         t={t.invite}

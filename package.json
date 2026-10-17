@@ -22,6 +22,7 @@
     "typecheck": "next typegen && tsc --noEmit && npm run typecheck -w server"
   },
   "dependencies": {
+    "idb": "^8.0.4",
     "jose": "^6.2.12",
     "jsqr": "^1.4.0",
     "next": "16.4.0",

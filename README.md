@@ -25,7 +25,7 @@ docker compose up -d          # PostgreSQL + Redis (skip if you run them yoursel
 cp .env.example .env          # then set SESSION_SECRET (openssl rand -base64 32)
 npm install
 npm run db:migrate            # create the tables
-npm run db:seed               # 3 templates + a demo wedding with 50 guests
+npm run db:seed               # 7 templates + a demo wedding with 50 guests
 npm run dev                   # API on :4000, web app on :3000
 ```
 

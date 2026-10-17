@@ -17,7 +17,8 @@ export function chromiumPath() {
 }
 
 let fontCss: string | null = null;
-function fonts() {
+/** @font-face rules with the Khmer fonts embedded, for pages printed to PDF. */
+export function fonts() {
   fontCss ??= [
     ["Kantumruy Pro", 400, "@fontsource/kantumruy-pro/files/kantumruy-pro-khmer-400-normal.woff2"],
     ["Kantumruy Pro", 700, "@fontsource/kantumruy-pro/files/kantumruy-pro-khmer-700-normal.woff2"],
@@ -33,7 +34,7 @@ function fonts() {
   return fontCss;
 }
 
-const escape = (s: string | null | undefined) =>
+export const escape = (s: string | null | undefined) =>
   (s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 const both = (usd: number, khr: number) => [usd && formatAmount(usd, "USD"), khr && formatAmount(khr, "KHR")].filter(Boolean).join(" + ") || "—";
@@ -124,13 +125,16 @@ dl { margin: 0; } dl div { display: flex; justify-content: space-between; border
 </body></html>`;
 }
 
-export async function reportPdf(report: Report, lang: ReportLanguage) {
+export const reportPdf = (report: Report, lang: ReportLanguage) => htmlToPdf(reportHtml(report, lang));
+
+/** Prints an HTML page to an A4 PDF with Chromium; null when no Chromium is installed. */
+export async function htmlToPdf(html: string) {
   const executablePath = chromiumPath();
   if (!executablePath) return null;
   const browser = await chromium.launch({ executablePath, args: ["--no-sandbox", "--disable-dev-shm-usage"] });
   try {
     const page = await browser.newPage();
-    await page.setContent(reportHtml(report, lang), { waitUntil: "load" });
+    await page.setContent(html, { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);
     return await page.pdf({
       format: "A4",

@@ -124,7 +124,7 @@ export async function reportWorkbook(report: Report, eventId: string, lang: Repo
   // Guest list with replies and attendance
   const guests = await prisma.guest.findMany({
     where: { eventId, ...(report.side ? { side: report.side } : {}) },
-    include: { checkins: true },
+    include: { checkins: true, table: { select: { name: true } } },
     orderBy: [{ side: "asc" }, { name: "asc" }],
   });
   const guestSheet = book.addWorksheet(L.guests);
@@ -136,6 +136,7 @@ export async function reportWorkbook(report: Report, eventId: string, lang: Repo
     { header: L.invitedPeople, key: "invited", width: 12 },
     { header: L.rsvp, key: "rsvp", width: 14 },
     { header: L.arrived, key: "arrived", width: 12 },
+    { header: L.table, key: "table", width: 10 },
   ]);
   for (const g of guests) {
     guestSheet.addRow({
@@ -146,6 +147,7 @@ export async function reportWorkbook(report: Report, eventId: string, lang: Repo
       invited: g.invitedCount,
       rsvp: L.rsvps[g.rsvpStatus],
       arrived: g.checkins[0]?.peopleCount ?? null,
+      table: g.table?.name ?? null,
     });
   }
 

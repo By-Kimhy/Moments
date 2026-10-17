@@ -190,6 +190,23 @@ side). Downloads, in Khmer or English:
 Only confirmed gifts are counted; cancelled and rejected gifts appear only in the "every gift"
 sheet, and KHQR gifts still waiting are shown separately.
 
+## Seating plan
+
+The "ប្លង់តុ" tab:
+
+- **Tables:** add many at once ("20 tables of 10 seats", numbered after the highest number),
+  rename (e.g. "តុកិត្តិយស"), change seats, delete (its guests just lose their table).
+- **Seats per guest:** people confirmed if they said yes, people invited if no reply yet, none
+  if they said no. Tables over capacity are shown in red (allowed, not blocked).
+- **Arrange automatically:** seats everyone without a table, keeping each side together, then
+  each group, and never splitting a family across tables. "Re-arrange everyone" starts over.
+  Guests who don't fit are reported so you can add tables.
+- **By hand:** tick guests without a table and seat them at a table; remove a guest from a table.
+- **Print:** a PDF with an alphabetical "find your table" list for the entrance and one card per
+  table for the venue.
+- The guest's table shows on their invitation, at the desk, in the guest list, in the Excel
+  report, and the guest spreadsheet's Table column fills tables on import (created if needed).
+
 ## Telegram
 
 One bot does both the hosts' Telegram login and their alerts.
@@ -307,6 +324,12 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | GET | `/api/events/:eventId/reports/summary` (`?side=`) | owner |
 | GET | `/api/events/:eventId/reports/gift-book.xlsx` (`?side=&lang=`) | owner |
 | GET | `/api/events/:eventId/reports/gift-book.pdf` (`?side=&lang=`) | owner |
+| GET | `/api/events/:eventId/seating` | owner |
+| POST | `/api/events/:eventId/tables` `{ name, capacity?, note? }`, `/tables/bulk` `{ count, capacity? }` | owner |
+| PATCH, DELETE | `/api/events/:eventId/tables/:tableId` | owner |
+| POST | `/api/events/:eventId/seating/assign` `{ guestIds, tableId \| null }` | owner |
+| POST | `/api/events/:eventId/seating/auto` `{ mode: "unassigned" \| "all" }` | owner |
+| GET | `/api/events/:eventId/seating/plan.pdf` (`?lang=`) | owner |
 | GET, DELETE | `/api/events/:eventId/telegram` | owner |
 | POST | `/api/events/:eventId/telegram/link` | owner |
 | POST | `/api/events/:eventId/telegram/test` | owner |
@@ -324,6 +347,9 @@ Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers a
 co-hosts, access control, event create/edit, photo and KHQR uploads, guest list with
 CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts, installable PWA. This completes the
 MVP in `docs/PROPOSAL.md`.
+
+Phase 2 (`docs/PHASE2.md`): seating plan done; next thank-you messages, planner dashboard,
+ticketing.
 
 Before a real wedding: connect a real SMS gateway (`server/src/providers/sms.ts`), set up the
 Telegram bot, S3/R2 storage and Chromium on the server, and run the app over https (the camera

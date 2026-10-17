@@ -61,6 +61,11 @@ export function Invitation({ event, guest, gifts, token, locale, t, langSwitch, 
           )}
           <p className="text-sm opacity-80">{t.dear}</p>
           <p className={`${heading} text-2xl text-[var(--inv-accent)]`}>{guestName}</p>
+          {guest.tableName && (
+            <p className="rounded-full border border-[var(--inv-accent)] px-4 py-1 text-sm text-[var(--inv-accent)]">
+              {t.yourTable.replace("{table}", localDigits(guest.tableName, locale))}
+            </p>
+          )}
           <p className="text-sm opacity-80">{t.invitedTo}</p>
           {groom || bride ? (
             <div className="flex flex-col items-center gap-1">

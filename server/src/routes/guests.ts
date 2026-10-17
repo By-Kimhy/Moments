@@ -8,7 +8,7 @@ import { HttpError, parse } from "../errors.js";
 import { audit } from "../lib/audit.js";
 import { newInviteToken } from "../lib/codes.js";
 import { csvCell } from "../lib/csv.js";
-import { MAX_IMPORT_ROWS, type GuestInput, guestSchema, guestView, inviteUrl, readSheet, rowsToGuests } from "../lib/guests.js";
+import { MAX_IMPORT_ROWS, type GuestInput, guestSchema, guestView, inviteUrl, readSheet, resolveTable, rowsToGuests } from "../lib/guests.js";
 import { translate } from "../messages.js";
 import { sheetUpload } from "../uploads.js";
 
@@ -27,7 +27,20 @@ const bulkSchema = z.object({
   guests: z.array(z.unknown()).min(1, "There are no guests to add.").max(MAX_IMPORT_ROWS, `Import at most ${MAX_IMPORT_ROWS} guests at a time.`),
 });
 
-const withCounts = { _count: { select: { checkins: true, gifts: true } } } as const;
+const withCounts = { _count: { select: { checkins: true, gifts: true } }, table: { select: { name: true } } } as const;
+
+/** The guest fields to store: the table id/name inputs become tableId. */
+async function guestData<T extends Partial<GuestInput>>(
+  tx: Prisma.TransactionClient,
+  eventId: string,
+  input: T,
+): Promise<Omit<T, "tableId" | "tableName"> & { tableId?: string | null }> {
+  const { tableId, tableName, ...rest } = input;
+  if (tableId === undefined && tableName === undefined) return rest;
+  const resolved = await resolveTable(tx, eventId, { tableId, tableName });
+  if (resolved === undefined) throw new HttpError(400, "Choose a table.", { tableId: ["Choose a table."] });
+  return { ...rest, tableId: resolved };
+}
 
 async function findGuest(eventId: string, guestId: unknown) {
   const guest = isUuid(guestId) ? await prisma.guest.findFirst({ where: { id: guestId, eventId }, include: withCounts }) : null;
@@ -78,10 +91,10 @@ guestsRouter.get("/guests/groups", async (req, res) => {
 // A CSV of the whole list with each guest's invitation link, for sharing or printing.
 guestsRouter.get("/guests/export.csv", async (req, res) => {
   const { eventId } = currentMember(req);
-  const guests = await prisma.guest.findMany({ where: { eventId }, orderBy: [{ side: "asc" }, { name: "asc" }] });
+  const guests = await prisma.guest.findMany({ where: { eventId }, orderBy: [{ side: "asc" }, { name: "asc" }], include: { table: { select: { name: true } } } });
   const lines = [
     ["Name", "Latin name", "Phone", "Side", "Group", "People", "RSVP", "Confirmed people", "Table", "Invitation link"],
-    ...guests.map((g) => [g.name, g.nameAlt, g.phone, g.side, g.group, g.invitedCount, g.rsvpStatus, g.rsvpCount, g.tableNo, inviteUrl(g.inviteToken)]),
+    ...guests.map((g) => [g.name, g.nameAlt, g.phone, g.side, g.group, g.invitedCount, g.rsvpStatus, g.rsvpCount, g.table?.name, inviteUrl(g.inviteToken)]),
   ];
   res.set("Content-Disposition", 'attachment; filename="guests.csv"');
   // The BOM makes Excel read the file as UTF-8, so Khmer names show correctly.
@@ -92,7 +105,7 @@ guestsRouter.post("/guests", async (req, res) => {
   const member = currentMember(req);
   const data = parse(guestSchema, req.body);
   const guest = await prisma.$transaction(async (tx) => {
-    const created = await tx.guest.create({ data: { ...data, eventId: member.eventId, inviteToken: newInviteToken() }, include: withCounts });
+    const created = await tx.guest.create({ data: { ...(await guestData(tx, member.eventId, data)), eventId: member.eventId, inviteToken: newInviteToken() }, include: withCounts });
     await audit(tx, { eventId: member.eventId, entity: "guest", entityId: created.id, action: "create", actorId: member.id, after: data });
     return created;
   });
@@ -167,7 +180,10 @@ guestsRouter.post("/guests/bulk", async (req, res) => {
   }
 
   await prisma.$transaction(async (tx) => {
-    await tx.guest.createMany({ data: toCreate.map((g) => ({ ...g, eventId: member.eventId, inviteToken: newInviteToken() })) });
+    // Tables named in the file are found or created once each.
+    const rows = [];
+    for (const g of toCreate) rows.push({ ...(await guestData(tx, member.eventId, g)), eventId: member.eventId, inviteToken: newInviteToken() });
+    await tx.guest.createMany({ data: rows });
     await audit(tx, {
       eventId: member.eventId,
       entity: "event",
@@ -190,7 +206,7 @@ guestsRouter.patch("/guests/:guestId", async (req, res) => {
   const before = await findGuest(member.eventId, req.params.guestId);
   const data = parse(guestSchema.partial(), req.body);
   const guest = await prisma.$transaction(async (tx) => {
-    const after = await tx.guest.update({ where: { id: before.id }, data, include: withCounts });
+    const after = await tx.guest.update({ where: { id: before.id }, data: await guestData(tx, member.eventId, data), include: withCounts });
     await audit(tx, { eventId: member.eventId, entity: "guest", entityId: before.id, action: "update", actorId: member.id, before: guestView(before), after: guestView(after) });
     return after;
   });

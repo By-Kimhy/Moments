@@ -39,7 +39,7 @@ export const publicEventView = (e: Event & { template: Template | null }) => ({
   rsvpOpen: rsvpOpen(e),
 });
 
-export const publicGuestView = (g: Guest) => ({
+export const publicGuestView = (g: Guest & { table?: { name: string } | null }) => ({
   name: g.name,
   nameAlt: g.nameAlt,
   side: g.side,
@@ -47,6 +47,7 @@ export const publicGuestView = (g: Guest) => ({
   rsvpStatus: g.rsvpStatus,
   rsvpCount: g.rsvpCount,
   rsvpMessage: g.rsvpMessage,
+  tableName: g.table?.name ?? null,
 });
 
 export const rsvpSchema = z.object({

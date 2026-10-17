@@ -81,6 +81,12 @@ const km: Record<string, string> = {
   "PDF export is not set up on this server.": "ការនាំចេញ PDF មិនទាន់បានរៀបចំនៅលើម៉ាស៊ីនមេនេះទេ។",
   "Telegram is not set up on this server.": "Telegram មិនទាន់បានរៀបចំនៅលើម៉ាស៊ីនមេនេះទេ។",
   "Connect a Telegram chat first.": "សូមភ្ជាប់ Telegram ជាមុនសិន។",
+  "Choose a table.": "សូមជ្រើសរើសតុ។",
+  "Table not found.": "រកមិនឃើញតុ។",
+  "A table with this name already exists.": "មានតុឈ្មោះនេះរួចហើយ។",
+  "Enter a table name.": "សូមបញ្ចូលឈ្មោះតុ។",
+  "At least 1 seat.": "យ៉ាងហោចណាស់ ១ កៅអី។",
+  "At most 100 seats.": "យ៉ាងច្រើន ១០០ កៅអី។",
 };
 
 const KHMER_DIGITS = "០១២៣៤៥៦៧៨៩";

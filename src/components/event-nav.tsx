@@ -2,10 +2,11 @@ import Link from "next/link";
 import type { Messages } from "@/i18n/km";
 
 /** Tabs across the top of an event's pages. */
-export function EventNav({ eventId, active, t }: { eventId: string; active: "overview" | "guests" | "checkin" | "gifts" | "reports"; t: Messages["nav"] }) {
+export function EventNav({ eventId, active, t }: { eventId: string; active: "overview" | "guests" | "checkin" | "gifts" | "reports" | "seating"; t: Messages["nav"] }) {
   const tabs = [
     { key: "overview", href: `/events/${eventId}`, label: t.overview },
     { key: "guests", href: `/events/${eventId}/guests`, label: t.guests },
+    { key: "seating", href: `/events/${eventId}/seating`, label: t.seating },
     { key: "checkin", href: `/events/${eventId}/checkin`, label: t.checkin },
     { key: "gifts", href: `/events/${eventId}/gifts`, label: t.gifts },
     { key: "reports", href: `/events/${eventId}/reports`, label: t.reports },

@@ -5,9 +5,13 @@ import { redirect } from "next/navigation";
 import type { BulkImportResponse, GuestInput, ImportPreview } from "@api/contract";
 import { ApiError, type FormState, api, attempt, field } from "@/lib/api";
 
-const GUEST_FIELDS = ["name", "nameAlt", "phone", "side", "group", "invitedCount", "tableNo"] as const;
+const GUEST_FIELDS = ["name", "nameAlt", "phone", "side", "group", "invitedCount"] as const;
 
-const guestBody = (formData: FormData) => Object.fromEntries(GUEST_FIELDS.map((k) => [k, field(formData, k)]));
+// The table select only exists once the event has tables; without it the table is left alone.
+const guestBody = (formData: FormData): Record<string, string> => ({
+  ...Object.fromEntries(GUEST_FIELDS.map((k) => [k, field(formData, k)])),
+  ...(formData.has("tableId") ? { tableId: field(formData, "tableId") } : {}),
+});
 
 export async function addGuest(eventId: string, _state: FormState, formData: FormData): Promise<FormState> {
   const body = guestBody(formData);

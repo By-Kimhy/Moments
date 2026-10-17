@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { GuestView } from "@api/contract";
+import type { GuestView, SeatingPlan } from "@api/contract";
 import { newGuestLink, updateGuest } from "@/app/actions/guests";
 import { GuestForm } from "@/components/guest-form";
 import { ShareLink } from "@/components/share-link";
@@ -10,10 +10,11 @@ import { DeleteGuest } from "./delete-guest";
 
 export default async function GuestPage({ params }: PageProps<"/events/[eventId]/guests/[guestId]">) {
   const { eventId, guestId } = await params;
-  const [t, { guest }, { groups }] = await Promise.all([
+  const [t, { guest }, { groups }, { tables }] = await Promise.all([
     getMessages(),
     apiGet<{ guest: GuestView }>(`/events/${eventId}/guests/${guestId}`),
     apiGet<{ groups: string[] }>(`/events/${eventId}/guests/groups`),
+    apiGet<SeatingPlan>(`/events/${eventId}/seating`),
   ]);
   return (
     <div className="flex flex-col gap-6 py-8">
@@ -46,7 +47,7 @@ export default async function GuestPage({ params }: PageProps<"/events/[eventId]
         </form>
       </div>
 
-      <GuestForm action={updateGuest.bind(null, eventId, guestId)} t={t.guests} sides={t.side} guest={guest} groups={groups} submitLabel={t.common.save} />
+      <GuestForm action={updateGuest.bind(null, eventId, guestId)} t={t.guests} sides={t.side} guest={guest} groups={groups} tables={tables} submitLabel={t.common.save} />
 
       {guest.giftCount === 0 && !guest.checkedIn && <DeleteGuest eventId={eventId} guestId={guestId} label={t.guests.delete} />}
     </div>

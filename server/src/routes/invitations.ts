@@ -27,7 +27,7 @@ async function isOwner(req: Request, eventId: string) {
 async function findInvitation(req: Request) {
   const token = String(req.params.token);
   const guest = TOKEN.test(token)
-    ? await prisma.guest.findUnique({ where: { inviteToken: token }, include: { event: { include: { template: true } } } })
+    ? await prisma.guest.findUnique({ where: { inviteToken: token }, include: { event: { include: { template: true } }, table: { select: { name: true } } } })
     : null;
   if (!guest) throw new HttpError(404, "This invitation link is not valid.");
   const owner = await isOwner(req, guest.eventId);
@@ -104,6 +104,7 @@ invitationsRouter.post("/:token/rsvp", async (req, res) => {
 
   const updated = await prisma.$transaction(async (tx) => {
     const after = await tx.guest.update({
+      include: { table: { select: { name: true } } },
       where: { id: guest.id },
       data: { rsvpStatus: data.status, rsvpCount: count, rsvpMessage: data.message, rsvpAt: new Date(), openedAt: guest.openedAt ?? new Date() },
     });

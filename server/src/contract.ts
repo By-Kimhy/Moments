@@ -43,7 +43,8 @@ export type GuestInput = {
   side: Side;
   group: string | null;
   invitedCount: number;
-  tableNo: string | null;
+  tableId?: string | null;
+  tableName: string | null;
 };
 export type ImportPreview = {
   rows: { line: number; guest: GuestInput }[];
@@ -74,3 +75,5 @@ export type GiftTotals = import("./lib/gifts.js").GiftTotals;
 export type GiftsResponse = { gifts: GiftView[]; totals: GiftTotals };
 
 export type ReportSummary = Omit<import("./reports/data.js").Report, "gifts">;
+
+export type SeatingPlan = Awaited<ReturnType<typeof import("./routes/seating.js")["seatingPlanForContract"]>>;

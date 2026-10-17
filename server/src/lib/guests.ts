@@ -1,5 +1,5 @@
 // Guest fields, and turning a spreadsheet of guests into rows the API can create.
-import type { Guest, Side } from "@prisma/client";
+import type { Guest, Prisma, Side } from "@prisma/client";
 import ExcelJS from "exceljs";
 import { z } from "zod";
 import { config } from "../config.js";
@@ -40,7 +40,13 @@ export const guestSchema = z.object({
     .min(1, "At least 1 person.")
     .max(50, "At most 50 people per invitation.")
     .default(1),
-  tableNo: optionalText(20),
+  // A table by id (forms) or by name (spreadsheet import; created if it doesn't exist yet).
+  tableId: z
+    .string()
+    .nullish()
+    .transform((v) => v || null)
+    .refine((v) => v === null || /^[0-9a-f-]{36}$/i.test(v), "Choose a table."),
+  tableName: optionalText(40),
 });
 
 export type GuestInput = z.output<typeof guestSchema>;
@@ -48,7 +54,7 @@ export type GuestInput = z.output<typeof guestSchema>;
 export const inviteUrl = (token: string) => `${config.appUrl()}/i/${token}`;
 
 /** A guest as hosts see it. */
-export const guestView = (g: Guest & { _count?: { checkins: number; gifts: number } }) => ({
+export const guestView = (g: Guest & { _count?: { checkins: number; gifts: number }; table?: { name: string } | null }) => ({
   id: g.id,
   name: g.name,
   nameAlt: g.nameAlt,
@@ -63,7 +69,8 @@ export const guestView = (g: Guest & { _count?: { checkins: number; gifts: numbe
   rsvpMessage: g.rsvpMessage,
   rsvpAt: g.rsvpAt,
   openedAt: g.openedAt,
-  tableNo: g.tableNo,
+  tableId: g.tableId,
+  tableName: g.table?.name ?? null,
   walkIn: g.walkIn,
   checkedIn: (g._count?.checkins ?? 0) > 0,
   giftCount: g._count?.gifts ?? 0,
@@ -78,7 +85,8 @@ const HEADINGS: Record<keyof GuestInput, string[]> = {
   side: ["side", "ខាង"],
   group: ["group", "relationship", "category", "ក្រុម", "ទំនាក់ទំនង", "ប្រភេទ"],
   invitedCount: ["people", "partysize", "count", "guests", "number", "pax", "ចំនួន", "ចំនួនមនុស្ស", "ចំនួនភ្ញៀវ"],
-  tableNo: ["table", "tableno", "tablenumber", "តុ", "លេខតុ"],
+  tableId: [],
+  tableName: ["table", "tableno", "tablenumber", "តុ", "លេខតុ"],
 };
 
 const SIDES: Record<string, Side> = {
@@ -138,10 +146,28 @@ export function rowsToGuests(table: string[][]): ImportResult | { headingError: 
       side: side ?? "unknown",
       group: cell("group"),
       invitedCount: count === "" ? undefined : count,
-      tableNo: cell("tableNo"),
+      tableName: cell("tableName"),
     });
     if (result.success) rows.push({ line, guest: result.data });
     else errors.push({ line, messages: result.error.issues.map((issue) => issue.message) });
   });
   return { rows, errors };
+}
+
+/**
+ * Resolves a guest's table for one event: an id must belong to the event; a name finds the
+ * table or creates it (at the end of the list). Returns the table id, or null for none.
+ */
+export async function resolveTable(tx: Prisma.TransactionClient, eventId: string, input: { tableId?: string | null; tableName?: string | null }) {
+  if (input.tableId) {
+    const table = await tx.diningTable.findFirst({ where: { id: input.tableId, eventId }, select: { id: true } });
+    if (!table) return undefined; // caller reports "Table not found"
+    return table.id;
+  }
+  if (!input.tableName) return null;
+  const existing = await tx.diningTable.findUnique({ where: { eventId_name: { eventId, name: input.tableName } }, select: { id: true } });
+  if (existing) return existing.id;
+  const last = await tx.diningTable.aggregate({ where: { eventId }, _max: { sortOrder: true } });
+  const created = await tx.diningTable.create({ data: { eventId, name: input.tableName, sortOrder: (last._max.sortOrder ?? 0) + 1 } });
+  return created.id;
 }

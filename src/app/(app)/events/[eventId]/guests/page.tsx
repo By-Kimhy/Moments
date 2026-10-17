@@ -6,7 +6,7 @@ import { buttonClass, secondaryButtonClass } from "@/components/form";
 import { GuestForm } from "@/components/guest-form";
 import { ShareLink } from "@/components/share-link";
 import { getLocale, getMessages } from "@/i18n";
-import { fill } from "@/i18n/format";
+import { fill, tableLabel } from "@/i18n/format";
 import { apiGet } from "@/lib/api";
 
 const RSVP_STYLE = {
@@ -131,7 +131,7 @@ export default async function GuestsPage({ params, searchParams }: PageProps<"/e
                 </span>
               </div>
               <div className="text-sm text-muted">
-                {[t.side[g.side], g.group, fill(t.guests.people, { count: g.invitedCount }), g.phone, g.openedAt && t.guests.opened, g.checkedIn && t.guests.checkedIn]
+                {[t.side[g.side], g.group, fill(t.guests.people, { count: g.invitedCount }), g.tableName && tableLabel(t.desk.table, g.tableName), g.phone, g.openedAt && t.guests.opened, g.checkedIn && t.guests.checkedIn]
                   .filter(Boolean)
                   .join(" · ")}
               </div>

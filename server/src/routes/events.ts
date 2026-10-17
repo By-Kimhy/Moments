@@ -127,7 +127,7 @@ eventRouter.get("/preview", ownersOnly, async (req, res) => {
   const event = await prisma.event.findUniqueOrThrow({ where: { id: currentMember(req).eventId }, include: { template: true } });
   res.json({
     event: publicEventView(event),
-    guest: { name: "ភ្ញៀវកិត្តិយស", nameAlt: "Honoured guest", side: "BOTH", invitedCount: 2, rsvpStatus: "PENDING", rsvpCount: null, rsvpMessage: null },
+    guest: { name: "ភ្ញៀវកិត្តិយស", nameAlt: "Honoured guest", side: "BOTH", invitedCount: 2, rsvpStatus: "PENDING", rsvpCount: null, rsvpMessage: null, tableName: null },
   });
 });
 

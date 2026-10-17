@@ -121,6 +121,7 @@ model Event {
   payments  Payment[]
   checkins  Checkin[]
   auditLogs AuditLog[]
+  tables    DiningTable[]
 
   @@index([ownerId])
 }
@@ -161,16 +162,18 @@ model Guest {
   rsvpMessage  String?    @db.VarChar(500)
   rsvpAt       DateTime?
   openedAt     DateTime? // first time the invitation was opened
-  tableNo      String?    @db.VarChar(20)
+  tableId      String?    @db.Uuid
   walkIn       Boolean    @default(false)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  event    Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event    Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  table    DiningTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
   gifts    Gift[]
   checkins Checkin[]
 
   @@unique([eventId, clientId])
+  @@index([eventId, tableId])
   @@index([eventId, side])
   @@index([eventId, name])
 }
@@ -271,4 +274,21 @@ model AuditLog {
   actor EventMember? @relation(fields: [actorId], references: [id])
 
   @@index([eventId, entity, entityId])
+}
+
+model DiningTable {
+  id        String   @id @default(uuid()) @db.Uuid
+  eventId   String   @db.Uuid
+  name      String   @db.VarChar(40) // "1", "VIP", "តុគ្រួសារ"
+  capacity  Int      @default(10)
+  sortOrder Int      @default(0)
+  note      String?  @db.VarChar(200)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event  Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  guests Guest[]
+
+  @@unique([eventId, name])
+  @@index([eventId, sortOrder])
 }

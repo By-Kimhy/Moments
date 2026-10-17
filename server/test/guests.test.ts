@@ -29,8 +29,8 @@ describe("rowsToGuests", () => {
     ]);
     if ("headingError" in result) throw new Error("heading");
     expect(result.rows.map((r) => r.guest)).toEqual([
-      { name: "សុខ ដារ៉ា", nameAlt: null, phone: "+85512345678", side: "GROOM", group: "គ្រួសារ", invitedCount: 3, tableNo: null },
-      { name: "Chan Sophea", nameAlt: null, phone: null, side: "BRIDE", group: null, invitedCount: 1, tableNo: null },
+      { name: "សុខ ដារ៉ា", nameAlt: null, phone: "+85512345678", side: "GROOM", group: "គ្រួសារ", invitedCount: 3, tableId: null, tableName: null },
+      { name: "Chan Sophea", nameAlt: null, phone: null, side: "BRIDE", group: null, invitedCount: 1, tableId: null, tableName: null },
     ]);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0].line).toBe(4);
@@ -63,8 +63,8 @@ describe("guest list", () => {
     expect((await agent.get(`${base}?q=${encodeURIComponent("012 345")}`)).body.guests[0].id).toBe(guest.id);
     expect((await agent.get(`${base}?q=${encodeURIComponent("សុភា")}`)).body.guests).toHaveLength(1);
 
-    const edited = await agent.patch(`${base}/${guest.id}`).send({ invitedCount: 4, tableNo: "12" }).expect(200);
-    expect(edited.body.guest).toMatchObject({ invitedCount: 4, tableNo: "12", name: "សុខ ដារ៉ា" });
+    const edited = await agent.patch(`${base}/${guest.id}`).send({ invitedCount: 4, tableName: "12" }).expect(200);
+    expect(edited.body.guest).toMatchObject({ invitedCount: 4, tableName: "12", name: "សុខ ដារ៉ា" });
 
     const relinked = await agent.post(`${base}/${guest.id}/new-link`).expect(200);
     expect(relinked.body.guest.inviteToken).not.toBe(guest.inviteToken);

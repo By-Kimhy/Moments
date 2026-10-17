@@ -13,6 +13,7 @@ export function GuestForm({
   sides,
   guest,
   groups,
+  tables = [],
   submitLabel,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
@@ -20,6 +21,7 @@ export function GuestForm({
   sides: Messages["side"];
   guest?: GuestView;
   groups: string[];
+  tables?: { id: string; name: string }[];
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
@@ -55,7 +57,16 @@ export function GuestForm({
           </datalist>
         </label>
         <Field label={t.invitedCount} name="invitedCount" inputMode="numeric" defaultValue={value("invitedCount") || "1"} errors={e?.invitedCount} />
-        <Field label={t.tableNo} name="tableNo" defaultValue={value("tableNo")} errors={e?.tableNo} />
+        {tables.length > 0 && (
+          <Select label={t.tableNo} name="tableId" defaultValue={value("tableId")} errors={e?.tableId}>
+            <option value="">—</option>
+            {tables.map((table) => (
+              <option key={table.id} value={table.id}>
+                {table.name}
+              </option>
+            ))}
+          </Select>
+        )}
       </div>
       <Message text={state?.message} />
       <button className={buttonClass} disabled={pending}>

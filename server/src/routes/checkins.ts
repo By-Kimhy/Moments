@@ -23,7 +23,7 @@ type CheckinWithMember = Checkin & { checkedInBy: { displayName: string } };
  */
 type DeskGift = { id: string; amount: number; currency: "USD" | "KHR"; method: "CASH" | "KHQR"; status: string };
 
-export const deskGuestView = (g: Guest & { checkins: CheckinWithMember[]; gifts?: DeskGift[] }) => ({
+export const deskGuestView = (g: Guest & { checkins: CheckinWithMember[]; gifts?: DeskGift[]; table?: { name: string } | null }) => ({
   id: g.id,
   name: g.name,
   nameAlt: g.nameAlt,
@@ -33,7 +33,7 @@ export const deskGuestView = (g: Guest & { checkins: CheckinWithMember[]; gifts?
   invitedCount: g.invitedCount,
   rsvpStatus: g.rsvpStatus,
   rsvpCount: g.rsvpCount,
-  tableNo: g.tableNo,
+  tableName: g.table?.name ?? null,
   walkIn: g.walkIn,
   tokenHash: tokenHash(g.inviteToken),
   checkin: g.checkins[0] ? checkinView(g.checkins[0]) : null,
@@ -51,6 +51,7 @@ const checkinView = (c: CheckinWithMember) => ({
 });
 
 const withCheckin = {
+  table: { select: { name: true } },
   checkins: { include: { checkedInBy: { select: { displayName: true } } } },
   gifts: { where: { voidedAt: null, status: { not: "REJECTED" } }, select: { id: true, amount: true, currency: true, method: true, status: true } },
 } as const;

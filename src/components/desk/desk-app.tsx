@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DeskGuest, DeskGuestsResponse, DeskStats, GiftsResponse, Side } from "@api/contract";
 import { type Currency, formatAmount, parseAmount } from "@api/lib/money";
 import type { Messages } from "@/i18n/km";
-import { fill } from "@/i18n/format";
+import { fill, tableLabel } from "@/i18n/format";
 import { ClientApiError, clientApi, hashToken, tokenFromQr } from "@/lib/client-api";
 import { type OutboxOp, enqueue, flush, loadSnapshot, pendingOps, removeOp, saveSnapshot } from "@/lib/offline/outbox";
 import { warmOfflineCache } from "@/components/pwa";
@@ -64,7 +64,7 @@ function overlay(guests: DeskGuest[], ops: OutboxOp[], me: string): LocalGuest[]
         invitedCount: b.peopleCount,
         rsvpStatus: "PENDING",
         rsvpCount: null,
-        tableNo: null,
+        tableName: null,
         walkIn: true,
         tokenHash: "",
         local: true,
@@ -431,7 +431,7 @@ function GuestSheet({
           guest.group,
           fill(t.invitedFor, { count: guest.invitedCount }),
           fill(t.replied, { rsvp: rsvp[guest.rsvpStatus] + (guest.rsvpStatus === "ATTENDING" && guest.rsvpCount ? ` (${guest.rsvpCount})` : "") }),
-          guest.tableNo && fill(t.table, { table: guest.tableNo }),
+          guest.tableName && tableLabel(t.table, guest.tableName),
         ]
           .filter(Boolean)
           .join(" · ")}

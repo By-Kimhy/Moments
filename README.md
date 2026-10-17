@@ -172,6 +172,24 @@ Helpers use `/desk` after joining with the helper code; hosts use the "Guest des
 - **Money** is stored in cents (USD) or riel (KHR) as whole numbers (`server/src/lib/money.ts`,
   shared with the web app).
 
+## Reports
+
+The "របាយការណ៍" tab shows totals, attendance, totals by group and every giver, for both
+sides or one side's book (families often keep separate books for the bride's and the groom's
+side). Downloads, in Khmer or English:
+
+- **Excel** (`gift-book[-side]-<date>.xlsx`): a summary, gifts by guest (one row per giver,
+  amounts as numbers with a total formula), every gift including cancelled ones with who
+  recorded them, and the guest list with replies and arrivals. The font is Khmer OS Battambang.
+- **PDF**: the summary and the gifts-by-guest table on A4, printed by Chromium with Kantumruy
+  Pro and Moul embedded, so Khmer renders correctly (PDF libraries without a text-shaping
+  engine break Khmer). Set `CHROMIUM_PATH` to a Chromium/Chrome binary on the API server;
+  without one the PDF download answers 503 (Excel still works). In Docker, install the
+  `chromium` package and set `CHROMIUM_PATH=/usr/bin/chromium`.
+
+Only confirmed gifts are counted; cancelled and rejected gifts appear only in the "every gift"
+sheet, and KHQR gifts still waiting are shown separately.
+
 ## Offline desk
 
 Venue wifi is often weak, so the desk saves everything on the phone first (IndexedDB,
@@ -240,6 +258,9 @@ Venue wifi is often weak, so the desk saves everything on the phone first (Index
 | POST | `/api/events/:eventId/gifts/:giftId/confirm`, `/reject` | owner |
 | GET | `/api/events/:eventId/gifts/:giftId/history` | owner |
 | POST | `/api/invitations/:token/gift` `{ amount, currency, note? }` | anyone with the link |
+| GET | `/api/events/:eventId/reports/summary` (`?side=`) | owner |
+| GET | `/api/events/:eventId/reports/gift-book.xlsx` (`?side=&lang=`) | owner |
+| GET | `/api/events/:eventId/reports/gift-book.pdf` (`?side=&lang=`) | owner |
 
 ## Tests
 
@@ -251,6 +272,6 @@ Each test signs in with fresh random phone numbers, so tests don't disturb other
 
 Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers and
 co-hosts, access control, event create/edit, photo and KHQR uploads, guest list with
-CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk.
+CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports.
 
-Next, in order: reports (Excel/PDF), Telegram notifications, PWA.
+Next, in order: Telegram notifications, PWA.

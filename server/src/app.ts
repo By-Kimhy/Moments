@@ -14,6 +14,7 @@ import { giftsRouter } from "./routes/gifts.js";
 import { guestsRouter } from "./routes/guests.js";
 import { invitationsRouter } from "./routes/invitations.js";
 import { filesRouter, mediaRouter } from "./routes/media.js";
+import { reportsRouter } from "./routes/reports.js";
 import { templatesRouter } from "./routes/templates.js";
 
 export function createApp() {
@@ -40,7 +41,7 @@ export function createApp() {
   // Everything about one event: eventAccess checks the caller belongs to it first.
   const event = Router({ mergeParams: true });
   event.use(eventAccess);
-  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter);
+  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter);
   app.use("/api/events/:eventId", event);
 
   app.use(notFound);

@@ -72,3 +72,5 @@ export type DeskGuestsResponse = { guests: DeskGuest[]; stats: DeskStats; at: Da
 export type GiftView = ReturnType<typeof giftView>;
 export type GiftTotals = import("./lib/gifts.js").GiftTotals;
 export type GiftsResponse = { gifts: GiftView[]; totals: GiftTotals };
+
+export type ReportSummary = Omit<import("./reports/data.js").Report, "gifts">;

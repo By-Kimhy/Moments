@@ -78,6 +78,7 @@ const km: Record<string, string> = {
   "Only gifts waiting for confirmation can be rejected.": "អាចបដិសេធបានតែចំណងដៃដែលកំពុងរង់ចាំប៉ុណ្ណោះ។",
   "Too many gifts sent. Try again later.": "បានផ្ញើច្រើនដងពេក។ សូមព្យាយាមពេលក្រោយ។",
   "This event no longer accepts gifts here.": "កម្មវិធីនេះលែងទទួលចំណងដៃតាមទីនេះទៀតហើយ។",
+  "PDF export is not set up on this server.": "ការនាំចេញ PDF មិនទាន់បានរៀបចំនៅលើម៉ាស៊ីនមេនេះទេ។",
 };
 
 const KHMER_DIGITS = "០១២៣៤៥៦៧៨៩";

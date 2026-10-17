@@ -11,6 +11,7 @@ process.env.SMS_PROVIDER = "mock";
 // Uploaded test images go to a temporary folder, never to S3 or the real uploads folder.
 process.env.UPLOAD_DIR = path.join(tmpdir(), "moments-test-uploads");
 process.env.S3_BUCKET = "";
+if (!process.env.CHROMIUM_PATH && existsSync("/opt/pw-browsers/chromium")) process.env.CHROMIUM_PATH = "/opt/pw-browsers/chromium";
 process.env.TELEGRAM_BOT_TOKEN = "123456:test-bot-token";
 
 afterAll(async () => {

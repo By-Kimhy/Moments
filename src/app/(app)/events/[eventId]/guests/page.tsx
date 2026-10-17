@@ -48,6 +48,11 @@ export default async function GuestsPage({ params, searchParams }: PageProps<"/e
         <h1 className="mt-1 text-2xl font-semibold">{title}</h1>
       </div>
       <EventNav eventId={eventId} active="guests" t={t.nav} />
+      {event.status === "DRAFT" && (
+        <Link href={`/events/${eventId}`} className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900 underline-offset-2 hover:underline">
+          {t.event.draftHint}
+        </Link>
+      )}
 
       <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {stats.map(([label, value]) => (

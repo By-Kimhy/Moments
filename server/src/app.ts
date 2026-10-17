@@ -10,6 +10,7 @@ import { authRouter } from "./routes/auth.js";
 import { deskRouter } from "./routes/desk.js";
 import { eventRouter, eventsRouter } from "./routes/events.js";
 import { guestsRouter } from "./routes/guests.js";
+import { invitationsRouter } from "./routes/invitations.js";
 import { filesRouter, mediaRouter } from "./routes/media.js";
 import { templatesRouter } from "./routes/templates.js";
 
@@ -33,6 +34,7 @@ export function createApp() {
   app.use("/api/templates", templatesRouter);
   app.use("/api/events", eventsRouter);
   app.use("/api/files", filesRouter);
+  app.use("/api/invitations", invitationsRouter);
   // Everything about one event: eventAccess checks the caller belongs to it first.
   const event = Router({ mergeParams: true });
   event.use(eventAccess);

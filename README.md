@@ -110,6 +110,28 @@ at `/guests-sample.csv`.
 A guest with a gift or check-in recorded can't be deleted, so money records always keep
 their guest.
 
+## Invitations and RSVP
+
+Each guest's link opens `/i/<token>`: no app, no login. The page shows the couple, the guest's
+own name, date and time in Phnom Penh time (Khmer digits in Khmer), venue with a map button,
+the day's schedule, photos, the family's KHQR (with "save image" for banking apps on the same
+phone) and the guest's personal entry QR for check-in. A button switches Khmer/English
+(`?lang=en`).
+
+- **Templates:** traditional (red and gold, Moul headings), modern (soft rose, arched cover
+  photo) and minimal (white). Colours and fonts come from each template's `config`.
+- **RSVP:** one tap for coming or not, how many people (up to the number invited, default all
+  of them) and an optional wish. Guests can change their reply until the event starts; replies
+  close when the event starts or is archived. Every reply is in the audit log.
+- **Opened:** the page tells the API when a guest opens it, from the browser only, so
+  Telegram/Facebook link previews and hosts' own visits don't count.
+- **Link previews:** Telegram and Facebook show the event title, "សូមគោរពអញ្ជើញ <name>", the
+  date and venue, and the cover photo as a 1200×630 JPEG (`/api/files/<key>/og.jpg`), or
+  `public/og-default.png` when there is no photo. Links are marked noindex.
+- **Drafts:** guests can't open links of a draft event (they see "invitation not found").
+  Hosts publish from the event page and can preview the invitation at any time
+  (`/events/<id>/preview`).
+
 ## API
 
 | Method | Path | Who |
@@ -142,6 +164,12 @@ their guest.
 | POST | `/api/events/:eventId/guests/bulk` `{ guests: [...] }` | owner |
 | GET, PATCH, DELETE | `/api/events/:eventId/guests/:guestId` | owner |
 | POST | `/api/events/:eventId/guests/:guestId/new-link` | owner |
+| GET | `/api/events/:eventId/preview` | owner |
+| GET | `/api/files/:key/og.jpg` | anyone |
+| GET | `/api/invitations/:token` | anyone with the link (owners also for drafts) |
+| POST | `/api/invitations/:token/open` | anyone with the link |
+| POST | `/api/invitations/:token/rsvp` `{ status, count?, message? }` | anyone with the link |
+| GET | `/api/invitations/:token/qr.svg` | anyone with the link |
 
 ## Tests
 
@@ -153,7 +181,7 @@ Each test signs in with fresh random phone numbers, so tests don't disturb other
 
 Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers and
 co-hosts, access control, event create/edit, photo and KHQR uploads, guest list with
-CSV/Excel import and export.
+CSV/Excel import and export, invitation page with three templates, RSVP and link previews.
 
-Next, in order: invitation page and RSVP, check-in desk, gift book with offline sync,
-reports, Telegram notifications, PWA.
+Next, in order: check-in desk, gift book with offline sync, reports, Telegram notifications,
+PWA.

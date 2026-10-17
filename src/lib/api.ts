@@ -26,14 +26,14 @@ const revive = (_key: string, value: unknown) =>
 
 type Body = Record<string, unknown> | FormData;
 
-async function call<T>(method: string, path: string, body?: Body): Promise<T> {
+async function call<T>(method: string, path: string, body?: Body, language?: "km" | "en"): Promise<T> {
   const jar = await cookies();
   const session = jar.get(SESSION_COOKIE)?.value;
   const desk = jar.get(DESK_COOKIE)?.value;
   const headers: Record<string, string> = {
     Accept: "application/json",
     // The API answers errors in this language.
-    "Accept-Language": jar.get(LOCALE_COOKIE)?.value === "en" ? "en" : "km",
+    "Accept-Language": language ?? (jar.get(LOCALE_COOKIE)?.value === "en" ? "en" : "km"),
   };
   if (session) headers.Authorization = `Bearer ${session}`;
   if (desk) headers["X-Desk-Token"] = desk;
@@ -72,7 +72,7 @@ export async function apiGet<T>(path: string, { onUnauthorized = "/login" } = {}
 /** For Server Actions: changes data. Failures throw ApiError for the action to show. */
 export const api = {
   get: <T>(path: string) => call<T>("GET", path),
-  post: <T = unknown>(path: string, body: Body = {}) => call<T>("POST", path, body),
+  post: <T = unknown>(path: string, body: Body = {}, language?: "km" | "en") => call<T>("POST", path, body, language),
   put: <T = unknown>(path: string, body: Body) => call<T>("PUT", path, body),
   patch: <T = unknown>(path: string, body: Body) => call<T>("PATCH", path, body),
   delete: (path: string) => call<void>("DELETE", path),

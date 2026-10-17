@@ -31,6 +31,10 @@ describe("event photos", () => {
     expect(meta.width).toBe(1600);
     expect(meta.exif).toBeUndefined();
 
+    const og = await request(app).get(`/api/files/${photos[0].key}/og.jpg`).buffer(true).expect(200);
+    expect(og.headers["content-type"]).toBe("image/jpeg");
+    expect(await sharp(og.body as Buffer).metadata()).toMatchObject({ width: 1200, height: 630 });
+
     const cover = await agent.post(`/api/events/${event.id}/photos/${photos[1].key}/cover`).expect(200);
     expect(cover.body.event.photos.map((p: { key: string }) => p.key)).toEqual([photos[1].key, photos[0].key]);
 

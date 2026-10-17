@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { HostEvent, MembersResponse } from "@api/contract";
-import { removeMember, rotateHelperCode } from "@/app/actions/events";
+import { publishEvent, removeMember, rotateHelperCode } from "@/app/actions/events";
 import { EventNav } from "@/components/event-nav";
-import { secondaryButtonClass } from "@/components/form";
+import { buttonClass, secondaryButtonClass } from "@/components/form";
 import { getLocale, getMessages } from "@/i18n";
 import { apiGet } from "@/lib/api";
 import { formatDateTime } from "@/lib/dates";
@@ -37,6 +37,18 @@ export default async function EventPage({ params }: PageProps<"/events/[eventId]
       </div>
 
       <EventNav eventId={eventId} active="overview" t={t.nav} />
+
+      {event.status === "DRAFT" && (
+        <div className="flex flex-col gap-3 rounded-xl bg-amber-50 p-4 text-amber-900">
+          <p className="text-sm">{t.event.draftHint}</p>
+          <form action={publishEvent.bind(null, eventId)}>
+            <button className={buttonClass}>{t.event.publish}</button>
+          </form>
+        </div>
+      )}
+      <Link href={`/events/${eventId}/preview`} className={`${secondaryButtonClass} self-start`}>
+        {t.event.preview}
+      </Link>
 
       <dl className="grid gap-3 rounded-xl border border-line p-4 sm:grid-cols-2">
         <div>

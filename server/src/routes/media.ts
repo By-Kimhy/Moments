@@ -7,6 +7,7 @@ import { HttpError } from "../errors.js";
 import { audit } from "../lib/audit.js";
 import { type Photo, hostView } from "../lib/events.js";
 import { imageKey, processPhoto, processQr } from "../lib/images.js";
+import sharp from "sharp";
 import { storage } from "../providers/storage.js";
 import { imageUpload } from "../uploads.js";
 
@@ -110,4 +111,15 @@ filesRouter.get("/:key", async (req, res) => {
   // Keys never change content (a new upload gets a new key), so browsers may cache forever.
   res.set("Cache-Control", "public, max-age=31536000, immutable");
   res.type(file.contentType).send(file.body);
+});
+
+// A 1200×630 JPEG of a photo, for link previews: Facebook and some chat apps don't show WebP.
+filesRouter.get("/:key/og.jpg", async (req, res) => {
+  const key = String(req.params.key);
+  if (!/^[\w-]+-photo-[\w-]+\.webp$/.test(key)) throw new HttpError(404, "Not found.");
+  const file = await storage.get(key);
+  if (!file) throw new HttpError(404, "Not found.");
+  const jpeg = await sharp(file.body).resize(1200, 630, { fit: "cover", position: "attention" }).jpeg({ quality: 80 }).toBuffer();
+  res.set("Cache-Control", "public, max-age=31536000, immutable");
+  res.type("image/jpeg").send(jpeg);
 });

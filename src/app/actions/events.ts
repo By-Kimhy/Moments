@@ -80,3 +80,8 @@ export async function rotateHelperCode(eventId: string) {
   await api.post(`/events/${eventId}/helper-code`);
   revalidatePath(`/events/${eventId}`);
 }
+
+export async function publishEvent(eventId: string) {
+  await api.patch(`/events/${eventId}`, { status: "PUBLISHED" });
+  revalidatePath(`/events/${eventId}`);
+}

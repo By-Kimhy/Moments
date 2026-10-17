@@ -2,6 +2,7 @@
 // Types only, so the web bundle never pulls in server code.
 import type { deskView, hostView } from "./lib/events.js";
 import type { guestView } from "./lib/guests.js";
+import type { publicEventView, publicGuestView } from "./lib/invitations.js";
 import type { CurrentUser } from "./auth.js";
 
 export type { CurrentUser };
@@ -48,3 +49,7 @@ export type ImportPreview = {
   duplicates: number[];
 };
 export type BulkImportResponse = { created: number; skipped: number };
+
+export type InvitationEvent = ReturnType<typeof publicEventView>;
+export type InvitationGuest = ReturnType<typeof publicGuestView>;
+export type InvitationResponse = { event: InvitationEvent; guest: InvitationGuest; inviteUrl: string };

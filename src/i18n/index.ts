@@ -11,8 +11,8 @@ export async function getLocale(): Promise<Locale> {
   return (await cookies()).get(LOCALE_COOKIE)?.value === "en" ? "en" : "km";
 }
 
-export async function getMessages(): Promise<Messages> {
-  return (await getLocale()) === "en" ? en : km;
+export async function getMessages(locale?: Locale): Promise<Messages> {
+  return (locale ?? (await getLocale())) === "en" ? en : km;
 }
 
 export type { Messages };

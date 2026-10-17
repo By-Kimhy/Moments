@@ -56,10 +56,29 @@ const km: Record<string, string> = {
   "There are no guests to add.": "មិនមានភ្ញៀវត្រូវបន្ថែមទេ។",
   "Some guests have problems. Fix them and try again.": "ភ្ញៀវខ្លះមានបញ្ហា។ សូមកែ ហើយព្យាយាមម្តងទៀត។",
   "This guest has gifts or a check-in recorded, so they can't be deleted.": "ភ្ញៀវនេះមានចំណងដៃ ឬបានចុះឈ្មោះចូលរួចហើយ ដូច្នេះមិនអាចលុបបានទេ។",
+  "This invitation link is not valid.": "តំណលិខិតអញ្ជើញនេះមិនត្រឹមត្រូវទេ។",
+  "Too many replies. Try again later.": "ឆ្លើយតបច្រើនដងពេក។ សូមព្យាយាមពេលក្រោយ។",
+  "Replies for this event are closed.": "ការឆ្លើយតបសម្រាប់កម្មវិធីនេះបានបិទហើយ។",
+  "Choose whether you are coming.": "សូមជ្រើសរើសថាអ្នកនឹងមក ឬមិនមក។",
+  "Keep the message under 500 characters.": "សារត្រូវតិចជាង ៥០០ តួអក្សរ។",
 };
 
+const KHMER_DIGITS = "០១២៣៤៥៦៧៨៩";
+const khmerNumber = (n: string) => n.replace(/\d/g, (d) => KHMER_DIGITS[Number(d)]);
+
+// Messages with a number in them.
+const kmPatterns: [RegExp, (n: string) => string][] = [
+  [/^This invitation is for up to (\d+) people\.$/, (n) => `លិខិតអញ្ជើញនេះសម្រាប់មនុស្សយ៉ាងច្រើន ${khmerNumber(n)} នាក់។`],
+];
+
 export function translate(message: string, language: string | false) {
-  return language === "km" ? (km[message] ?? message) : message;
+  if (language !== "km") return message;
+  if (km[message]) return km[message];
+  for (const [pattern, render] of kmPatterns) {
+    const match = message.match(pattern);
+    if (match) return render(match[1]);
+  }
+  return message;
 }
 
 export function translateFields(fields: Record<string, string[] | undefined> | undefined, language: string | false) {

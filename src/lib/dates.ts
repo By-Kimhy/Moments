@@ -30,3 +30,16 @@ export function formatDateTime(d: Date, locale: "km" | "en") {
     timeStyle: "short",
   }).format(d);
 }
+
+/** The parts of an invitation date: "ថ្ងៃអាទិត្យ ២០ ធ្នូ ២០២៦" and "០៧:០០" in Khmer, with Khmer digits. */
+export function invitationDate(d: Date, locale: "km" | "en") {
+  const tag = locale === "km" ? "km-KH-u-nu-khmr" : "en-GB";
+  const date = new Intl.DateTimeFormat(tag, { timeZone: TZ, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(d);
+  const time = new Intl.DateTimeFormat(tag, { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
+  return { date: locale === "km" ? `ថ្ងៃ${date}` : date, time };
+}
+
+const KHMER_DIGITS = "០១២៣៤៥៦៧៨៩";
+/** "07:00" → "០៧:០០" for Khmer text. */
+export const localDigits = (s: string, locale: "km" | "en") =>
+  locale === "km" ? s.replace(/\d/g, (d) => KHMER_DIGITS[Number(d)]) : s;

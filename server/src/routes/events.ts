@@ -6,6 +6,7 @@ import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
 import { audit } from "../lib/audit.js";
 import { deskView, hostView, uniqueHelperCode } from "../lib/events.js";
+import { publicEventView } from "../lib/invitations.js";
 import { normalizePhone } from "../lib/phone.js";
 
 /** /api/events: the signed-in host's events. */
@@ -119,6 +120,15 @@ eventRouter.patch("/", ownersOnly, async (req, res) => {
     return after;
   });
   res.json({ event: hostView(event) });
+});
+
+// What guests will see, before any guest exists or the event is published.
+eventRouter.get("/preview", ownersOnly, async (req, res) => {
+  const event = await prisma.event.findUniqueOrThrow({ where: { id: currentMember(req).eventId }, include: { template: true } });
+  res.json({
+    event: publicEventView(event),
+    guest: { name: "ភ្ញៀវកិត្តិយស", nameAlt: "Honoured guest", side: "BOTH", invitedCount: 2, rsvpStatus: "PENDING", rsvpCount: null, rsvpMessage: null },
+  });
 });
 
 eventRouter.post("/helper-code", ownersOnly, async (req, res) => {

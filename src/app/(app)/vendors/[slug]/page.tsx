@@ -11,7 +11,7 @@ import { fill } from "@/i18n/format";
 import { ApiError, api } from "@/lib/api";
 import { getOptionalUser } from "@/lib/dal";
 import { formatDateTime } from "@/lib/dates";
-import { EnquiryForm, ReviewForm, ShortlistForm } from "./forms";
+import { EnquiryForm, ReportForm, ReviewForm, ShortlistForm } from "./forms";
 
 const getVendor = cache(async (slug: string) => {
   try {
@@ -110,6 +110,8 @@ export default async function VendorPage({ params }: PageProps<"/vendors/[slug]"
         )
       )}
 
+      {user && !viewer?.isOwner && <ReportForm slug={vendor.slug} label={t.vendors.report} t={t.vendors} />}
+
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">{t.vendors.reviews}</h2>
         {viewer?.canReview ? (
@@ -135,6 +137,7 @@ export default async function VendorPage({ params }: PageProps<"/vendors/[slug]"
                 </div>
                 {r.text && <p className="whitespace-pre-line">{r.text}</p>}
                 <span className="text-xs text-muted">{formatDateTime(r.createdAt, locale)}</span>
+                {user && !viewer?.isOwner && <ReportForm slug={vendor.slug} reviewId={r.id} label={t.vendors.reportReview} t={t.vendors} />}
                 {r.reply && (
                   <div className="mt-1 rounded-lg bg-black/5 p-3 text-sm">
                     <span className="font-medium">{t.vendors.reply}</span>

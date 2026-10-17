@@ -104,6 +104,12 @@ export async function removeShortlisted(eventId: string, vendorId: string) {
   revalidatePath(`/events/${eventId}/vendors`);
 }
 
+export async function reportVendor(slug: string, reviewId: string | null, _state: FormState, formData: FormData): Promise<FormState> {
+  const result = await attempt(() => api.post(`/vendors/${slug}/reports`, { reason: field(formData, "reason"), note: field(formData, "note"), reviewId }));
+  if (!result.ok) return result.state;
+  return { done: true };
+}
+
 // Platform admins.
 
 export async function moderateVendor(vendorId: string, action: "approve" | "return" | "suspend", formData: FormData) {
@@ -118,5 +124,10 @@ export async function featureVendor(vendorId: string, formData: FormData) {
 
 export async function setReviewHidden(reviewId: string, hidden: boolean) {
   await api.post(`/admin/reviews/${reviewId}/${hidden ? "hide" : "show"}`);
+  revalidatePath("/admin", "layout");
+}
+
+export async function resolveReport(reportId: string) {
+  await api.post(`/admin/reports/${reportId}/resolve`);
   revalidatePath("/admin", "layout");
 }

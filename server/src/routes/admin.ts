@@ -117,6 +117,45 @@ adminRouter.get("/reviews", async (_req, res) => {
   });
 });
 
+// Reports from hosts about vendors and reviews.
+adminRouter.get("/reports", async (req, res) => {
+  const resolved = req.query.resolved === "true";
+  const reports = await prisma.report.findMany({
+    where: { resolvedAt: resolved ? { not: null } : null },
+    include: {
+      user: { select: { name: true } },
+      vendor: { select: { id: true, name: true, slug: true, status: true } },
+      review: { select: { id: true, rating: true, text: true, hiddenAt: true, user: { select: { name: true } } } },
+    },
+    orderBy: { createdAt: resolved ? "desc" : "asc" },
+    take: 200,
+  });
+  res.json({
+    reports: reports.map((r) => ({
+      id: r.id,
+      reason: r.reason,
+      note: r.note,
+      reporter: r.user.name,
+      vendor: r.vendor,
+      review: r.review ? { id: r.review.id, rating: r.review.rating, text: r.review.text, author: r.review.user.name, hidden: r.review.hiddenAt !== null } : null,
+      resolvedAt: r.resolvedAt,
+      createdAt: r.createdAt,
+    })),
+  });
+});
+
+adminRouter.post("/reports/:reportId/resolve", async (req, res) => {
+  const id = req.params.reportId;
+  const report = isUuid(id) ? await prisma.report.findUnique({ where: { id } }) : null;
+  if (!report) throw new HttpError(404, "Not found.");
+  // Every open report about the same vendor or review is dealt with at once.
+  await prisma.report.updateMany({
+    where: { vendorId: report.vendorId, reviewId: report.reviewId, resolvedAt: null },
+    data: { resolvedAt: new Date(), resolvedById: currentUser(req).id },
+  });
+  res.status(204).end();
+});
+
 async function setHidden(req: Request, hidden: boolean) {
   const id = req.params.reviewId;
   const review = isUuid(id) ? await prisma.vendorReview.findUnique({ where: { id } }) : null;

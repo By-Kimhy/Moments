@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { saveReview, sendEnquiry, shortlistVendor } from "@/app/actions/vendors";
+import { reportVendor, saveReview, sendEnquiry, shortlistVendor } from "@/app/actions/vendors";
 import { Field, Message, Select, TextArea, buttonClass } from "@/components/form";
 import type { Messages } from "@/i18n/km";
 
@@ -90,5 +90,33 @@ export function ShortlistForm({ vendorId, events, t }: { vendorId: string; event
         {t.save}
       </button>
     </form>
+  );
+}
+
+/** "Report" under the vendor or one review: a reason and an optional note for the admins. */
+export function ReportForm({ slug, reviewId, label, t }: { slug: string; reviewId?: string; label: string; t: T }) {
+  const [state, action, pending] = useActionState(reportVendor.bind(null, slug, reviewId ?? null), undefined);
+  return (
+    <details className="text-sm">
+      <summary className="cursor-pointer text-muted">{label}</summary>
+      {state?.done ? (
+        <Done text={t.reported} />
+      ) : (
+        <form action={action} className="mt-2 flex flex-col gap-2">
+          <Select label={t.reportReason} name="reason" defaultValue="FAKE" errors={state?.errors?.reason}>
+            {(["FAKE", "INAPPROPRIATE", "SPAM", "OTHER"] as const).map((r) => (
+              <option key={r} value={r}>
+                {t.reportReasons[r]}
+              </option>
+            ))}
+          </Select>
+          <Field label={t.reportNote} name="note" />
+          <Message text={state?.message} />
+          <button className="self-start rounded-lg border border-line px-3 py-2 text-sm" disabled={pending}>
+            {t.reportSend}
+          </button>
+        </form>
+      )}
+    </details>
   );
 }

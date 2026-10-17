@@ -184,3 +184,32 @@ describe("event shortlist", () => {
     expect((await host.agent.get(base)).body.vendors).toEqual([]);
   });
 });
+
+describe("reports", () => {
+  it("lets signed-in people flag a vendor or a review once, for the admins to resolve", async () => {
+    const { vendor } = await publishedVendor(`Reported ${randomBytes(3).toString("hex")}`);
+    const host = await signIn();
+    await host.agent.post(`/api/vendors/${vendor.slug}/enquiries`).send({ name: "Dara", phone: randomPhone(), message: "Hi" }).expect(201);
+    const review = (await host.agent.put(`/api/vendors/${vendor.slug}/reviews`).send({ rating: 1, text: "Bad" }).expect(200)).body.review;
+
+    const reporter = await signIn("Reporter");
+    await request(app).post(`/api/vendors/${vendor.slug}/reports`).send({ reason: "FAKE" }).expect(401);
+    await reporter.agent.post(`/api/vendors/${vendor.slug}/reports`).send({ reason: "nonsense" }).expect(400);
+    await reporter.agent.post(`/api/vendors/${vendor.slug}/reports`).send({ reason: "FAKE", note: "Stolen photos" }).expect(201);
+    await reporter.agent.post(`/api/vendors/${vendor.slug}/reports`).send({ reason: "SPAM" }).expect(409);
+    await reporter.agent.post(`/api/vendors/${vendor.slug}/reports`).send({ reason: "INAPPROPRIATE", reviewId: review.id }).expect(201);
+
+    const a = await admin();
+    const open = (await a.agent.get("/api/admin/reports").expect(200)).body.reports.filter((r: { vendor: { id: string } }) => r.vendor.id === vendor.id);
+    expect(open).toEqual([
+      expect.objectContaining({ reason: "FAKE", note: "Stolen photos", reporter: "Reporter", review: null }),
+      expect.objectContaining({ reason: "INAPPROPRIATE", review: expect.objectContaining({ text: "Bad", author: "Test Host" }) }),
+    ]);
+    await a.agent.post(`/api/admin/reports/${open[0].id}/resolve`).expect(204);
+    const left = (await a.agent.get("/api/admin/reports")).body.reports.filter((r: { vendor: { id: string } }) => r.vendor.id === vendor.id);
+    expect(left).toHaveLength(1);
+    // Once resolved, the same person can report it again.
+    await reporter.agent.post(`/api/vendors/${vendor.slug}/reports`).send({ reason: "SPAM" }).expect(201);
+    await reporter.agent.get("/api/admin/reports").expect(404);
+  });
+});

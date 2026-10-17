@@ -92,6 +92,7 @@ model User {
   vendors         Vendor[]
   vendorEnquiries VendorEnquiry[]
   vendorReviews   VendorReview[]
+  reports         Report[]
 }
 
 model Event {
@@ -530,6 +531,7 @@ model Vendor {
   reviews    VendorReview[]
   events     EventVendor[]
   planOrders PlanOrder[]
+  reports    Report[]
 
   @@index([status, category, province])
   @@index([ownerId])
@@ -569,6 +571,8 @@ model VendorReview {
 
   vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id])
+
+  reports Report[]
 
   @@unique([vendorId, userId])
 }
@@ -643,4 +647,30 @@ model PlanOrder {
   @@index([eventId])
   @@index([vendorId])
   @@index([organizationId])
+}
+
+// Someone flags a vendor listing or a review for the platform admins to look at.
+enum ReportReason {
+  FAKE
+  INAPPROPRIATE
+  SPAM
+  OTHER
+}
+
+model Report {
+  id           String       @id @default(uuid()) @db.Uuid
+  userId       String       @db.Uuid
+  vendorId     String       @db.Uuid
+  reviewId     String?      @db.Uuid // empty: about the vendor itself
+  reason       ReportReason
+  note         String?      @db.VarChar(500)
+  resolvedAt   DateTime?
+  resolvedById String?      @db.Uuid
+  createdAt    DateTime     @default(now())
+
+  user   User          @relation(fields: [userId], references: [id])
+  vendor Vendor        @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  review VendorReview? @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([resolvedAt, createdAt])
 }

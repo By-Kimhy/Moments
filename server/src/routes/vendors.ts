@@ -364,6 +364,31 @@ vendorsRouter.post("/:slug/enquiries", requireUser, async (req, res) => {
   res.status(201).json({ enquiry: { id: enquiry.id, createdAt: enquiry.createdAt } });
 });
 
+const reportSchema = z.object({
+  reason: z.enum(["FAKE", "INAPPROPRIATE", "SPAM", "OTHER"], { message: "Choose a reason." }),
+  note: optionalText(500),
+  reviewId: z
+    .string()
+    .nullish()
+    .transform((v) => v || null)
+    .refine((v) => v === null || isUuid(v), "Review not found."),
+});
+
+// Flags the vendor (or one of its reviews) for the platform admins.
+vendorsRouter.post("/:slug/reports", requireUser, async (req, res) => {
+  const vendor = await publishedVendor(req.params.slug);
+  const data = parse(reportSchema, req.body);
+  const user = currentUser(req);
+  if (data.reviewId && !(await prisma.vendorReview.findFirst({ where: { id: data.reviewId, vendorId: vendor.id, hiddenAt: null } }))) {
+    throw new HttpError(404, "Review not found.");
+  }
+  await rateLimit(`vendor-report:${user.id}`, 10, 60 * 60, "Too many reports. Try again later.");
+  const open = await prisma.report.findFirst({ where: { userId: user.id, vendorId: vendor.id, reviewId: data.reviewId, resolvedAt: null } });
+  if (open) throw new HttpError(409, "You already reported this. The team will look at it.");
+  await prisma.report.create({ data: { ...data, vendorId: vendor.id, userId: user.id } });
+  res.status(201).json({ reported: true });
+});
+
 // One review per host per vendor, from hosts who contacted the vendor; sending again edits it.
 vendorsRouter.put("/:slug/reviews", requireUser, async (req, res) => {
   const vendor = await publishedVendor(req.params.slug);

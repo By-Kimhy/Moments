@@ -7,6 +7,7 @@ const TABS = [
   ["payments", "/payments"],
   ["leads", "/leads"],
   ["reviews", "/reviews"],
+  ["reports", "/reports"],
 ] as const;
 
 /** Title and tabs of the platform admin pages. */

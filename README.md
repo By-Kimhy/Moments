@@ -299,6 +299,9 @@ The seed adds a demo concert at `/e/khmer-music-night` (door helper code `654321
   the average of visible reviews.
 - **Event shortlist:** "Save to an event" on a profile adds the vendor to the event's
   "អ្នកផ្តល់សេវា" tab as considering or booked, with a note and their contact details.
+- **Reports:** signed-in people can report a vendor or a review (fake, inappropriate, spam,
+  other, with a note), once until it is dealt with. Admins see them oldest first in
+  `/admin/reports` and resolve them, hide the review or suspend the vendor from there.
 - **Leads report** (`/admin/leads`): enquiries per vendor for each month, with a CSV download,
   for charging vendors per lead.
 - **Admins** (`User.isAdmin`, or phone numbers in `ADMIN_PHONES`) use `/admin`: the review
@@ -500,6 +503,8 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | GET | `/api/admin/vendors` (`?status=`), `/api/admin/reviews` | platform admin |
 | POST | `/api/admin/vendors/:vendorId/approve`, `/return`, `/suspend` `{ note }`, `/feature` `{ days }` | platform admin |
 | POST | `/api/admin/reviews/:reviewId/hide`, `/show` | platform admin |
+| POST | `/api/vendors/:slug/reports` `{ reason, note?, reviewId? }` | signed in |
+| GET | `/api/admin/reports` (`?resolved=true`); POST `/api/admin/reports/:reportId/resolve` | platform admin |
 | GET, DELETE | `/api/events/:eventId/telegram` | owner |
 | POST | `/api/events/:eventId/telegram/link` | owner |
 | POST | `/api/events/:eventId/telegram/test` | owner |

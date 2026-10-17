@@ -220,3 +220,16 @@ export type SubscriptionResponse = PlatformPurchase & { paidUntil: Date | null; 
 
 export type AdminStats = Awaited<ReturnType<typeof import("./lib/admin-stats.js")["adminStats"]>>;
 export type AdminLeadsResponse = { month: string; months: string[]; total: number; leads: Awaited<ReturnType<typeof import("./lib/admin-stats.js")["vendorLeads"]>> };
+export type ReportReason = "FAKE" | "INAPPROPRIATE" | "SPAM" | "OTHER";
+export type AdminReportsResponse = {
+  reports: {
+    id: string;
+    reason: ReportReason;
+    note: string | null;
+    reporter: string;
+    vendor: { id: string; name: string; slug: string; status: VendorStatus };
+    review: { id: string; rating: number; text: string | null; author: string; hidden: boolean } | null;
+    resolvedAt: Date | null;
+    createdAt: Date;
+  }[];
+};

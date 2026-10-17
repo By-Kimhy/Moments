@@ -47,3 +47,5 @@ next-env.d.ts
 
 # API build output
 /server/dist
+test-results/
+playwright-report/

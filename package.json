@@ -19,7 +19,8 @@
     "db:migrate": "npm run db:migrate -w server",
     "db:deploy": "npm run db:deploy -w server",
     "db:seed": "npm run db:seed -w server",
-    "typecheck": "next typegen && tsc --noEmit && npm run typecheck -w server"
+    "typecheck": "next typegen && tsc --noEmit && npm run typecheck -w server",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "idb": "^8.0.4",
@@ -31,6 +32,7 @@
     "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^22",
     "@types/react": "^19",

@@ -536,6 +536,18 @@ saved pages from the phone, because phones get passed around at weddings. After 
 Each test signs in with fresh random phone numbers, so tests don't disturb other data.
 `npm run typecheck` and `npm run lint` check both parts.
 
+`npm run e2e` runs browser tests of the main journeys on a phone-sized screen (Playwright, in
+`e2e/`): signing in, a guest replying and being checked in with a gift at the desk, buying
+concert tickets, the vendor directory and an enquiry, and upgrading a plan. They need the
+seeded database and the built app running without a Telegram bot, so the login page offers
+its test form:
+
+```bash
+npm run db:seed
+npm run build && TELEGRAM_BOT_TOKEN= npm start   # in another terminal
+npm run e2e
+```
+
 ## Status
 
 Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers and

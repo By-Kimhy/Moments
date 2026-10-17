@@ -1,4 +1,4 @@
-// Three invitation templates, plus (outside production) one demo wedding with 50 guests.
+// Seven invitation templates, plus (outside production) one demo wedding with 50 guests.
 // Safe to run again: templates are upserted and the demo wedding is rebuilt.
 import { PrismaClient, type Currency, type GiftMethod, type RsvpStatus, type Side } from "@prisma/client";
 import sharp from "sharp";
@@ -25,6 +25,30 @@ const templates = [
     name: "Minimal / សាមញ្ញ",
     style: "MINIMAL" as const,
     config: { background: "#ffffff", accent: "#1f2937", text: "#111827", headingFont: "Kantumruy Pro", bodyFont: "Kantumruy Pro" },
+  },
+  {
+    slug: "royal-gold",
+    name: "Royal gold / មាសរាជវាំង",
+    style: "TRADITIONAL" as const,
+    config: { background: "#0f3b2e", accent: "#d4af37", text: "#f8f1dc", headingFont: "Moul", bodyFont: "Battambang", ornament: "kbach" },
+  },
+  {
+    slug: "lotus",
+    name: "Lotus / ផ្កាឈូក",
+    style: "MODERN" as const,
+    config: { background: "#fff1f3", accent: "#c0577a", text: "#4a2a33", headingFont: "Moul", bodyFont: "Kantumruy Pro", ornament: "lotus" },
+  },
+  {
+    slug: "angkor",
+    name: "Angkor / អង្គរ",
+    style: "TRADITIONAL" as const,
+    config: { background: "#f4e9d8", accent: "#8b5a2b", text: "#3b2a1a", headingFont: "Moul", bodyFont: "Battambang", ornament: "angkor" },
+  },
+  {
+    slug: "midnight",
+    name: "Midnight / រាត្រី",
+    style: "MINIMAL" as const,
+    config: { background: "#101827", accent: "#e5c07b", text: "#f3f4f6", headingFont: "Kantumruy Pro", bodyFont: "Kantumruy Pro", ornament: "kbach" },
   },
 ];
 

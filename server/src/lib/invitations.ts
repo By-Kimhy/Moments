@@ -6,12 +6,20 @@ import { featuresOf } from "./plans.js";
 import { z } from "zod";
 import type { Photo, ScheduleItem } from "./events.js";
 
-export type TemplateConfig = { background: string; accent: string; text: string; headingFont: string; bodyFont: string };
+export type TemplateConfig = {
+  background: string;
+  accent: string;
+  text: string;
+  headingFont: string;
+  bodyFont: string;
+  /** A decoration above and below the names (see the web app's ornaments). */
+  ornament?: "kbach" | "lotus" | "angkor";
+};
 
 const DEFAULT_TEMPLATE = {
   slug: "traditional",
   style: "TRADITIONAL" as const,
-  config: { background: "#7a1f1f", accent: "#d4a73c", text: "#fff8e7", headingFont: "Moul", bodyFont: "Battambang" },
+  config: { background: "#7a1f1f", accent: "#d4a73c", text: "#fff8e7", headingFont: "Moul", bodyFont: "Battambang" } as TemplateConfig,
 };
 
 /** Replies are accepted until the event starts, and never once it is archived. */

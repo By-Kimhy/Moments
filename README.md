@@ -107,6 +107,14 @@ Without `S3_BUCKET` the files go to `UPLOAD_DIR` (default `./uploads`). For prod
 `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, and `S3_ENDPOINT` for
 Cloudflare R2 or MinIO. The S3 code path has not yet been run against a real bucket.
 
+### Invitation templates
+
+Seven templates (the free plan uses Traditional): Traditional, Modern, Minimal, and four with an
+ornament drawn in the accent colour — Royal gold (deep green and gold, kbach scroll), Lotus
+(pink, lotus flower), Angkor (sandstone, the temple towers) and Midnight (navy and gold).
+Templates are colours, fonts, a layout style and an optional ornament, stored in the database
+and upserted by `npm run db:seed`.
+
 ## Guests
 
 At `/events/<id>/guests` owners see totals (guests, people invited, coming, not coming, no
@@ -575,7 +583,7 @@ npm run e2e
 
 Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers and
 co-hosts, access control, event create/edit, photo and KHQR uploads, guest list with
-CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts, installable PWA. This completes the
+CSV/Excel import and export, invitation page with seven templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts, installable PWA. This completes the
 MVP in `docs/PROPOSAL.md`.
 
 Phase 2 (`docs/PHASE2.md`) is done too: seating plan, thank-you messages, planner dashboard

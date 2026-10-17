@@ -1,5 +1,5 @@
-// The invitation card guests see, in one of three styles. Colours and fonts come from the
-// template's config; the layout differs a little per style.
+// The invitation card guests see, in one of three styles. Colours, fonts and the ornament come
+// from the template's config; the layout differs a little per style.
 import type { CSSProperties, ReactNode } from "react";
 import type { GuestGift, InvitationEvent, InvitationGuest } from "@api/contract";
 import type { Messages } from "@/i18n/km";
@@ -7,6 +7,7 @@ import { invitationDate, localDigits } from "@/lib/dates";
 import { GuestGiftForm } from "./guest-gift-form";
 import { PhotoWall } from "./photo-wall";
 import { WishForm } from "./wish-form";
+import { Ornament } from "./ornaments";
 import { RsvpForm } from "./rsvp-form";
 
 const fileUrl = (key: string) => `/api/files/${key}`;
@@ -63,6 +64,7 @@ export function Invitation({ event, guest, gifts, thankYou, token, locale, t, la
               className={`w-full object-cover ${style === "MODERN" ? "aspect-[4/5] rounded-t-full" : style === "MINIMAL" ? "aspect-[4/3]" : "aspect-square rounded-2xl"}`}
             />
           )}
+          <Ornament name={config.ornament} />
           <p className="text-sm opacity-80">{t.dear}</p>
           <p className={`${heading} text-2xl text-[var(--inv-accent)]`}>{guestName}</p>
           {guest.tableName && (
@@ -90,6 +92,7 @@ export function Invitation({ event, guest, gifts, thankYou, token, locale, t, la
           ) : (
             <h1 className={`${heading} text-2xl`}>{pick(event.titleKm, event.titleEn)}</h1>
           )}
+          {config.ornament !== "angkor" && <Ornament name={config.ornament} flip />}
         </section>
 
         {thankYou && (

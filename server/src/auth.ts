@@ -104,7 +104,8 @@ export async function loadAuth(req: Request, _res: Response, next: NextFunction)
   ]);
   if (userClaims) {
     const user = await prisma.user.findUnique({ where: { id: userClaims.sub } });
-    if (user) req.user = toCurrentUser(user);
+    // A deleted account's sessions stop working at once.
+    if (user && !user.deletedAt) req.user = toCurrentUser(user);
   }
   if (helperClaims) {
     const member = await prisma.eventMember.findFirst({

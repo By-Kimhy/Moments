@@ -76,14 +76,15 @@ enum TemplateStyle {
 }
 
 model User {
-  id         String   @id @default(uuid()) @db.Uuid
-  name       String   @db.VarChar(120)
-  phone      String?  @unique @db.VarChar(20) // E.164, e.g. +85512345678
-  telegramId BigInt?  @unique
-  language   Language @default(KM)
-  isAdmin    Boolean  @default(false) // platform admin: reviews vendors, confirms plan payments
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id         String    @id @default(uuid()) @db.Uuid
+  name       String    @db.VarChar(120)
+  phone      String?   @unique @db.VarChar(20) // E.164, e.g. +85512345678
+  telegramId BigInt?   @unique
+  language   Language  @default(KM)
+  isAdmin    Boolean   @default(false) // platform admin: reviews vendors, confirms plan payments
+  deletedAt  DateTime? // the person deleted their account: personal details are wiped
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   ownedEvents     Event[]              @relation("EventOwner")
   memberships     EventMember[]

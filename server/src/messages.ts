@@ -143,6 +143,7 @@ const km: Record<string, string> = {
   "Choose a package.": "សូមជ្រើសរើសកញ្ចប់។",
   "Only published listings can be featured.": "អាចដាក់ជាពិសេសបានតែទំព័រដែលបានផ្សព្វផ្សាយប៉ុណ្ណោះ។",
   "Your planner subscription has ended. Renew it to add client events.": "ការជាវសម្រាប់អ្នករៀបចំកម្មវិធីបានផុតកំណត់។ សូមបន្តការជាវ ដើម្បីបន្ថែមកម្មវិធីអតិថិជន។",
+  "Type DELETE to confirm.": "សូមវាយ DELETE ដើម្បីបញ្ជាក់។",
   "This order has changed. Reload and try again.": "ការកុម្ម៉ង់នេះបានផ្លាស់ប្តូរ។ សូមផ្ទុកឡើងវិញ ហើយព្យាយាមម្តងទៀត។",
   "This listing has changed. Reload and try again.": "ព័ត៌មាននេះបានផ្លាស់ប្តូរ។ សូមផ្ទុកឡើងវិញ ហើយព្យាយាមម្តងទៀត។",
 };
@@ -155,6 +156,7 @@ const kmPatterns: [RegExp, (n: string) => string][] = [
   [/^At most (\d+) tickets of this type per order\.$/, (n) => `យ៉ាងច្រើន ${khmerNumber(n)} សំបុត្រប្រភេទនេះ ក្នុងការកុម្ម៉ង់មួយ។`],
   [/^A vendor can have up to (\d+) photos\.$/, (n) => `អ្នកផ្តល់សេវាម្នាក់អាចមានរូបថតបានច្រើនបំផុត ${khmerNumber(n)}។`],
   [/^This plan allows up to (\d+) guests\. Upgrade to add more\.$/, (n) => `គម្រោងនេះអនុញ្ញាតភ្ញៀវបានច្រើនបំផុត ${khmerNumber(n)} នាក់។ សូមដំឡើងគម្រោង ដើម្បីបន្ថែមទៀត។`],
+  [/^Make someone else an owner of (.+) first\.$/, (name) => `សូមដាក់អ្នកផ្សេងជាម្ចាស់ ${name} ជាមុនសិន។`],
   [/^This invitation is for up to (\d+) people\.$/, (n) => `លិខិតអញ្ជើញនេះសម្រាប់មនុស្សយ៉ាងច្រើន ${khmerNumber(n)} នាក់។`],
 ];
 

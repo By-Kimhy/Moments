@@ -66,6 +66,9 @@ export default async function Dashboard() {
         <Link href="/vendor" className="text-muted underline">
           {t.vendors.forVendors}
         </Link>
+        <Link href="/account" className="text-muted underline">
+          {t.account.link}
+        </Link>
         {user.isAdmin && (
           <Link href="/admin" className="text-muted underline">
             {t.admin.link}

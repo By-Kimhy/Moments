@@ -4,6 +4,7 @@ import { clearDeskCookie, clearSessionCookie, currentUser, requireUser, setSessi
 import { config } from "../config.js";
 import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
+import { deleteAccount } from "../lib/accounts.js";
 import { normalizePhone } from "../lib/phone.js";
 import { LOGIN_TTL, completeLogin, consumeLogin, loginStatus, newLoginToken } from "../lib/telegram-auth.js";
 import { telegram } from "../providers/telegram.js";
@@ -64,6 +65,14 @@ authRouter.post("/telegram/dev-confirm", async (req, res) => {
   const user = await completeLogin(token, { telegramId: existing?.telegramId ?? BigInt(phone.replace(/\D/g, "")), phone, name: name || existing?.name || phone });
   if (!user) throw new HttpError(410, "This sign-in has expired. Start again.");
   res.status(204).end();
+});
+
+// Deleting the account: the person types DELETE to confirm.
+authRouter.post("/me/delete", requireUser, async (req, res) => {
+  parse(z.object({ confirm: z.literal("DELETE", { message: "Type DELETE to confirm." }) }), req.body);
+  const result = await deleteAccount(currentUser(req).id);
+  clearSessionCookie(res);
+  res.json(result);
 });
 
 authRouter.post("/logout", (_req, res) => {

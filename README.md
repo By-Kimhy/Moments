@@ -66,6 +66,12 @@ Telegram account whose phone number matches.
 - **Co-hosts:** a host adds another host by phone number (e.g. the other family). They sign
   in with that number and see the event.
 
+- **My account** (`/account`): change the name and the language of Telegram messages, or
+  delete the account (type DELETE). Deleting wipes the name, phone number and Telegram link
+  and ends every session at once; the records others rely on stay (gift books, guest lists,
+  reviews, the audit log). Events nobody else hosts are archived, vendor pages are taken down,
+  and the last owner of an organization with staff must hand it over first.
+
 The API signs sessions as JWTs (`SESSION_SECRET`): the host session in the `session`
 cookie (or `Authorization: Bearer`), the helper session in the `desk` cookie (or
 `X-Desk-Token`).
@@ -399,6 +405,7 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | POST | `/api/auth/telegram/poll` `{ token }` (202 while waiting) | anyone with the token |
 | POST | `/api/auth/telegram/dev-confirm` `{ token, phone, name? }` | development without a bot |
 | GET, PATCH | `/api/auth/me` | host |
+| POST | `/api/auth/me/delete` `{ confirm: "DELETE" }` | host |
 | POST | `/api/auth/logout` | anyone |
 | POST | `/api/desk/join` `{ code, name }` | anyone |
 | GET | `/api/desk/me` | helper |

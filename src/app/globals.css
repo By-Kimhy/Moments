@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fffaf5;
+  --foreground: #2b1d1d;
+  --accent: #9b2c2c;
+  --muted: #7a6a66;
+  --line: #ead9cf;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --font-sans: var(--font-kantumruy), system-ui, sans-serif;
+  --font-serif: var(--font-battambang), serif;
+  --font-moul: var(--font-moul), serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #1a1414;
+    --foreground: #f4ece8;
+    --accent: #f08c8c;
+    --muted: #b3a29d;
+    --line: #3a2c2a;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Khmer script needs extra line height so vowels above and below don't collide. */
+:lang(km) {
+  line-height: 1.8;
+}

@@ -1,0 +1,115 @@
+# Moments
+
+A Khmer-first app for Cambodian weddings: digital invitations, RSVPs, guest check-in and the
+gift book (chamnang dai), in cash or by KHQR. Guests need no app and no login.
+
+The plan and the approved design (folder structure, database schema, build order) are in
+[docs/PROPOSAL.md](docs/PROPOSAL.md).
+
+| Part | Folder | Stack | Port |
+| ---- | ------ | ----- | ---- |
+| Web app | `src/` | Next.js 16 (App Router, TypeScript, Tailwind CSS) | 3000 |
+| API | `server/` | Node.js, Express 5, TypeScript, Prisma 6, zod | 4000 |
+| Database | `server/prisma/` | PostgreSQL 16 | 5432 |
+| Codes, rate limits, queue | | Redis 7 | 6379 |
+
+The web app never touches the database. Its pages and Server Actions call the API, passing
+the visitor's session along (`src/lib/api.ts`).
+
+## Running locally
+
+Requirements: Node.js 22+, PostgreSQL 16 and Redis (or Docker).
+
+```bash
+docker compose up -d          # PostgreSQL + Redis (skip if you run them yourself)
+cp .env.example .env          # then set SESSION_SECRET (openssl rand -base64 32)
+npm install
+npm run db:migrate            # create the tables
+npm run db:seed               # 3 templates + a demo wedding with 50 guests
+npm run dev                   # API on :4000, web app on :3000
+```
+
+Open http://localhost:3000. Both parts read the one `.env` at the repository root.
+
+### Demo data
+
+`npm run db:seed` creates (outside production):
+
+| Who | How to sign in |
+| --- | -------------- |
+| Host | Phone `012 345 678` |
+| Co-host (bride's side) | Phone `098 765 432` |
+| Helper | Go to `/desk`, helper code `123456`, any name |
+
+With `SMS_PROVIDER="mock"` (the default) no SMS is sent: the code is printed in the API log
+and shown on the login screen.
+
+## How sign-in works
+
+- **Hosts** sign in with their phone number and a 6-digit code, or with Telegram. Codes are
+  kept in Redis for 5 minutes and burn after 5 wrong tries; requests are rate-limited per
+  number and per IP. A new number is asked for a name on first sign-in.
+- **Telegram:** set `TELEGRAM_BOT_TOKEN` and `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`, and set the
+  bot's domain with @BotFather (`/setdomain`). The widget sends people to `/auth/telegram`,
+  and the API checks the signature.
+- **Helpers** need no account. The host shares the event's 6-digit helper code; a helper
+  enters it with their name at `/desk` and gets a session for that one event. Hosts can
+  remove a helper or make a new code.
+- **Co-hosts:** a host adds another host by phone number (e.g. the other family). They sign
+  in with that number and see the event.
+
+The API signs sessions as JWTs (`SESSION_SECRET`): the host session in the `session`
+cookie (or `Authorization: Bearer`), the helper session in the `desk` cookie (or
+`X-Desk-Token`).
+
+## Access rules
+
+- Every event route is under `/api/events/:eventId` and goes through `eventAccess`
+  (`server/src/access.ts`), which finds the caller's membership in that event. Anyone else
+  gets 404, as if the event didn't exist.
+- Owners (hosts and co-hosts) can do everything; helpers only get the desk. The person who
+  created the event can't be removed.
+- Every change to events and members is written to `audit_logs` in the same transaction.
+
+## Language
+
+Khmer is the default; the button in the header switches to English (a `lang` cookie). Web
+text lives in `src/i18n/km.ts` and `src/i18n/en.ts`. The API writes its error messages in
+English and translates them to Khmer (`server/src/messages.ts`) when the request sends
+`Accept-Language: km`, which the web app does for Khmer visitors. Fonts: Kantumruy Pro,
+Battambang and Moul.
+
+## API
+
+| Method | Path | Who |
+| ------ | ---- | --- |
+| POST | `/api/auth/otp/request` `{ phone }` | anyone |
+| POST | `/api/auth/otp/verify` `{ phone, code, name? }` | anyone |
+| POST | `/api/auth/telegram` (widget fields) | anyone |
+| GET, PATCH | `/api/auth/me` | host |
+| POST | `/api/auth/logout` | anyone |
+| POST | `/api/desk/join` `{ code, name }` | anyone |
+| GET | `/api/desk/me` | helper |
+| POST | `/api/desk/leave` | anyone |
+| GET | `/api/templates` | anyone |
+| GET, POST | `/api/events` | host |
+| GET | `/api/events/:eventId` | owner (full) or helper (desk view) |
+| PATCH | `/api/events/:eventId` | owner |
+| POST | `/api/events/:eventId/helper-code` | owner (new code) |
+| GET | `/api/events/:eventId/members` | owner |
+| POST | `/api/events/:eventId/cohosts` `{ phone, name }` | owner |
+| DELETE | `/api/events/:eventId/members/:memberId` | owner |
+
+## Tests
+
+`npm test` runs the API tests (Vitest + Supertest) against the database in `DATABASE_URL`.
+Each test signs in with fresh random phone numbers, so tests don't disturb other data.
+`npm run typecheck` and `npm run lint` check both parts.
+
+## Status
+
+Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers and
+co-hosts, access control, event create/edit.
+
+Next, in order: photo and KHQR uploads, guest list and import, invitation page and RSVP,
+check-in desk, gift book with offline sync, reports, Telegram notifications, PWA.

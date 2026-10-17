@@ -1,6 +1,12 @@
 # Moments – MVP proposal (step 1: structure and schema)
 
-Status: **draft, waiting for approval**. No application code has been written yet.
+Status: **approved** (Oct 17, 2026): build in this repo, Express + Prisma, helpers join with
+code + name, events may have several owners (co-hosts).
+
+Changes made while building:
+- i18n uses two small dictionaries (`src/i18n/km.ts`, `en.ts`) and a `lang` cookie instead of
+  `next-intl` and `[locale]` URLs. The API translates its error messages to Khmer.
+- The members list marks the event's creator, who can't be removed.
 
 Scope is the wedding MVP from the product plan: invitations, RSVP, guest list, check-in,
 gift book (cash + KHQR), reports, Telegram alerts. Ticketing, seating, thank-you

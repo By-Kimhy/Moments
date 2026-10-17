@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Language {
+  KM
+  EN
+}
+
+enum EventType {
+  WEDDING
+  TICKETED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MemberRole {
+  OWNER
+  HELPER
+}
+
+enum Side {
+  BRIDE
+  GROOM
+  BOTH
+}
+
+enum RsvpStatus {
+  PENDING
+  ATTENDING
+  DECLINED
+}
+
+enum Currency {
+  USD
+  KHR
+}
+
+enum GiftMethod {
+  CASH
+  KHQR
+}
+
+enum GiftStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+enum GiftSource {
+  DESK
+  GUEST
+  HOST
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+}
+
+enum TemplateStyle {
+  TRADITIONAL
+  MODERN
+  MINIMAL
+}
+
+model User {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @db.VarChar(120)
+  phone      String?  @unique @db.VarChar(20) // E.164, e.g. +85512345678
+  telegramId BigInt?  @unique
+  language   Language @default(KM)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  ownedEvents Event[]       @relation("EventOwner")
+  memberships EventMember[]
+}
+
+model Event {
+  id              String      @id @default(uuid()) @db.Uuid
+  ownerId         String      @db.Uuid // the account that created (and later pays for) the event
+  type            EventType   @default(WEDDING)
+  status          EventStatus @default(DRAFT)
+  titleKm         String      @db.VarChar(200)
+  titleEn         String?     @db.VarChar(200)
+  brideNameKm     String?     @db.VarChar(120)
+  brideNameEn     String?     @db.VarChar(120)
+  groomNameKm     String?     @db.VarChar(120)
+  groomNameEn     String?     @db.VarChar(120)
+  startsAt        DateTime // stored in UTC, shown in Asia/Phnom_Penh
+  venueKm         String?     @db.VarChar(300)
+  venueEn         String?     @db.VarChar(300)
+  mapUrl          String?     @db.VarChar(500)
+  schedule        Json        @default("[]") // [{ time, titleKm, titleEn }]
+  photos          Json        @default("[]") // [{ key }] storage keys, in display order
+  khqrImageKey    String?     @db.VarChar(300)
+  khqrAccountName String?     @db.VarChar(120)
+  templateId      String?     @db.Uuid
+  helperCode      String      @unique @db.VarChar(6)
+  telegramChatId  BigInt? // where host alerts go
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  owner     User          @relation("EventOwner", fields: [ownerId], references: [id])
+  template  Template?     @relation(fields: [templateId], references: [id])
+  members   EventMember[]
+  guests    Guest[]
+  gifts     Gift[]
+  payments  Payment[]
+  checkins  Checkin[]
+  auditLogs AuditLog[]
+
+  @@index([ownerId])
+}
+
+model EventMember {
+  id          String     @id @default(uuid()) @db.Uuid
+  eventId     String     @db.Uuid
+  userId      String?    @db.Uuid // empty for helpers who joined with the event's helper code
+  role        MemberRole
+  displayName String     @db.VarChar(120)
+  revokedAt   DateTime?
+  createdAt   DateTime   @default(now())
+
+  event         Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user          User?      @relation(fields: [userId], references: [id])
+  giftsRecorded Gift[]     @relation("GiftRecordedBy")
+  giftsVoided   Gift[]     @relation("GiftVoidedBy")
+  checkins      Checkin[]
+  auditLogs     AuditLog[]
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+}
+
+model Guest {
+  id           String     @id @default(uuid()) @db.Uuid
+  eventId      String     @db.Uuid
+  clientId     String?    @db.Uuid // set when created offline at the desk
+  name         String     @db.VarChar(160)
+  nameAlt      String?    @db.VarChar(160) // the name in the other script, to help search
+  phone        String?    @db.VarChar(20)
+  side         Side       @default(BOTH)
+  group        String?    @db.VarChar(80)
+  invitedCount Int        @default(1) // party size the host expects
+  inviteToken  String     @unique @db.VarChar(32)
+  rsvpStatus   RsvpStatus @default(PENDING)
+  rsvpCount    Int? // people the guest confirmed
+  rsvpMessage  String?    @db.VarChar(500)
+  rsvpAt       DateTime?
+  openedAt     DateTime? // first time the invitation was opened
+  tableNo      String?    @db.VarChar(20)
+  walkIn       Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  event    Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  gifts    Gift[]
+  checkins Checkin[]
+
+  @@unique([eventId, clientId])
+  @@index([eventId, side])
+  @@index([eventId, name])
+}
+
+model Gift {
+  id           String     @id @default(uuid()) @db.Uuid
+  eventId      String     @db.Uuid
+  clientId     String?    @db.Uuid // idempotency key from the offline desk
+  guestId      String?    @db.Uuid
+  giverName    String?    @db.VarChar(160) // when the giver is not on the guest list
+  amount       Int // USD cents or KHR riel, always > 0
+  currency     Currency
+  method       GiftMethod
+  status       GiftStatus @default(CONFIRMED) // gifts a guest submits start PENDING
+  source       GiftSource
+  note         String?    @db.VarChar(500)
+  recordedById String?    @db.Uuid // empty when a guest submitted it
+  recordedAt   DateTime   @default(now()) // device time at the desk
+  confirmedAt  DateTime?
+  voidedAt     DateTime?
+  voidedById   String?    @db.Uuid
+  voidReason   String?    @db.VarChar(300)
+  paymentId    String?    @unique @db.Uuid
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  event      Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  guest      Guest?       @relation(fields: [guestId], references: [id])
+  recordedBy EventMember? @relation("GiftRecordedBy", fields: [recordedById], references: [id])
+  voidedBy   EventMember? @relation("GiftVoidedBy", fields: [voidedById], references: [id])
+  payment    Payment?     @relation(fields: [paymentId], references: [id])
+
+  @@unique([eventId, clientId])
+  @@index([eventId, status])
+  @@index([eventId, guestId])
+}
+
+model Payment {
+  id              String        @id @default(uuid()) @db.Uuid
+  eventId         String        @db.Uuid
+  provider        String        @db.VarChar(40) // "manual", "bakong", ...
+  reference       String        @db.VarChar(120)
+  amount          Int
+  currency        Currency
+  status          PaymentStatus @default(PENDING)
+  providerPayload Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  gift  Gift?
+
+  @@unique([provider, reference])
+  @@index([eventId, status])
+}
+
+model Checkin {
+  id            String   @id @default(uuid()) @db.Uuid
+  eventId       String   @db.Uuid
+  guestId       String   @db.Uuid
+  clientId      String?  @db.Uuid
+  peopleCount   Int      @default(1)
+  checkedInById String   @db.Uuid
+  checkedInAt   DateTime @default(now())
+
+  event       Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  guest       Guest       @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  checkedInBy EventMember @relation(fields: [checkedInById], references: [id])
+
+  @@unique([eventId, guestId]) // one check-in per guest
+  @@unique([eventId, clientId])
+}
+
+model Template {
+  id         String        @id @default(uuid()) @db.Uuid
+  slug       String        @unique @db.VarChar(60)
+  name       String        @db.VarChar(120)
+  style      TemplateStyle
+  previewUrl String?       @db.VarChar(500)
+  config     Json // colors, fonts, layout options
+  isActive   Boolean       @default(true)
+
+  events Event[]
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  eventId   String   @db.Uuid
+  entity    String   @db.VarChar(40) // gift, guest, checkin, event, member
+  entityId  String   @db.Uuid
+  action    String   @db.VarChar(40) // create, update, void, confirm, reject, ...
+  before    Json?
+  after     Json?
+  actorId   String?  @db.Uuid // EventMember; empty for a guest or the system
+  createdAt DateTime @default(now())
+
+  event Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  actor EventMember? @relation(fields: [actorId], references: [id])
+
+  @@index([eventId, entity, entityId])
+}

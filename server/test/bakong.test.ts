@@ -56,17 +56,18 @@ describe("Bakong payments", () => {
     expect((await agent.post(`/api/platform/orders/${order.id}/check`).expect(200)).body).toEqual({ paid: false });
     paid.set(stored.khqrMd5!, { hash: "h1", amount: 1000, currency: "USD", fromAccountId: "guest@aba" });
     expect((await agent.post(`/api/platform/orders/${order.id}/check`).expect(200)).body).toEqual({ paid: false });
-    paid.set(stored.khqrMd5!, { hash: "abc123", amount: 2000, currency: "USD", fromAccountId: "dara@aba" });
+    const hash = `tx-${order.id}`; // Bakong's transaction hash: one per payment
+    paid.set(stored.khqrMd5!, { hash, amount: 2000, currency: "USD", fromAccountId: "dara@aba" });
     expect((await agent.post(`/api/platform/orders/${order.id}/check`).expect(200)).body).toEqual({ paid: true });
 
     expect((await agent.get(`/api/events/${event.id}`)).body.event.plan).toBe("STANDARD");
-    const payment = await prisma.payment.findFirstOrThrow({ where: { provider: "bakong", reference: "abc123" } });
+    const payment = await prisma.payment.findFirstOrThrow({ where: { provider: "bakong", reference: hash } });
     expect(payment).toMatchObject({ amount: 2000, eventId: event.id });
     expect((await prisma.planOrder.findUniqueOrThrow({ where: { id: order.id } })).confirmedById).toBeNull();
     // The QR is gone once paid, and checking again changes nothing.
     await request(app).get(`/api/platform/orders/${order.id}/khqr.svg`).expect(404);
     expect((await agent.post(`/api/platform/orders/${order.id}/check`)).body).toEqual({ paid: true });
-    expect(await prisma.payment.count({ where: { reference: { in: ["abc123", `plan:${order.id}`] } } })).toBe(1);
+    expect(await prisma.payment.count({ where: { reference: { in: [hash, `plan:${order.id}`] } } })).toBe(1);
     expect(user.id).toBeTruthy();
   });
 

@@ -3,6 +3,7 @@
 import type { deskView, hostView } from "./lib/events.js";
 import type { guestView } from "./lib/guests.js";
 import type { publicEventView, publicGuestView } from "./lib/invitations.js";
+import type { deskGuestView } from "./routes/checkins.js";
 import type { CurrentUser } from "./auth.js";
 
 export type { CurrentUser };
@@ -53,3 +54,15 @@ export type BulkImportResponse = { created: number; skipped: number };
 export type InvitationEvent = ReturnType<typeof publicEventView>;
 export type InvitationGuest = ReturnType<typeof publicGuestView>;
 export type InvitationResponse = { event: InvitationEvent; guest: InvitationGuest; inviteUrl: string };
+
+export type DeskGuest = ReturnType<typeof deskGuestView>;
+export type DeskStats = {
+  checkedInGuests: number;
+  checkedInPeople: number;
+  expectedPeople: number;
+  invitedPeople: number;
+  invitedGuests: number;
+  walkIns: number;
+  recent: { guestId: string; name: string; id: string; peopleCount: number; checkedInAt: Date; checkedInBy: string }[];
+};
+export type DeskGuestsResponse = { guests: DeskGuest[]; stats: DeskStats; at: Date };

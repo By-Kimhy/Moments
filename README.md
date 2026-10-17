@@ -132,6 +132,25 @@ phone) and the guest's personal entry QR for check-in. A button switches Khmer/E
   Hosts publish from the event page and can preview the invitation at any time
   (`/events/<id>/preview`).
 
+## Guest desk (check-in)
+
+Helpers use `/desk` after joining with the helper code; hosts use the "Guest desk" tab
+(`/events/<id>/checkin`). Same screen for both:
+
+- **Live count** of people and guests arrived against people expected (RSVP "coming"),
+  refreshed every 10 seconds, and the last arrivals.
+- **Find a guest** by typing part of a name (Khmer or Latin, spaces ignored) or phone number.
+  The whole guest list is loaded once onto the phone, so search is instant.
+- **Scan QR:** the back camera reads the QR on the guest's invitation (jsQR, works on Android
+  and iPhone; needs https). The desk never receives invitation tokens, only a short hash of
+  each, which it compares with the hash of the scanned code.
+- **Check in** with the number of people who actually came (defaults to their reply, or the
+  number invited). A second phone checking the same guest is told who already did it and
+  when. Mistakes can be undone. Every check-in and undo is in the audit log.
+- **Walk-ins:** someone not on the list is added (marked as a walk-in) and checked in at once.
+- Every write carries an id made on the phone, so a request sent twice is saved once; this
+  is what the offline queue (next module) builds on.
+
 ## API
 
 | Method | Path | Who |
@@ -170,6 +189,11 @@ phone) and the guest's personal entry QR for check-in. A button switches Khmer/E
 | POST | `/api/invitations/:token/open` | anyone with the link |
 | POST | `/api/invitations/:token/rsvp` `{ status, count?, message? }` | anyone with the link |
 | GET | `/api/invitations/:token/qr.svg` | anyone with the link |
+| GET | `/api/events/:eventId/desk/guests` | owner, helper |
+| GET | `/api/events/:eventId/desk/stats` | owner, helper |
+| POST | `/api/events/:eventId/checkins` `{ guestId, peopleCount, clientId?, checkedInAt? }` | owner, helper |
+| DELETE | `/api/events/:eventId/checkins/:guestId` | owner, helper |
+| POST | `/api/events/:eventId/desk/walk-ins` `{ name, side, phone?, peopleCount, clientId }` | owner, helper |
 
 ## Tests
 
@@ -181,7 +205,6 @@ Each test signs in with fresh random phone numbers, so tests don't disturb other
 
 Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers and
 co-hosts, access control, event create/edit, photo and KHQR uploads, guest list with
-CSV/Excel import and export, invitation page with three templates, RSVP and link previews.
+CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in.
 
-Next, in order: check-in desk, gift book with offline sync, reports, Telegram notifications,
-PWA.
+Next, in order: gift book with offline sync, reports, Telegram notifications, PWA.

@@ -7,6 +7,7 @@ import { loadAuth } from "./auth.js";
 import { config } from "./config.js";
 import { errorHandler, notFound } from "./errors.js";
 import { authRouter } from "./routes/auth.js";
+import { checkinsRouter } from "./routes/checkins.js";
 import { deskRouter } from "./routes/desk.js";
 import { eventRouter, eventsRouter } from "./routes/events.js";
 import { guestsRouter } from "./routes/guests.js";
@@ -38,7 +39,7 @@ export function createApp() {
   // Everything about one event: eventAccess checks the caller belongs to it first.
   const event = Router({ mergeParams: true });
   event.use(eventAccess);
-  event.use(eventRouter, mediaRouter, guestsRouter);
+  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter);
   app.use("/api/events/:eventId", event);
 
   app.use(notFound);

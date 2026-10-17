@@ -61,6 +61,10 @@ const km: Record<string, string> = {
   "Replies for this event are closed.": "ការឆ្លើយតបសម្រាប់កម្មវិធីនេះបានបិទហើយ។",
   "Choose whether you are coming.": "សូមជ្រើសរើសថាអ្នកនឹងមក ឬមិនមក។",
   "Keep the message under 500 characters.": "សារត្រូវតិចជាង ៥០០ តួអក្សរ។",
+  "Already checked in.": "បានចុះឈ្មោះចូលរួចហើយ។",
+  "Enter how many people arrived.": "សូមបញ្ចូលចំនួនមនុស្សដែលបានមកដល់។",
+  "Choose a guest.": "សូមជ្រើសរើសភ្ញៀវ។",
+  "That time is not valid.": "ពេលវេលានោះមិនត្រឹមត្រូវ។",
 };
 
 const KHMER_DIGITS = "០១២៣៤៥៦៧៨៩";

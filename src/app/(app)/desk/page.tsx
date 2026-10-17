@@ -3,6 +3,7 @@ import { leaveDesk } from "@/app/actions/desk";
 import { getMessages } from "@/i18n";
 import { fill } from "@/i18n/format";
 import { ApiError, api } from "@/lib/api";
+import { DeskApp } from "@/components/desk/desk-app";
 import { JoinForm } from "./join-form";
 
 // Helpers land here: the join form, or (once joined) the desk for their event.
@@ -26,11 +27,13 @@ export default async function DeskPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 py-8">
-      <p className="text-muted">{fill(t.desk.welcome, { name: desk.helper.displayName })}</p>
-      <h1 className="text-2xl font-semibold">{desk.event.titleKm}</h1>
-      <p className="rounded-xl border border-dashed border-line p-6 text-center text-muted">{t.desk.comingSoon}</p>
-      <form action={leaveDesk}>
+    <div className="flex flex-col gap-4 py-6">
+      <div>
+        <p className="text-sm text-muted">{fill(t.desk.welcome, { name: desk.helper.displayName })}</p>
+        <h1 className="text-xl font-semibold">{desk.event.titleKm}</h1>
+      </div>
+      <DeskApp eventId={desk.event.id} t={t.desk} sides={t.side} rsvp={t.rsvp} />
+      <form action={leaveDesk} className="mt-6">
         <button className="text-sm text-muted underline">{t.desk.leave}</button>
       </form>
     </div>

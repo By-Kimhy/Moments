@@ -145,6 +145,7 @@ model Event {
   eventVendors    EventVendor[]
   planOrders      PlanOrder[]
   guestPhotos     GuestPhoto[]
+  reminders       EventReminder[]
 
   @@index([ownerId])
   @@index([organizationId, startsAt])
@@ -693,4 +694,22 @@ model GuestPhoto {
 
   @@index([eventId, createdAt])
   @@index([guestId])
+}
+
+// Reminders the bot sends hosts before and after the day; each kind once per event.
+enum ReminderKind {
+  REPLIES // 3 days before: who hasn't replied
+  DESK // the day before: the guest desk checklist
+  THANKS // the day after: totals, and a nudge to send thank-yous
+}
+
+model EventReminder {
+  id      String       @id @default(uuid()) @db.Uuid
+  eventId String       @db.Uuid
+  kind    ReminderKind
+  sentAt  DateTime     @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, kind])
 }

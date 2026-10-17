@@ -382,6 +382,17 @@ message" checks it any time. If the bot is removed from the group, the event is 
 - gifts recorded at the desk, as one summary per 15 minutes (count, amount in that window,
   and the running total), so a busy desk doesn't flood the chat.
 
+**Reminders** (published weddings; each sent once):
+
+- 3 days before: who hasn't replied yet (up to 10 names) and how many are coming, with a link to
+  send invitations again;
+- the day before: the guest desk checklist — helper code, how many helpers joined, whether the
+  KHQR is uploaded;
+- the day after: arrivals and gift totals, with a link to send thank-yous.
+
+They go to the event's linked chat, or to each host privately if none is linked (hosts sign in
+through the bot). The API checks every 15 minutes.
+
 With Redis, alerts go through a BullMQ queue (`notifications`) and are retried with backoff
 when Telegram fails; the worker runs inside the API process. Without Redis they are sent in the
 background directly.

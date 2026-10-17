@@ -72,3 +72,55 @@ export const loginDone = "✅ បានចូលហើយ! សូមត្រឡ
 export const loginExpired =
   "តំណចូលនេះផុតកំណត់ហើយ។ សូមចុច «ចូលតាម Telegram» ម្តងទៀតនៅលើទំព័រ Moments។\n\nThis sign-in link has expired. Press “Sign in with Telegram” again on the Moments page.";
 export const loginNotYourContact = "សូមចែករំលែកលេខទូរស័ព្ទរបស់អ្នកផ្ទាល់ ដោយប្រើប៊ូតុងខាងក្រោម។\n\nPlease share your own number with the button below.";
+
+export function repliesReminder(lang: Lang, e: { title: string; pending: string[]; pendingCount: number; attendingPeople: number; link: string }) {
+  const names = e.pending.slice(0, 10).map((name) => `• ${name}`);
+  const more = e.pendingCount - names.length;
+  if (lang === "KM") {
+    return [
+      `⏰ នៅសល់ ៣ ថ្ងៃទៀតដល់ «${e.title}»។`,
+      e.pendingCount ? `ភ្ញៀវ ${n(e.pendingCount, lang)} នាក់មិនទាន់ឆ្លើយតប៖` : "ភ្ញៀវទាំងអស់បានឆ្លើយតបហើយ 🎉",
+      ...names,
+      more > 0 ? `… និង ${n(more, lang)} នាក់ទៀត` : null,
+      `នឹងមកសរុប៖ ${n(e.attendingPeople, lang)} នាក់`,
+      e.pendingCount ? `ផ្ញើតំណលិខិតអញ្ជើញម្តងទៀត៖ ${e.link}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+  return [
+    `⏰ 3 days to go until "${e.title}".`,
+    e.pendingCount ? `${e.pendingCount} guests haven't replied yet:` : "Every guest has replied 🎉",
+    ...names,
+    more > 0 ? `… and ${more} more` : null,
+    `Coming in total: ${e.attendingPeople} people`,
+    e.pendingCount ? `Send their invitation links again: ${e.link}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function deskReminder(lang: Lang, e: { title: string; helperCode: string; helpers: number; khqr: boolean; deskLink: string; guestsLink: string }) {
+  if (lang === "KM") {
+    return [
+      `📋 ថ្ងៃស្អែកជា «${e.title}»។ ត្រៀមតុទទួលភ្ញៀវ៖`,
+      `• លេខកូដជំនួយការ៖ ${e.helperCode} (ចូលនៅ ${e.deskLink})`,
+      e.helpers ? `• ជំនួយការបានចូលរួចហើយ៖ ${n(e.helpers, lang)} នាក់` : "• មិនទាន់មានជំនួយការចូលទេ — ផ្ញើលេខកូដទៅពួកគេ",
+      e.khqr ? "• KHQR ✓" : `• មិនទាន់មាន KHQR សម្រាប់ចំណងដៃទេ — ផ្ទុកឡើងនៅ ${e.guestsLink}`,
+      "• តុទទួលភ្ញៀវដំណើរការដោយគ្មានអ៊ីនធឺណិតបាន៖ សូមបើកវាម្តងមុនពិធី។",
+    ].join("\n");
+  }
+  return [
+    `📋 "${e.title}" is tomorrow. Get the guest desk ready:`,
+    `• Helper code: ${e.helperCode} (join at ${e.deskLink})`,
+    e.helpers ? `• Helpers who joined: ${e.helpers}` : "• No helper has joined yet — send them the code",
+    e.khqr ? "• KHQR ✓" : `• No KHQR for gifts yet — upload it at ${e.guestsLink}`,
+    "• The desk works offline: open it once before the day starts.",
+  ].join("\n");
+}
+
+export function thanksReminder(lang: Lang, e: { title: string; arrived: number; gifts: number; total: Money; link: string }) {
+  return lang === "KM"
+    ? [`🙏 អបអរសាទរ! «${e.title}» បានបញ្ចប់ហើយ។`, `ភ្ញៀវបានមក៖ ${n(e.arrived, lang)} នាក់ · ចំណងដៃ៖ ${n(e.gifts, lang)} (${both(e.total, lang)})`, `ផ្ញើសារអរគុណទៅភ្ញៀវ៖ ${e.link}`].join("\n")
+    : [`🙏 Congratulations! "${e.title}" is over.`, `Guests who came: ${e.arrived} · Gifts: ${e.gifts} (${both(e.total, lang)})`, `Send your guests a thank-you: ${e.link}`].join("\n");
+}

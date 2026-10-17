@@ -8,6 +8,7 @@ import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
 import { audit } from "../lib/audit.js";
 import { inviteUrl } from "../lib/guests.js";
+import { requireFeature } from "../lib/plan-limits.js";
 import { type Audience, DEFAULT_THANK_YOU, attended, gave, giftText, inAudience, thankYouFor } from "../lib/thank-you.js";
 import { notify } from "../jobs/notifications.js";
 
@@ -85,7 +86,7 @@ thankYouRouter.put("/thank-you/settings", async (req, res) => {
 
 // Queues an SMS for everyone in the audience with a phone number who hasn't had one yet
 // (failed ones are tried again).
-thankYouRouter.post("/thank-you/send", async (req, res) => {
+thankYouRouter.post("/thank-you/send", requireFeature("thankYouSms", "Sending thank-yous by SMS is part of the Premium plan."), async (req, res) => {
   const member = currentMember(req);
   const { audience: who, language: lang } = parse(sendSchema, req.body);
   const { event, guests } = await load(member.eventId);

@@ -33,13 +33,13 @@ Prices are the plan's starting assumptions and live in one place (`server/src/li
 | ---- | --- | ------------------- |
 | FREE | default for a new event | up to 100 guests, the traditional template only, Moments branding, no seating plan, no thank-you SMS |
 | STANDARD | $20 per event | up to 1,000 guests, all templates, gift book, check-in, reports |
-| PREMIUM | $50 per event | everything, including seating plan and thank-you messages, more guests |
-| PLANNER | organizations | events of a planner organization get Premium features |
+| PREMIUM | $50 per event | everything, including seating plan and thank-you SMS, up to 5,000 guests |
+| PLANNER | organizations | events of a planner organization get Premium features (so do ticketed events) |
 
 - `Event.plan` (default FREE). Limits are checked in the API: adding or importing guests past
   the limit, choosing a template, the seating and thank-you routes.
-- **Upgrading:** the host picks a plan on the event's "Plan" page; an `Upgrade` order is created
-  with the price and a short reference, and the page shows the **platform's** KHQR
+- **Upgrading:** the host picks a plan on the event's "Plan" page; a `PlanOrder` is created
+  for the difference from the current plan's price, with a short reference, and the page shows the **platform's** KHQR
   (`PLATFORM_KHQR_IMAGE`). A platform admin confirms the payment in `/admin`, which applies the
   plan (recorded in `payments` and the audit log). Ticket sales keep their per-ticket fee instead.
 - Existing events at the time of the migration become STANDARD, so nothing that already works

@@ -1,6 +1,7 @@
 // What a guest sees when they open their invitation link, and the RSVP rules.
 import type { Event, Guest, Organization, Template } from "@prisma/client";
 import { plannerBranding } from "./organizations.js";
+import { featuresOf } from "./plans.js";
 import { z } from "zod";
 import type { Photo, ScheduleItem } from "./events.js";
 
@@ -40,6 +41,8 @@ export const publicEventView = (e: Event & { template: Template | null; organiza
   rsvpOpen: rsvpOpen(e),
   // "Planned by …" instead of the Moments footer, when a planner runs the event.
   planner: plannerBranding(e.organization ?? null),
+  // The free plan shows the Moments credit at the foot of the invitation.
+  branding: featuresOf(e).branding,
 });
 
 export const publicGuestView = (g: Guest & { table?: { name: string } | null }) => ({

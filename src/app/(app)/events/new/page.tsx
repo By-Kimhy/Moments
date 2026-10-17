@@ -10,7 +10,7 @@ export default async function NewEventPage() {
   return (
     <div className="py-8">
       <h1 className="mb-6 text-2xl font-semibold">{t.eventForm.newTitle}</h1>
-      <EventForm action={createEvent} t={t.eventForm} templates={templates} submitLabel={t.eventForm.create} />
+      <EventForm action={createEvent} t={t.eventForm} templates={templates} submitLabel={t.eventForm.create} paidTemplateLabel={t.plans.paidTemplate} />
     </div>
   );
 }

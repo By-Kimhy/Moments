@@ -97,7 +97,7 @@ export async function attempt<T>(
   try {
     return { ok: true, data: await fn() };
   } catch (e) {
-    if (e instanceof ApiError && [400, 409, 429].includes(e.status)) {
+    if (e instanceof ApiError && [400, 402, 409, 429].includes(e.status)) {
       return { ok: false, state: { errors: e.fieldErrors, message: e.fieldErrors ? undefined : e.message } };
     }
     if (e instanceof ApiError && e.status === 401) redirect("/login");

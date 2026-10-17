@@ -1,6 +1,7 @@
 import { randomInt } from "node:crypto";
 import request from "supertest";
 import { createApp } from "../src/app.js";
+import { prisma } from "../src/db.js";
 
 export const app = createApp();
 
@@ -28,11 +29,12 @@ export const sampleEvent = {
   schedule: [{ time: "07:00", titleKm: "ពិធីហែជំនូន" }],
 };
 
-/** A signed-in host with one new event. */
-export async function hostWithEvent(name = "Test Host") {
+/** A signed-in host with one new event (on the free plan, unless another is given). */
+export async function hostWithEvent(name = "Test Host", plan: "FREE" | "STANDARD" | "PREMIUM" = "FREE") {
   const host = await signIn(name);
   const res = await host.agent.post("/api/events").send(sampleEvent);
   if (res.status !== 201) throw new Error(`create event failed: ${res.status} ${JSON.stringify(res.body)}`);
+  if (plan !== "FREE") await prisma.event.update({ where: { id: res.body.event.id }, data: { plan } });
   return { ...host, event: res.body.event as { id: string; helperCode: string } };
 }
 

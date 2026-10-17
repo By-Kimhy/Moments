@@ -1,6 +1,7 @@
 import type { Event, Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { randomDigits } from "./codes.js";
+import { effectivePlan, featuresOf } from "./plans.js";
 
 export type ScheduleItem = { time: string; titleKm: string; titleEn: string | null };
 export type Photo = { key: string };
@@ -39,6 +40,9 @@ export const hostView = (e: Event) => ({
   descriptionKm: e.descriptionKm,
   descriptionEn: e.descriptionEn,
   telegramChatId: e.telegramChatId?.toString() ?? null,
+  plan: e.plan,
+  effectivePlan: effectivePlan(e),
+  features: featuresOf(e),
   createdAt: e.createdAt,
   updatedAt: e.updatedAt,
 });

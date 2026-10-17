@@ -11,7 +11,7 @@ type Row = { id: string; name: string; text: string; gift: string; sms: { status
 
 /** A wedding that started yesterday: one guest came and gave, one came, one said no. */
 async function afterWedding() {
-  const host = await hostWithEvent();
+  const host = await hostWithEvent(undefined, "PREMIUM");
   const base = `/api/events/${host.event.id}`;
   await host.agent.patch(base).send({ status: "PUBLISHED", groomNameKm: "ដារ៉ា", brideNameKm: "សុភា", groomNameEn: "Dara", brideNameEn: "Sophea" }).expect(200);
   const add = async (name: string, nameAlt: string, phone: string | null) =>
@@ -78,7 +78,7 @@ describe("thank-you messages", () => {
   });
 
   it("waits until the wedding has started", async () => {
-    const host = await hostWithEvent();
+    const host = await hostWithEvent(undefined, "PREMIUM");
     await host.agent.post(`/api/events/${host.event.id}/thank-you/send`).send({}).expect(409);
   });
 

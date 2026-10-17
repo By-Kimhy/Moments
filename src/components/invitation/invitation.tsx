@@ -192,7 +192,7 @@ export function Invitation({ event, guest, gifts, thankYou, token, locale, t, la
             <span>{t.plannedBy.replace("{name}", event.planner.name)}</span>
           </div>
         ) : (
-          <p className="text-center text-xs opacity-60">{t.footer}</p>
+          event.branding && <p className="text-center text-xs opacity-60">{t.footer}</p>
         )}
       </div>
     </div>

@@ -7,6 +7,7 @@ import { buttonClass, secondaryButtonClass } from "@/components/form";
 import { getLocale, getMessages } from "@/i18n";
 import { apiGet } from "@/lib/api";
 import { formatDateTime } from "@/lib/dates";
+import { fill } from "@/i18n/format";
 import { CohostForm } from "./cohost-form";
 import { MediaSection } from "./media-section";
 import { TelegramSection } from "./telegram-section";
@@ -74,6 +75,13 @@ export default async function EventPage({ params }: PageProps<"/events/[eventId]
           </div>
         )}
       </dl>
+
+      {event.type === "WEDDING" && (
+        <Link href={`/events/${eventId}/plan`} className="flex items-center justify-between gap-3 rounded-xl border border-line p-4 hover:bg-black/5" data-testid="plan-link">
+          <span>{fill(t.plans.current, { plan: t.plans.names[event.effectivePlan] })}</span>
+          {event.effectivePlan !== "PREMIUM" && event.effectivePlan !== "PLANNER" && <span className="text-sm font-medium text-accent">{t.plans.needsUpgrade} →</span>}
+        </Link>
+      )}
 
       <TelegramSection eventId={eventId} status={telegram} t={t.telegram} />
 

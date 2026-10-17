@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { HostEvent, ThankYouResponse } from "@api/contract";
 import { EventNav } from "@/components/event-nav";
+import { UpgradeNotice } from "@/components/upgrade-notice";
 import { getLocale, getMessages } from "@/i18n";
 import { apiGet } from "@/lib/api";
 import { ThankYouBoard } from "./thank-you-board";
@@ -23,7 +24,7 @@ export default async function ThankYouPage({ params }: PageProps<"/events/[event
         <h1 className="mt-1 text-2xl font-semibold">{title}</h1>
       </div>
       <EventNav eventId={eventId} active="thanks" t={t.nav} />
-      <ThankYouBoard eventId={eventId} initial={data} t={t.thanks} />
+      <ThankYouBoard eventId={eventId} initial={data} t={t.thanks} upgrade={event.features.thankYouSms ? undefined : <UpgradeNotice eventId={eventId} t={t.plans} />} />
     </div>
   );
 }

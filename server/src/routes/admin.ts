@@ -1,12 +1,17 @@
-// Platform admins: the vendor review queue, featured placements and hiding reviews.
+// Platform admins: the vendor review queue, featured placements, hiding reviews, and
+// confirming plan payments.
 import type { Prisma, VendorStatus } from "@prisma/client";
 import { type Request, Router } from "express";
 import { z } from "zod";
-import { requireAdmin } from "../auth.js";
+import { currentUser, requireAdmin } from "../auth.js";
 import { isUuid } from "../access.js";
 import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
+import { audit } from "../lib/audit.js";
+import { PLAN_ORDER } from "../lib/plans.js";
 import { ownerVendorView, ratings } from "../lib/vendors.js";
+import { paymentProvider } from "../providers/payment.js";
+import { planOrderView } from "./plans.js";
 
 export const adminRouter = Router();
 adminRouter.use(requireAdmin);
@@ -108,4 +113,60 @@ adminRouter.post("/reviews/:reviewId/hide", async (req, res) => {
 adminRouter.post("/reviews/:reviewId/show", async (req, res) => {
   await setHidden(req, false);
   res.status(204).end();
+});
+
+// Plan upgrades: hosts pay the platform's KHQR with the reference; an admin confirms here.
+
+const ordersSchema = z.object({ status: z.enum(["PENDING", "PAID", "CANCELLED"]).default("PENDING").catch("PENDING") });
+
+adminRouter.get("/plan-orders", async (req, res) => {
+  const { status } = parse(ordersSchema, req.query);
+  const orders = await prisma.planOrder.findMany({
+    where: { status },
+    include: { event: { select: { id: true, titleKm: true, titleEn: true, plan: true, owner: { select: { name: true, phone: true } } } } },
+    orderBy: { createdAt: status === "PENDING" ? "asc" : "desc" },
+    take: 200,
+  });
+  res.json({ orders: orders.map((o) => ({ ...planOrderView(o), event: { id: o.event.id, titleKm: o.event.titleKm, titleEn: o.event.titleEn, plan: o.event.plan }, owner: o.event.owner })) });
+});
+
+async function pendingOrder(req: Request) {
+  const id = req.params.orderId;
+  const order = isUuid(id) ? await prisma.planOrder.findUnique({ where: { id } }) : null;
+  if (!order) throw new HttpError(404, "Order not found.");
+  if (order.status !== "PENDING") throw new HttpError(409, "This order has changed. Reload and try again.");
+  return order;
+}
+
+// The money arrived: record the payment and move the event to the plan.
+adminRouter.post("/plan-orders/:orderId/confirm", async (req, res) => {
+  const order = await pendingOrder(req);
+  const admin = currentUser(req);
+  const updated = await prisma.$transaction(async (tx) => {
+    // Claim the order first, so two admins confirming at once record one payment.
+    const claimed = await tx.planOrder.updateMany({ where: { id: order.id, status: "PENDING" }, data: { status: "PAID", paidAt: new Date(), confirmedById: admin.id } });
+    if (!claimed.count) throw new HttpError(409, "This order has changed. Reload and try again.");
+    const paymentId = await paymentProvider.recordPlanPayment(tx, order, admin.id);
+    const before = await tx.event.findUniqueOrThrow({ where: { id: order.eventId }, select: { plan: true } });
+    // Never move an event down: an older, cheaper order confirmed late changes nothing.
+    const plan = PLAN_ORDER.indexOf(order.plan) > PLAN_ORDER.indexOf(before.plan) ? order.plan : before.plan;
+    await tx.event.update({ where: { id: order.eventId }, data: { plan } });
+    await audit(tx, {
+      eventId: order.eventId,
+      entity: "event",
+      entityId: order.eventId,
+      action: "plan_upgrade",
+      actorId: null,
+      before: { plan: before.plan },
+      after: { plan, reference: order.reference, amount: order.amount, currency: order.currency, confirmedBy: { id: admin.id, name: admin.name } },
+    });
+    return tx.planOrder.update({ where: { id: order.id }, data: { paymentId } });
+  });
+  res.json({ order: planOrderView(updated) });
+});
+
+adminRouter.post("/plan-orders/:orderId/cancel", async (req, res) => {
+  const order = await pendingOrder(req);
+  const updated = await prisma.planOrder.update({ where: { id: order.id }, data: { status: "CANCELLED", cancelledAt: new Date() } });
+  res.json({ order: planOrderView(updated) });
 });

@@ -33,6 +33,8 @@ export const config = {
   telegramPolling: () => process.env.TELEGRAM_POLLING === "true",
   // Platform fee on ticket sales, in percent (recorded per order for billing).
   platformFeePercent: () => Number(process.env.PLATFORM_FEE_PERCENT ?? 4),
+  // The platform's own KHQR image (a PNG or JPEG file), shown to hosts paying for a plan.
+  platformKhqrImage: () => (process.env.PLATFORM_KHQR_IMAGE ? path.resolve(repoRoot, process.env.PLATFORM_KHQR_IMAGE) : null),
   // Comma-separated phone numbers (any format) of platform admins.
   adminPhones: () =>
     (process.env.ADMIN_PHONES ?? "")

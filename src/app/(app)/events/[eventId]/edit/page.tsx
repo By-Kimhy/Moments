@@ -26,6 +26,7 @@ export default async function EditEventPage({ params }: PageProps<"/events/[even
         event={data.event}
         dateTime={toInputs(data.event.startsAt)}
         submitLabel={t.common.save}
+        paidTemplateLabel={data.event.features.allTemplates ? undefined : t.plans.paidTemplate}
       />
     </div>
   );

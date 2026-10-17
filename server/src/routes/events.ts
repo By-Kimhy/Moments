@@ -8,6 +8,8 @@ import { audit } from "../lib/audit.js";
 import { deskView, hostView, uniqueHelperCode } from "../lib/events.js";
 import { publicEventView } from "../lib/invitations.js";
 import { normalizePhone } from "../lib/phone.js";
+import { checkTemplateAllowed } from "../lib/plan-limits.js";
+import { featuresOf } from "../lib/plans.js";
 
 /** /api/events: the signed-in host's events. */
 export const eventsRouter = Router();
@@ -112,6 +114,8 @@ eventsRouter.post("/", requireUser, async (req, res) => {
   const user = currentUser(req);
   const data = parse(createEventSchema, req.body);
   await checkTemplate(data.templateId);
+  // New events start on the free plan.
+  await checkTemplateAllowed(data.templateId, featuresOf({ plan: "FREE", organizationId: null, type: data.type ?? "WEDDING" }));
   const event = await prisma.$transaction(async (tx) => {
     const created = await tx.event.create({
       data: {
@@ -138,6 +142,10 @@ eventRouter.patch("/", ownersOnly, async (req, res) => {
   const member = currentMember(req);
   const data = parse(updateEventSchema, req.body);
   await checkTemplate(data.templateId);
+  if (data.templateId) {
+    const current = await prisma.event.findUniqueOrThrow({ where: { id: member.eventId } });
+    await checkTemplateAllowed(data.templateId, featuresOf({ ...current, type: data.type ?? current.type }));
+  }
   const event = await prisma.$transaction(async (tx) => {
     const before = await tx.event.findUniqueOrThrow({ where: { id: member.eventId } });
     const after = await tx.event.update({ where: { id: member.eventId }, data });

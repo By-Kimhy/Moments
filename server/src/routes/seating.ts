@@ -5,12 +5,16 @@ import { currentMember, isUuid, ownersOnly } from "../access.js";
 import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
 import { audit } from "../lib/audit.js";
+import { requireFeature } from "../lib/plan-limits.js";
 import { autoArrange, nextTableNames, seatsFor } from "../lib/seating.js";
 import { seatingPdf } from "../reports/seating-pdf.js";
 
 /** Mounted on /api/events/:eventId (after eventAccess). */
 export const seatingRouter = Router({ mergeParams: true });
 seatingRouter.use(["/seating", "/tables"], ownersOnly);
+// Reading the tables stays open (the guest form lists them); arranging them is Premium.
+const premiumOnly = requireFeature("seating", "The seating plan is part of the Premium plan.");
+seatingRouter.use(["/tables", "/seating/assign", "/seating/auto", "/seating/plan.pdf"], premiumOnly);
 
 const tableFields = {
   name: z.string().trim().min(1, "Enter a table name.").max(40),

@@ -1,7 +1,7 @@
 // Confirms that KHQR gift money really arrived. For now a host confirms by hand after checking
 // their bank app (ManualPaymentProvider). An automatic provider (Bakong or a bank's API) will
 // implement the same interface and confirm gifts without the host.
-import type { Gift, Order, Prisma } from "@prisma/client";
+import type { Gift, Order, PlanOrder, Prisma } from "@prisma/client";
 
 export interface PaymentProvider {
   readonly name: string;
@@ -9,6 +9,8 @@ export interface PaymentProvider {
   recordConfirmation(tx: Prisma.TransactionClient, gift: Gift, confirmedById: string): Promise<string>;
   /** The same for a ticket order: the organizer saw the money arrive. */
   recordOrderPayment(tx: Prisma.TransactionClient, order: Order, confirmedById: string): Promise<string>;
+  /** A host paid the platform for a plan; a platform admin saw it arrive. */
+  recordPlanPayment(tx: Prisma.TransactionClient, order: PlanOrder, confirmedById: string): Promise<string>;
 }
 
 export class ManualPaymentProvider implements PaymentProvider {
@@ -39,6 +41,21 @@ export class ManualPaymentProvider implements PaymentProvider {
         currency: order.currency,
         status: "PAID",
         providerPayload: { confirmedBy: confirmedById, reference: order.reference },
+      },
+    });
+    return payment.id;
+  }
+
+  async recordPlanPayment(tx: Prisma.TransactionClient, order: PlanOrder, confirmedById: string) {
+    const payment = await tx.payment.create({
+      data: {
+        eventId: order.eventId,
+        provider: this.name,
+        reference: `plan:${order.id}`,
+        amount: order.amount,
+        currency: order.currency,
+        status: "PAID",
+        providerPayload: { confirmedBy: confirmedById, reference: order.reference, plan: order.plan },
       },
     });
     return payment.id;

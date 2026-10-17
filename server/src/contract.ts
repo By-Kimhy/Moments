@@ -196,3 +196,19 @@ export type AdminReviewsResponse = {
 export type EventVendorsResponse = {
   vendors: { vendorId: string; status: "CONSIDERING" | "BOOKED"; note: string | null; listed: boolean; vendor: VendorCard & { phone: string | null; telegram: string | null } }[];
 };
+
+export type Plan = import("./lib/plans.js").Plan;
+export type PlanOrderView = ReturnType<typeof import("./routes/plans.js")["planOrderView"]>;
+export type PlanResponse = {
+  plan: Plan;
+  effectivePlan: import("./lib/plans.js").EffectivePlan;
+  features: import("./lib/plans.js").PlanFeatures;
+  guests: number;
+  plans: ({ plan: Plan; price: number; upgradePrice: number | null } & import("./lib/plans.js").PlanFeatures)[];
+  pending: PlanOrderView | null;
+  orders: PlanOrderView[];
+  platformKhqr: boolean;
+};
+export type AdminPlanOrdersResponse = {
+  orders: (PlanOrderView & { event: { id: string; titleKm: string; titleEn: string | null; plan: Plan }; owner: { name: string; phone: string | null } })[];
+};

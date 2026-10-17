@@ -43,6 +43,7 @@ Open http://localhost:3000. Both parts read the one `.env` at the repository roo
 | Concert door | Go to `/desk`, helper code `654321` |
 | Ticket buyer | Open `/e/khmer-music-night` |
 | Platform admin | The host above (`012 345 678`) is also an admin: `/admin` |
+| Plans | The demo wedding is on Premium; new events start on Free |
 | Vendor | Phone `077 777 777` (owns the demo listings at `/vendors`) |
 
 With `SMS_PROVIDER="mock"` (the default) no SMS is sent: the code is printed in the API log
@@ -297,6 +298,28 @@ The seed adds a demo concert at `/e/khmer-music-night` (door helper code `654321
 - **Admins** (`User.isAdmin`, or phone numbers in `ADMIN_PHONES`) use `/admin`: the review
   queue by status, approve, send back, suspend, feature for a number of days, hide reviews.
 
+## Plans
+
+Prices and limits live in `server/src/lib/plans.ts` (US cents, per event):
+
+| Plan | Price | Guests | Templates | Seating plan | Thank-you SMS | Moments credit on invitations |
+| ---- | ----- | ------ | --------- | ------------ | ------------- | ----------------------------- |
+| Free | – | 100 | traditional | – | – | yes |
+| Standard | $20 | 1,000 | all | – | – | no |
+| Premium | $50 | 5,000 | all | yes | yes | no |
+
+- New weddings start on Free; events that existed before plans became Standard. Events of a
+  planner organization ("Planner") and ticketed events (which pay a fee per ticket) get every
+  feature.
+- The API enforces the limits and answers 402 with the reason: adding or importing guests past
+  the limit (walk-ins at the desk are never refused), choosing another template, arranging
+  tables, sending thank-yous by SMS. The web app shows an "upgrade" notice where it applies.
+- **Upgrading:** the event's "Plan" page (from the overview) lists the plans; choosing one
+  creates an order for the difference in price with a short reference, and shows the platform's
+  KHQR (`PLATFORM_KHQR_IMAGE`). A platform admin checks the bank and taps "Money received" in
+  `/admin`, which records the payment, moves the event up (never down) and writes the audit log.
+  Hosts can cancel a waiting order; a new one replaces it.
+
 ## Telegram
 
 One bot does both the hosts' Telegram login and their alerts.
@@ -448,6 +471,11 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | POST | `/api/vendors/mine/:vendorId/submit` | vendor owner |
 | GET | `/api/vendors/mine/:vendorId/enquiries`; POST `/enquiries/read` | vendor owner |
 | PUT | `/api/vendors/mine/:vendorId/reviews/:reviewId/reply` `{ reply }` | vendor owner |
+| GET | `/api/events/:eventId/plan` | owner |
+| POST | `/api/events/:eventId/plan/orders` `{ plan }`, `/plan/orders/:orderId/cancel` | owner |
+| GET | `/api/platform/khqr` | anyone |
+| GET | `/api/admin/plan-orders` (`?status=`) | platform admin |
+| POST | `/api/admin/plan-orders/:orderId/confirm`, `/cancel` | platform admin |
 | GET | `/api/events/:eventId/vendors` | owner |
 | PUT, DELETE | `/api/events/:eventId/vendors/:vendorId` `{ status, note }` | owner |
 | GET | `/api/admin/vendors` (`?status=`), `/api/admin/reviews` | platform admin |
@@ -472,7 +500,7 @@ CSV/Excel import and export, invitation page with three templates, RSVP and link
 MVP in `docs/PROPOSAL.md`.
 
 Phase 2 (`docs/PHASE2.md`) is done too: seating plan, thank-you messages, planner dashboard
-and ticketing. Phase 3 (`docs/PHASE3.md`): the vendor marketplace is built; paid plans are next.
+and ticketing. Phase 3 (`docs/PHASE3.md`) is done: the vendor marketplace and paid plans.
 
 Before a real wedding: connect a real SMS gateway (`server/src/providers/sms.ts`), set up the
 Telegram bot, S3/R2 storage and Chromium on the server, and run the app over https (the camera

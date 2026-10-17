@@ -11,7 +11,7 @@ type Plan = {
 };
 
 async function wedding() {
-  const host = await hostWithEvent();
+  const host = await hostWithEvent(undefined, "PREMIUM");
   const base = `/api/events/${host.event.id}`;
   await host.agent.patch(base).send({ status: "PUBLISHED" }).expect(200);
   const add = async (name: string, side: string, group: string, invitedCount: number) =>
@@ -102,7 +102,7 @@ describe("seating guests", () => {
     const helper = await joinDesk(event.helperCode);
     await helper.agent.get(`${base}/seating`).expect(403);
     await helper.agent.post(`${base}/tables`).send({ name: "x" }).expect(403);
-    const other = await hostWithEvent();
+    const other = await hostWithEvent(undefined, "PREMIUM");
     const otherBase = `/api/events/${other.event.id}`;
     const t = (await other.agent.post(`${otherBase}/tables`).send({ name: "1" }).expect(201)).body.table;
     await other.agent.post(`${otherBase}/seating/assign`).send({ guestIds: [guests.friend.id], tableId: t.id }).expect(404);

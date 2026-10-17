@@ -80,6 +80,7 @@ async function main() {
   const template = await prisma.template.findUniqueOrThrow({ where: { slug: "traditional" } });
   const event = await prisma.event.create({
     data: {
+      plan: "PREMIUM", // so every feature can be tried
       ownerId: host.id,
       status: "PUBLISHED",
       titleKm: "ពិធីមង្គលការ ដារ៉ា និង សុភា",

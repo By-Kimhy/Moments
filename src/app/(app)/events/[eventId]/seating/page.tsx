@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { HostEvent, SeatingPlan } from "@api/contract";
 import { EventNav } from "@/components/event-nav";
+import { UpgradeNotice } from "@/components/upgrade-notice";
 import { getLocale, getMessages } from "@/i18n";
 import { apiGet } from "@/lib/api";
 import { SeatingBoard } from "./seating-board";
@@ -23,7 +24,11 @@ export default async function SeatingPage({ params }: PageProps<"/events/[eventI
         <h1 className="mt-1 text-2xl font-semibold">{title}</h1>
       </div>
       <EventNav eventId={eventId} active="seating" t={t.nav} />
-      <SeatingBoard eventId={eventId} initial={plan} locale={locale} t={t.seating} sides={t.side} />
+      {event.features.seating ? (
+        <SeatingBoard eventId={eventId} initial={plan} locale={locale} t={t.seating} sides={t.side} />
+      ) : (
+        <UpgradeNotice eventId={eventId} t={t.plans} />
+      )}
     </div>
   );
 }

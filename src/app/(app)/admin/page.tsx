@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { AdminReviewsResponse, AdminVendorsResponse, VendorStatus } from "@api/contract";
+import type { AdminPlanOrdersResponse, AdminReviewsResponse, AdminVendorsResponse, VendorStatus } from "@api/contract";
+import { formatAmount } from "@api/lib/money";
+import { confirmPlanOrder, rejectPlanOrder } from "@/app/actions/plans";
 import { featureVendor, moderateVendor, setReviewHidden } from "@/app/actions/vendors";
 import { buttonClass, secondaryButtonClass } from "@/components/form";
 import { categoryName, provinceName } from "@/components/vendor-card";
@@ -19,11 +21,12 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   if (!user.isAdmin) notFound();
   const { status: raw } = await searchParams;
   const status = STATUSES.find((s) => s === raw) ?? "PENDING_REVIEW";
-  const [t, locale, { vendors, counts }, { reviews }] = await Promise.all([
+  const [t, locale, { vendors, counts }, { reviews }, { orders }] = await Promise.all([
     getMessages(),
     getLocale(),
     apiGet<AdminVendorsResponse>(`/admin/vendors?status=${status}`),
     apiGet<AdminReviewsResponse>("/admin/reviews"),
+    apiGet<AdminPlanOrdersResponse>("/admin/plan-orders"),
   ]);
   return (
     <div className="flex flex-col gap-6 py-8">
@@ -33,6 +36,37 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         </Link>
         <h1 className="mt-1 text-2xl font-semibold">{t.admin.title}</h1>
       </div>
+      <section className="flex flex-col gap-3">
+        <h2 className="font-semibold">{t.plans.adminTitle}</h2>
+        {orders.length === 0 && <p className="text-sm text-muted">{t.admin.empty}</p>}
+        <ul className="flex flex-col gap-2">
+          {orders.map((o) => (
+            <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line p-3" data-testid="plan-order">
+              <div className="flex flex-col text-sm">
+                <span className="font-medium">
+                  {fill(t.plans.adminOrder, {
+                    reference: o.reference,
+                    event: locale === "en" && o.event.titleEn ? o.event.titleEn : o.event.titleKm,
+                    plan: t.plans.names[o.plan],
+                    price: formatAmount(o.amount, o.currency, locale === "km"),
+                  })}
+                </span>
+                <span className="text-muted">
+                  {fill(t.admin.owner, { name: o.owner.name, phone: o.owner.phone ?? "" })} · {formatDateTime(o.createdAt, locale)}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <form action={confirmPlanOrder.bind(null, o.id)}>
+                  <button className={buttonClass}>{t.plans.confirm}</button>
+                </form>
+                <form action={rejectPlanOrder.bind(null, o.id)}>
+                  <button className={secondaryButtonClass}>{t.plans.cancel}</button>
+                </form>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">{t.admin.vendors}</h2>
         <nav className="-mx-4 flex gap-1 overflow-x-auto border-b border-line px-4">

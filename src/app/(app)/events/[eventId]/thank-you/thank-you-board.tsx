@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import type { ThankYouResponse } from "@api/contract";
 import { buttonClass, secondaryButtonClass } from "@/components/form";
 import type { Messages } from "@/i18n/km";
@@ -10,7 +10,7 @@ import { ClientApiError, clientApi } from "@/lib/client-api";
 type Audience = "ALL" | "ATTENDED" | "GAVE";
 type Language = "KM" | "EN";
 
-export function ThankYouBoard({ eventId, initial, t }: { eventId: string; initial: ThankYouResponse; t: Messages["thanks"] }) {
+export function ThankYouBoard({ eventId, initial, t, upgrade }: { eventId: string; initial: ThankYouResponse; t: Messages["thanks"]; upgrade?: ReactNode }) {
   const [data, setData] = useState(initial);
   const [audience, setAudience] = useState<Audience>("ALL");
   const [language, setLanguage] = useState<Language>("KM");
@@ -97,7 +97,9 @@ export function ThankYouBoard({ eventId, initial, t }: { eventId: string; initia
           </label>
         </div>
         <p className="text-sm text-muted">{fill(t.sentCount, { sms: data.sent.SMS, share: data.sent.SHARE })}</p>
-        {data.canSend ? (
+        {upgrade ? (
+          upgrade
+        ) : data.canSend ? (
           <button
             type="button"
             className={`${buttonClass} self-start`}

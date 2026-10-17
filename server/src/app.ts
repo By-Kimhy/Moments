@@ -17,6 +17,7 @@ import { guestsRouter } from "./routes/guests.js";
 import { invitationsRouter } from "./routes/invitations.js";
 import { filesRouter, mediaRouter } from "./routes/media.js";
 import { organizationsRouter } from "./routes/organizations.js";
+import { eventPlanRouter, platformRouter } from "./routes/plans.js";
 import { ordersRouter, publicEventsRouter } from "./routes/public-tickets.js";
 import { reportsRouter } from "./routes/reports.js";
 import { seatingRouter } from "./routes/seating.js";
@@ -53,10 +54,11 @@ export function createApp() {
   app.use("/api/orders", ordersRouter);
   app.use("/api/vendors", vendorsRouter);
   app.use("/api/admin", adminRouter);
+  app.use("/api/platform", platformRouter);
   // Everything about one event: eventAccess checks the caller belongs to it first.
   const event = Router({ mergeParams: true });
   event.use(eventAccess);
-  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter, seatingRouter, thankYouRouter, ticketingRouter, eventVendorsRouter);
+  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter, seatingRouter, thankYouRouter, ticketingRouter, eventVendorsRouter, eventPlanRouter);
   app.use("/api/events/:eventId", event);
 
   app.use(notFound);

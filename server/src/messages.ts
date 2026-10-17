@@ -133,6 +133,14 @@ const km: Record<string, string> = {
   "Write a reply.": "សូមសរសេរការឆ្លើយតប។",
   "You can't review your own business.": "អ្នកមិនអាចវាយតម្លៃអាជីវកម្មផ្ទាល់ខ្លួនបានទេ។",
   "Send this vendor an enquiry before reviewing them.": "សូមផ្ញើសំណួរទៅអ្នកផ្តល់សេវានេះ មុនពេលវាយតម្លៃ។",
+  "This template needs a paid plan.": "គំរូនេះត្រូវការគម្រោងបង់ប្រាក់។",
+  "The seating plan is part of the Premium plan.": "ប្លង់តុមាននៅក្នុងគម្រោង Premium។",
+  "Sending thank-yous by SMS is part of the Premium plan.": "ការផ្ញើសារអរគុណតាម SMS មាននៅក្នុងគម្រោង Premium។",
+  "Choose a plan.": "សូមជ្រើសរើសគម្រោង។",
+  "This event already has every feature.": "កម្មវិធីនេះមានមុខងារទាំងអស់រួចហើយ។",
+  "The event is already on this plan or a higher one.": "កម្មវិធីនេះស្ថិតក្នុងគម្រោងនេះ ឬខ្ពស់ជាងរួចហើយ។",
+  "Only orders waiting for payment can be cancelled.": "អាចលុបចោលបានតែការកុម្ម៉ង់ដែលកំពុងរង់ចាំការបង់ប្រាក់ប៉ុណ្ណោះ។",
+  "This order has changed. Reload and try again.": "ការកុម្ម៉ង់នេះបានផ្លាស់ប្តូរ។ សូមផ្ទុកឡើងវិញ ហើយព្យាយាមម្តងទៀត។",
   "This listing has changed. Reload and try again.": "ព័ត៌មាននេះបានផ្លាស់ប្តូរ។ សូមផ្ទុកឡើងវិញ ហើយព្យាយាមម្តងទៀត។",
 };
 
@@ -143,6 +151,7 @@ const khmerNumber = (n: string) => n.replace(/\d/g, (d) => KHMER_DIGITS[Number(d
 const kmPatterns: [RegExp, (n: string) => string][] = [
   [/^At most (\d+) tickets of this type per order\.$/, (n) => `យ៉ាងច្រើន ${khmerNumber(n)} សំបុត្រប្រភេទនេះ ក្នុងការកុម្ម៉ង់មួយ។`],
   [/^A vendor can have up to (\d+) photos\.$/, (n) => `អ្នកផ្តល់សេវាម្នាក់អាចមានរូបថតបានច្រើនបំផុត ${khmerNumber(n)}។`],
+  [/^This plan allows up to (\d+) guests\. Upgrade to add more\.$/, (n) => `គម្រោងនេះអនុញ្ញាតភ្ញៀវបានច្រើនបំផុត ${khmerNumber(n)} នាក់។ សូមដំឡើងគម្រោង ដើម្បីបន្ថែមទៀត។`],
   [/^This invitation is for up to (\d+) people\.$/, (n) => `លិខិតអញ្ជើញនេះសម្រាប់មនុស្សយ៉ាងច្រើន ${khmerNumber(n)} នាក់។`],
 ];
 

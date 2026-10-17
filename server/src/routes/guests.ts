@@ -9,6 +9,7 @@ import { audit } from "../lib/audit.js";
 import { newInviteToken } from "../lib/codes.js";
 import { csvCell } from "../lib/csv.js";
 import { MAX_IMPORT_ROWS, type GuestInput, guestSchema, guestView, inviteUrl, readSheet, resolveTable, rowsToGuests } from "../lib/guests.js";
+import { checkGuestLimit } from "../lib/plan-limits.js";
 import { translate } from "../messages.js";
 import { sheetUpload } from "../uploads.js";
 
@@ -104,6 +105,7 @@ guestsRouter.get("/guests/export.csv", async (req, res) => {
 guestsRouter.post("/guests", async (req, res) => {
   const member = currentMember(req);
   const data = parse(guestSchema, req.body);
+  await checkGuestLimit(member.eventId, 1);
   const guest = await prisma.$transaction(async (tx) => {
     const created = await tx.guest.create({ data: { ...(await guestData(tx, member.eventId, data)), eventId: member.eventId, inviteToken: newInviteToken() }, include: withCounts });
     await audit(tx, { eventId: member.eventId, entity: "guest", entityId: created.id, action: "create", actorId: member.id, after: data });
@@ -179,6 +181,7 @@ guestsRouter.post("/guests/bulk", async (req, res) => {
     toCreate.push(guest);
   }
 
+  await checkGuestLimit(member.eventId, toCreate.length);
   await prisma.$transaction(async (tx) => {
     // Tables named in the file are found or created once each.
     const rows = [];

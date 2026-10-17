@@ -6,7 +6,7 @@ import { Field, Message, Select, TextArea, buttonClass } from "@/components/form
 import type { FormState } from "@/lib/api";
 import type { Messages } from "@/i18n/km";
 
-type Template = { id: string; name: string };
+type Template = { id: string; slug: string; name: string };
 
 /** Create and edit form for an event. Dates are entered in Phnom Penh time. */
 export function EventForm({
@@ -17,6 +17,7 @@ export function EventForm({
   event,
   dateTime,
   submitLabel,
+  paidTemplateLabel,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   t: Messages["eventForm"];
@@ -25,6 +26,8 @@ export function EventForm({
   event?: HostEvent;
   dateTime?: { date: string; time: string };
   submitLabel: string;
+  /** Set when the event's plan has only the traditional template: the others are shown, disabled. */
+  paidTemplateLabel?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const v = state?.values;
@@ -65,8 +68,9 @@ export function EventForm({
       <Select label={t.template} name="templateId" defaultValue={value("templateId")} errors={e?.templateId}>
         <option value="">—</option>
         {templates.map((tpl) => (
-          <option key={tpl.id} value={tpl.id}>
+          <option key={tpl.id} value={tpl.id} disabled={Boolean(paidTemplateLabel) && tpl.slug !== "traditional"}>
             {tpl.name}
+            {paidTemplateLabel && tpl.slug !== "traditional" ? ` ${paidTemplateLabel}` : ""}
           </option>
         ))}
       </Select>

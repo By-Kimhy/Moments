@@ -84,13 +84,15 @@ model User {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  ownedEvents Event[]       @relation("EventOwner")
-  memberships EventMember[]
+  ownedEvents   Event[]              @relation("EventOwner")
+  memberships   EventMember[]
+  organizations OrganizationMember[]
 }
 
 model Event {
   id              String      @id @default(uuid()) @db.Uuid
   ownerId         String      @db.Uuid // the account that created (and later pays for) the event
+  organizationId  String?     @db.Uuid // a planner's organization running this event
   type            EventType   @default(WEDDING)
   status          EventStatus @default(DRAFT)
   titleKm         String      @db.VarChar(200)
@@ -115,28 +117,32 @@ model Event {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
-  owner     User          @relation("EventOwner", fields: [ownerId], references: [id])
-  template  Template?     @relation(fields: [templateId], references: [id])
-  members   EventMember[]
-  guests    Guest[]
-  gifts     Gift[]
-  payments  Payment[]
-  checkins  Checkin[]
-  auditLogs AuditLog[]
-  tables    DiningTable[]
-  thankYous ThankYou[]
+  owner        User          @relation("EventOwner", fields: [ownerId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  template     Template?     @relation(fields: [templateId], references: [id])
+  members      EventMember[]
+  guests       Guest[]
+  gifts        Gift[]
+  payments     Payment[]
+  checkins     Checkin[]
+  auditLogs    AuditLog[]
+  tables       DiningTable[]
+  thankYous    ThankYou[]
 
   @@index([ownerId])
+  @@index([organizationId, startsAt])
 }
 
 model EventMember {
-  id          String     @id @default(uuid()) @db.Uuid
-  eventId     String     @db.Uuid
-  userId      String?    @db.Uuid // empty for helpers who joined with the event's helper code
-  role        MemberRole
-  displayName String     @db.VarChar(120)
-  revokedAt   DateTime?
-  createdAt   DateTime   @default(now())
+  id              String     @id @default(uuid()) @db.Uuid
+  eventId         String     @db.Uuid
+  userId          String?    @db.Uuid // empty for helpers who joined with the event's helper code
+  role            MemberRole
+  displayName     String     @db.VarChar(120)
+  // Host access that comes from the planner organization; ends when they leave it.
+  viaOrganization Boolean    @default(false)
+  revokedAt       DateTime?
+  createdAt       DateTime   @default(now())
 
   event         Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user          User?      @relation(fields: [userId], references: [id])
@@ -170,8 +176,8 @@ model Guest {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  event    Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  table    DiningTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  event     Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  table     DiningTable? @relation(fields: [tableId], references: [id], onDelete: SetNull)
   gifts     Gift[]
   checkins  Checkin[]
   thankYous ThankYou[]
@@ -327,4 +333,37 @@ model ThankYou {
 
   @@unique([guestId, channel])
   @@index([eventId, status])
+}
+
+enum OrgRole {
+  OWNER
+  STAFF
+}
+
+// A wedding planner or venue running many events for clients.
+model Organization {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @db.VarChar(120)
+  brandColor String   @default("#9b2c2c") @db.VarChar(7)
+  logoKey    String?  @db.VarChar(300)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  members OrganizationMember[]
+  events  Event[]
+}
+
+model OrganizationMember {
+  id             String    @id @default(uuid()) @db.Uuid
+  organizationId String    @db.Uuid
+  userId         String    @db.Uuid
+  role           OrgRole
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([organizationId, userId])
+  @@index([userId])
 }

@@ -23,7 +23,7 @@ export type OtpRequestResponse = { phone: string; expiresIn: number; devCode?: s
 export type EventsResponse = { events: (HostEvent & { guestCount: number })[] };
 export type EventResponse = { event: HostEvent; role: "OWNER" } | { event: DeskEvent; role: "HELPER" };
 export type MembersResponse = {
-  members: { id: string; role: MemberRole; displayName: string; phone: string | null; isCreator: boolean; revokedAt: Date | null; createdAt: Date }[];
+  members: { id: string; role: MemberRole; displayName: string; phone: string | null; viaOrganization: boolean; isCreator: boolean; revokedAt: Date | null; createdAt: Date }[];
 };
 export type DeskJoinResponse = { helper: { memberId: string; displayName: string }; event: DeskEvent; token: string };
 export type DeskMeResponse = { helper: { memberId: string; displayName: string }; event: DeskEvent };
@@ -86,3 +86,21 @@ export type ThankYouResponse = {
   sent: { SMS: number; SHARE: number };
   guests: { id: string; name: string; phone: string | null; inviteUrl: string; attended: boolean; gift: string; text: string; sms: ThankYouRecord | null; shared: ThankYouRecord | null }[];
 };
+
+export type OrganizationSummary = { id: string; name: string; brandColor: string; logoKey: string | null; createdAt: Date };
+export type OrganizationsResponse = { organizations: (OrganizationSummary & { role: "OWNER" | "STAFF"; eventCount: number })[] };
+export type OrganizationResponse = {
+  organization: OrganizationSummary;
+  role: "OWNER" | "STAFF";
+  members: { id: string; role: "OWNER" | "STAFF"; name: string; phone: string | null; isMe: boolean }[];
+};
+export type PlannerEvent = HostEvent & {
+  guests: number;
+  replyRate: number;
+  attendingPeople: number;
+  arrivedPeople: number;
+  giftTotal: { USD: number; KHR: number };
+  pendingGifts: number;
+  upcoming: boolean;
+};
+export type PlannerEventsResponse = { organization: OrganizationSummary; upcoming: PlannerEvent[]; past: PlannerEvent[] };

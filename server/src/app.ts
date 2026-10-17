@@ -14,6 +14,7 @@ import { giftsRouter } from "./routes/gifts.js";
 import { guestsRouter } from "./routes/guests.js";
 import { invitationsRouter } from "./routes/invitations.js";
 import { filesRouter, mediaRouter } from "./routes/media.js";
+import { organizationsRouter } from "./routes/organizations.js";
 import { reportsRouter } from "./routes/reports.js";
 import { seatingRouter } from "./routes/seating.js";
 import { eventTelegramRouter, telegramWebhookRouter } from "./routes/telegram.js";
@@ -38,6 +39,7 @@ export function createApp() {
   app.use("/api/auth", authRouter);
   app.use("/api/desk", deskRouter);
   app.use("/api/templates", templatesRouter);
+  app.use("/api/organizations", organizationsRouter);
   app.use("/api/events", eventsRouter);
   app.use("/api/files", filesRouter);
   app.use("/api/invitations", invitationsRouter);

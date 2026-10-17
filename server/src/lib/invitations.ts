@@ -1,5 +1,6 @@
 // What a guest sees when they open their invitation link, and the RSVP rules.
-import type { Event, Guest, Template } from "@prisma/client";
+import type { Event, Guest, Organization, Template } from "@prisma/client";
+import { plannerBranding } from "./organizations.js";
 import { z } from "zod";
 import type { Photo, ScheduleItem } from "./events.js";
 
@@ -16,7 +17,7 @@ export const rsvpOpen = (event: Pick<Event, "status" | "startsAt">, now = new Da
   event.status !== "ARCHIVED" && now < event.startsAt;
 
 /** The event as guests see it: no helper code, no internal ids beyond what the page needs. */
-export const publicEventView = (e: Event & { template: Template | null }) => ({
+export const publicEventView = (e: Event & { template: Template | null; organization?: Organization | null }) => ({
   id: e.id,
   status: e.status,
   titleKm: e.titleKm,
@@ -37,6 +38,8 @@ export const publicEventView = (e: Event & { template: Template | null }) => ({
     ? { slug: e.template.slug, style: e.template.style, config: e.template.config as TemplateConfig }
     : DEFAULT_TEMPLATE,
   rsvpOpen: rsvpOpen(e),
+  // "Planned by …" instead of the Moments footer, when a planner runs the event.
+  planner: plannerBranding(e.organization ?? null),
 });
 
 export const publicGuestView = (g: Guest & { table?: { name: string } | null }) => ({

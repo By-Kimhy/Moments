@@ -2,7 +2,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE } from "@/lib/cookies";
 
-const PROTECTED = ["/dashboard", "/events"];
+const PROTECTED = ["/dashboard", "/events", "/planner"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -17,5 +17,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/events/:path*"],
+  matcher: ["/dashboard/:path*", "/events/:path*", "/planner/:path*"],
 };

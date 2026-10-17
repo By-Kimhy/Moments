@@ -82,7 +82,7 @@ export default async function EventPage({ params }: PageProps<"/events/[eventId]
 
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold">{t.event.hosts}</h2>
-        <MemberList members={hosts} eventId={eventId} removeLabel={t.common.remove} removedLabel={t.event.removed} />
+        <MemberList members={hosts} eventId={eventId} removeLabel={t.common.remove} removedLabel={t.event.removed} viaLabel={t.planner.viaPlanner} />
         <details className="rounded-xl border border-line p-4">
           <summary className="cursor-pointer font-medium">{t.event.addCohost}</summary>
           <p className="my-2 text-sm text-muted">{t.event.cohostHint}</p>
@@ -95,7 +95,7 @@ export default async function EventPage({ params }: PageProps<"/events/[eventId]
         {helpers.length === 0 ? (
           <p className="text-sm text-muted">{t.event.noHelpers}</p>
         ) : (
-          <MemberList members={helpers} eventId={eventId} removeLabel={t.common.remove} removedLabel={t.event.removed} />
+          <MemberList members={helpers} eventId={eventId} removeLabel={t.common.remove} removedLabel={t.event.removed} viaLabel={t.planner.viaPlanner} />
         )}
       </section>
     </div>
@@ -107,11 +107,13 @@ function MemberList({
   eventId,
   removeLabel,
   removedLabel,
+  viaLabel,
 }: {
   members: MembersResponse["members"];
   eventId: string;
   removeLabel: string;
   removedLabel: string;
+  viaLabel: string;
 }) {
   return (
     <ul className="divide-y divide-line rounded-xl border border-line">
@@ -123,6 +125,8 @@ function MemberList({
           </div>
           {m.revokedAt ? (
             <span className="text-sm text-muted">{removedLabel}</span>
+          ) : m.viaOrganization ? (
+            <span className="text-sm text-muted">{viaLabel}</span>
           ) : m.isCreator ? null : (
             <form action={removeMember.bind(null, eventId, m.id)}>
               <button className="text-sm text-red-700 underline">{removeLabel}</button>

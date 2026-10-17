@@ -54,7 +54,7 @@ const eventFields = {
     .refine((v) => v === null || isUuid(v), "Choose a template."),
 };
 
-const createEventSchema = z.object(eventFields);
+export const createEventSchema = z.object(eventFields);
 const updateEventSchema = z
   .object({ ...eventFields, status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]) })
   .partial();
@@ -75,8 +75,14 @@ async function checkTemplate(templateId: string | null | undefined) {
 }
 
 eventsRouter.get("/", requireUser, async (req, res) => {
+  const userId = currentUser(req).id;
   const events = await prisma.event.findMany({
-    where: { members: { some: { userId: currentUser(req).id, role: "OWNER", revokedAt: null } } },
+    where: {
+      OR: [
+        { members: { some: { userId, role: "OWNER", revokedAt: null, viaOrganization: false } } },
+        { organization: { members: { some: { userId, revokedAt: null } } } },
+      ],
+    },
     orderBy: { startsAt: "desc" },
     include: { _count: { select: { guests: true } } },
   });
@@ -124,7 +130,7 @@ eventRouter.patch("/", ownersOnly, async (req, res) => {
 
 // What guests will see, before any guest exists or the event is published.
 eventRouter.get("/preview", ownersOnly, async (req, res) => {
-  const event = await prisma.event.findUniqueOrThrow({ where: { id: currentMember(req).eventId }, include: { template: true } });
+  const event = await prisma.event.findUniqueOrThrow({ where: { id: currentMember(req).eventId }, include: { template: true, organization: true } });
   res.json({
     event: publicEventView(event),
     guest: { name: "ភ្ញៀវកិត្តិយស", nameAlt: "Honoured guest", side: "BOTH", invitedCount: 2, rsvpStatus: "PENDING", rsvpCount: null, rsvpMessage: null, tableName: null },
@@ -153,6 +159,7 @@ eventRouter.get("/members", ownersOnly, async (req, res) => {
       role: m.role,
       displayName: m.displayName,
       phone: m.user?.phone ?? null,
+      viaOrganization: m.viaOrganization,
       isCreator: m.userId !== null && m.userId === m.event.ownerId,
       revokedAt: m.revokedAt,
       createdAt: m.createdAt,
@@ -186,6 +193,7 @@ eventRouter.delete("/members/:memberId", ownersOnly, async (req, res) => {
     : null;
   if (!target) throw new HttpError(404, "Member not found.");
   if (target.userId && target.userId === target.event.ownerId) throw new HttpError(409, "The person who created the event can't be removed.");
+  if (target.viaOrganization) throw new HttpError(409, "This person has access through the planner's organization. Remove them there.");
   if (!target.revokedAt) {
     await prisma.$transaction(async (tx) => {
       await tx.eventMember.update({ where: { id: target.id }, data: { revokedAt: new Date() } });

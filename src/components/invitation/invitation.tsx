@@ -183,7 +183,17 @@ export function Invitation({ event, guest, gifts, thankYou, token, locale, t, la
           </section>
         )}
 
-        <p className="text-center text-xs opacity-60">{t.footer}</p>
+        {event.planner ? (
+          <div className="flex flex-col items-center gap-2 text-center text-xs opacity-80">
+            {event.planner.logoKey && (
+              // eslint-disable-next-line @next/next/no-img-element -- stored logo, already resized
+              <img src={fileUrl(event.planner.logoKey)} alt="" className="size-12 rounded-lg object-cover" />
+            )}
+            <span>{t.plannedBy.replace("{name}", event.planner.name)}</span>
+          </div>
+        ) : (
+          <p className="text-center text-xs opacity-60">{t.footer}</p>
+        )}
       </div>
     </div>
   );

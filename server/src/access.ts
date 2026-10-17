@@ -16,9 +16,7 @@ export async function eventAccess(req: Request, _res: Response, next: NextFuncti
   // Someone without access gets the same 404 as for an event that doesn't exist.
   if (!isUuid(eventId)) throw new HttpError(404, "Event not found.");
 
-  const member = req.user
-    ? await prisma.eventMember.findFirst({ where: { eventId, userId: req.user.id, revokedAt: null } })
-    : null;
+  const member = req.user ? await hostMembership(eventId, req.user) : null;
   if (member) {
     req.member = { id: member.id, eventId, role: member.role, displayName: member.displayName };
   } else if (req.helper?.eventId === eventId) {
@@ -27,6 +25,32 @@ export async function eventAccess(req: Request, _res: Response, next: NextFuncti
     throw new HttpError(404, "Event not found.");
   }
   next();
+}
+
+/** Is the user active staff of the planner organization that runs this event? */
+async function plannerFor(eventId: string, userId: string) {
+  const event = await prisma.event.findUnique({ where: { id: eventId }, select: { organizationId: true } });
+  if (!event?.organizationId) return false;
+  const staff = await prisma.organizationMember.findFirst({ where: { organizationId: event.organizationId, userId, revokedAt: null } });
+  return Boolean(staff);
+}
+
+/**
+ * The user's host membership of an event: their own (owner or co-host), or one that comes from
+ * working for the planner organization running it. Planner access is checked every time, so it
+ * ends when they leave the organization; the membership row exists so their actions are logged
+ * under their name like any host's.
+ */
+async function hostMembership(eventId: string, user: { id: string; name: string }) {
+  const existing = await prisma.eventMember.findFirst({ where: { eventId, userId: user.id } });
+  if (existing && !existing.revokedAt && !existing.viaOrganization) return existing;
+  if (!(await plannerFor(eventId, user.id))) return null;
+  if (existing?.viaOrganization && !existing.revokedAt) return existing;
+  return prisma.eventMember.upsert({
+    where: { eventId_userId: { eventId, userId: user.id } },
+    create: { eventId, userId: user.id, role: "OWNER", displayName: user.name, viaOrganization: true },
+    update: { role: "OWNER", revokedAt: null, viaOrganization: true },
+  });
 }
 
 /** Allows only these roles past this point (after eventAccess). */

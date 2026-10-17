@@ -89,6 +89,14 @@ const km: Record<string, string> = {
   "At most 100 seats.": "យ៉ាងច្រើន ១០០ កៅអី។",
   "Keep the message under 1000 characters.": "សារត្រូវតិចជាង ១០០០ តួអក្សរ។",
   "Thank-you messages can be sent once the wedding has started.": "អាចផ្ញើសារអរគុណបាន បន្ទាប់ពីពិធីមង្គលការបានចាប់ផ្តើម។",
+  "Enter the organization's name.": "សូមបញ្ចូលឈ្មោះស្ថាប័ន។",
+  "Use a colour like #9b2c2c.": "សូមប្រើពណ៌ដូចជា #9b2c2c។",
+  "Organization not found.": "រកមិនឃើញស្ថាប័ន។",
+  "Only the organization's owners can do this.": "មានតែម្ចាស់ស្ថាប័នទេដែលអាចធ្វើបាន។",
+  "This person is already in the organization.": "អ្នកនេះនៅក្នុងស្ថាប័នរួចហើយ។",
+  "An organization needs at least one owner.": "ស្ថាប័នត្រូវមានម្ចាស់យ៉ាងហោចណាស់ម្នាក់។",
+  "Choose an image.": "សូមជ្រើសរើសរូបភាព។",
+  "This person has access through the planner's organization. Remove them there.": "អ្នកនេះមានសិទ្ធិតាមរយៈស្ថាប័នរៀបចំកម្មវិធី។ សូមដកពួកគេចេញនៅទីនោះ។",
 };
 
 const KHMER_DIGITS = "០១២៣៤៥៦៧៨៩";

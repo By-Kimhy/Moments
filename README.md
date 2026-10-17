@@ -225,6 +225,24 @@ The "អរគុណ" tab, after the wedding:
 SMS go through `server/src/providers/sms.ts`; with the mock provider they only appear in the
 API log.
 
+## Planner dashboard
+
+For wedding planners and venues ("សម្រាប់អ្នករៀបចំមង្គលការ" on the dashboard):
+
+- **Organization** with a name, brand colour and logo; **owners** manage it and its team,
+  **staff** work on its events. Staff are added by phone number.
+- **Every event of the organization** is open to all its staff as hosts, without adding them one
+  by one; their actions are logged under their own name. Leaving the organization ends that
+  access everywhere. On the event, they are shown as "via planner" and can only be removed in
+  the organization.
+- **New event for a client** from the dashboard; the client (couple or parent) is added as a
+  co-host by phone and signs in to see their own wedding. Planners can also move one of their
+  own events into the organization.
+- **Dashboard:** upcoming and past events with date, status, guests, reply rate, people coming,
+  arrivals, gift totals and KHQR gifts waiting.
+- **Branding:** invitations of the organization's events end with its logo and
+  "រៀបចំដោយ <name>" instead of the Moments footer.
+
 ## Telegram
 
 One bot does both the hosts' Telegram login and their alerts.
@@ -352,6 +370,12 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | PUT | `/api/events/:eventId/thank-you/settings` `{ thankYouKm, thankYouEn }` | owner |
 | POST | `/api/events/:eventId/thank-you/send` `{ audience, language }` | owner |
 | POST | `/api/events/:eventId/thank-you/:guestId/shared` `{ language }` | owner |
+| GET, POST | `/api/organizations` | signed in |
+| GET, PATCH | `/api/organizations/:orgId` | org member (PATCH: org owner) |
+| PUT | `/api/organizations/:orgId/logo` (multipart `image`) | org owner |
+| POST, DELETE | `/api/organizations/:orgId/members[/:memberId]` | org owner |
+| GET, POST | `/api/organizations/:orgId/events` | org member |
+| POST | `/api/organizations/:orgId/events/:eventId/attach` | org member who owns the event |
 | GET, DELETE | `/api/events/:eventId/telegram` | owner |
 | POST | `/api/events/:eventId/telegram/link` | owner |
 | POST | `/api/events/:eventId/telegram/test` | owner |
@@ -370,8 +394,8 @@ co-hosts, access control, event create/edit, photo and KHQR uploads, guest list 
 CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts, installable PWA. This completes the
 MVP in `docs/PROPOSAL.md`.
 
-Phase 2 (`docs/PHASE2.md`): seating plan and thank-you messages done; next planner
-dashboard, ticketing.
+Phase 2 (`docs/PHASE2.md`): seating plan, thank-you messages and planner dashboard done;
+next ticketing.
 
 Before a real wedding: connect a real SMS gateway (`server/src/providers/sms.ts`), set up the
 Telegram bot, S3/R2 storage and Chromium on the server, and run the app over https (the camera

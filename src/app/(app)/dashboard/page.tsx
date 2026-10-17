@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { EventsResponse } from "@api/contract";
+import type { EventsResponse, OrganizationsResponse } from "@api/contract";
 import { logout } from "@/app/actions/auth";
 import { buttonClass } from "@/components/form";
 import { InstallButton } from "@/components/pwa";
@@ -14,7 +14,12 @@ export const metadata = { title: "Moments" };
 
 export default async function Dashboard() {
   const user = await requireUser();
-  const [t, locale, { events }] = await Promise.all([getMessages(), getLocale(), apiGet<EventsResponse>("/events")]);
+  const [t, locale, { events }, { organizations }] = await Promise.all([
+    getMessages(),
+    getLocale(),
+    apiGet<EventsResponse>("/events"),
+    apiGet<OrganizationsResponse>("/organizations"),
+  ]);
   return (
     <div className="flex flex-col gap-6 py-8">
       <div className="flex items-center justify-between gap-4">
@@ -44,6 +49,15 @@ export default async function Dashboard() {
             </li>
           ))}
         </ul>
+      )}
+      {organizations.length > 0 ? (
+        <Link href="/planner" className="rounded-xl border border-line p-4 font-medium hover:bg-black/5">
+          {t.planner.link} · {organizations.map((o) => o.name).join(", ")} →
+        </Link>
+      ) : (
+        <Link href="/planner" className="text-sm text-muted underline">
+          {t.planner.forPlanners}
+        </Link>
       )}
       <div className="flex flex-col items-start gap-3">
         <InstallButton label={t.pwa.install} iosHint={t.pwa.iosHint} />

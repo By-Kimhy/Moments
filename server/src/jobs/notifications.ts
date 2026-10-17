@@ -20,6 +20,7 @@ export type NotificationJob =
   | { kind: "thank_you_sms"; thankYouId: string }
   | { kind: "order_sms"; orderId: string; stage: "placed" | "paid" }
   | { kind: "order_placed"; orderId: string }
+  | { kind: "vendor_enquiry"; enquiryId: string }
   | { kind: "rsvp"; guestId: string }
   | { kind: "guest_gift"; giftId: string }
   | { kind: "desk_digest"; eventId: string; windowEnd: number }
@@ -40,8 +41,8 @@ function getQueue() {
 
 /** Queues a notification. Never throws: an alert must not break the request that caused it. */
 export async function notify(job: NotificationJob, options: { delay?: number; jobId?: string } = {}) {
-  // Alerts to hosts need the bot; thank-you SMS don't.
-  if (job.kind !== "thank_you_sms" && job.kind !== "order_sms" && !telegram()) return;
+  // Alerts to hosts need the bot; SMS don't.
+  if (job.kind !== "thank_you_sms" && job.kind !== "order_sms" && job.kind !== "vendor_enquiry" && !telegram()) return;
   try {
     if (queueEnabled()) {
       await getQueue().add(job.kind, job, options);
@@ -118,6 +119,14 @@ export async function handle(job: NotificationJob) {
       job.stage === "placed"
         ? `Moments: ${order.event.titleKm} — ${amount}. បង់តាម KHQR ហើយសរសេរ ${order.reference} ក្នុងកំណត់ចំណាំ។ Pay by KHQR with note ${order.reference}: ${link}`
         : `Moments: សំបុត្ររបស់អ្នកសម្រាប់ ${order.event.titleKm} រួចរាល់ហើយ។ Your tickets are ready: ${link}`,
+    );
+  } else if (job.kind === "vendor_enquiry") {
+    const enquiry = await prisma.vendorEnquiry.findUnique({ where: { id: job.enquiryId }, include: { vendor: { include: { owner: { select: { phone: true } } } } } });
+    const phone = enquiry?.vendor.phone ?? enquiry?.vendor.owner.phone;
+    if (!enquiry || !phone) return;
+    await sms.send(
+      phone,
+      `Moments: សំណួរថ្មីពី ${enquiry.name} (${enquiry.phone}). New enquiry from ${enquiry.name}: ${config.appUrl()}/vendor/${enquiry.vendorId}`,
     );
   } else if (job.kind === "order_placed") {
     const order = await prisma.order.findUnique({ where: { id: job.orderId }, include: { items: { include: { ticketType: true } } } });

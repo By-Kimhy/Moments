@@ -33,6 +33,17 @@ const DEMO_COHOST_PHONE = "+85598765432";
 const DEMO_HELPER_CODE = "123456";
 const DEMO_DOOR_CODE = "654321";
 const DEMO_SLUG = "khmer-music-night";
+const DEMO_VENDOR_PHONE = "+85577777777";
+
+// Demo marketplace listings: [slug, name, category, province, price from (minor units), currency, colour, Khmer description]
+const demoVendors = [
+  ["angkor-lens", "Angkor Lens Studio", "PHOTOGRAPHY", "siem-reap", 35000, "USD", "#7c5c3b", "ថតរូបមង្គលការ និងរូបមុនរៀបការ នៅប្រាសាទអង្គរ។"],
+  ["golden-day-decor", "Golden Day Decoration", "DECORATION", "phnom-penh", 80000, "USD", "#b8860b", "តុបតែងរោងការ ផ្កាស្រស់ និងភ្លើងលម្អ។"],
+  ["srey-beauty", "Srey Beauty Makeup", "MAKEUP", "phnom-penh", 2000000, "KHR", "#c2185b", "តុបតែងមុខ និងសក់កូនក្រមុំ គ្រប់សម្លៀកបំពាក់ប្រពៃណី។"],
+  ["mekong-films", "Mekong Films", "VIDEO", "kandal", 45000, "USD", "#1565c0", "ថតវីដេអូមង្គលការ និងកាត់តខ្លីសម្រាប់ Facebook។"],
+  ["pin-peat-band", "ក្រុមភ្លេងពិណពាទ្យ សុខា", "MUSIC", "battambang", 30000, "USD", "#2e7d32", "ភ្លេងការប្រពៃណី និងតន្ត្រីសម័យ។"],
+  ["mc-vannak", "MC Vannak", "MC", "phnom-penh", 15000, "USD", "#455a64", "ពិធីករមង្គលការ ភាសាខ្មែរ និងអង់គ្លេស។"],
+] as const;
 
 const families = [
   ["សុខ", "Sok"], ["ចាន់", "Chan"], ["លី", "Ly"], ["ហេង", "Heng"], ["គឹម", "Kim"],
@@ -61,9 +72,10 @@ async function main() {
     update: {},
     create: { phone: DEMO_COHOST_PHONE, name: "ចាន់ សុភា" },
   });
-  await prisma.event.deleteMany({ where: { ownerId: host.id } });
-  await prisma.event.deleteMany({ where: { helperCode: { in: [DEMO_HELPER_CODE, DEMO_DOOR_CODE] } } });
-  await prisma.event.deleteMany({ where: { slug: DEMO_SLUG } });
+  const demoEvents = { OR: [{ ownerId: host.id }, { helperCode: { in: [DEMO_HELPER_CODE, DEMO_DOOR_CODE] } }, { slug: DEMO_SLUG }] };
+  // Orders first: their items hold on to the ticket types an event deletion would remove.
+  await prisma.order.deleteMany({ where: { event: demoEvents } });
+  await prisma.event.deleteMany({ where: demoEvents });
 
   const template = await prisma.template.findUniqueOrThrow({ where: { slug: "traditional" } });
   const event = await prisma.event.create({
@@ -173,6 +185,39 @@ async function main() {
     },
   });
   console.log(`Demo concert: /e/${concert.slug} (door helper code ${DEMO_DOOR_CODE})`);
+
+  // The marketplace: published vendors (one featured), one waiting for review. The demo host is
+  // also a platform admin, so /admin can be tried with the same login.
+  await prisma.user.update({ where: { id: host.id }, data: { isAdmin: true } });
+  const vendorOwner = await prisma.user.upsert({ where: { phone: DEMO_VENDOR_PHONE }, update: {}, create: { phone: DEMO_VENDOR_PHONE, name: "ហេង សុភ័ក្ត្រ" } });
+  await prisma.vendor.deleteMany({ where: { ownerId: vendorOwner.id } });
+  for (const [i, [slug, name, category, province, priceFrom, currency, colour, descriptionKm]] of demoVendors.entries()) {
+    const photos = [];
+    for (const shade of [colour, "#f5e6d3"]) {
+      const key = `demo-vendor-${slug}-photo-${Date.now()}${photos.length}.webp`;
+      await storage.put(key, await sharp({ create: { width: 1200, height: 800, channels: 3, background: shade } }).webp().toBuffer(), "image/webp");
+      photos.push({ key });
+    }
+    await prisma.vendor.create({
+      data: {
+        ownerId: vendorOwner.id,
+        slug,
+        name,
+        category,
+        province,
+        priceFrom,
+        priceCurrency: currency,
+        descriptionKm,
+        phone: DEMO_VENDOR_PHONE,
+        telegram: slug.replace(/-/g, "_"),
+        photos,
+        status: i === demoVendors.length - 1 ? "PENDING_REVIEW" : "PUBLISHED",
+        publishedAt: i === demoVendors.length - 1 ? null : new Date(),
+        featuredUntil: i === 0 ? new Date(Date.now() + 30 * 86_400_000) : null,
+      },
+    });
+  }
+  console.log(`Demo vendors: ${demoVendors.length} (owner ${DEMO_VENDOR_PHONE}); demo host is a platform admin`);
 
   console.log(`Demo wedding: ${event.titleEn} (host ${DEMO_PHONE}, co-host ${DEMO_COHOST_PHONE}, helper code ${DEMO_HELPER_CODE})`);
 }

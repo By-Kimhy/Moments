@@ -113,6 +113,27 @@ const km: Record<string, string> = {
   "Too many orders. Try again later.": "កុម្ម៉ង់ច្រើនពេក។ សូមព្យាយាមពេលក្រោយ។",
   "Not a ticket for this event.": "មិនមែនជាសំបុត្រសម្រាប់កម្មវិធីនេះទេ។",
   "This ticket has already been used.": "សំបុត្រនេះត្រូវបានប្រើរួចហើយ។",
+  "Enter the business name.": "សូមបញ្ចូលឈ្មោះអាជីវកម្ម។",
+  "Choose a category.": "សូមជ្រើសរើសប្រភេទសេវាកម្ម។",
+  "Choose a province.": "សូមជ្រើសរើសខេត្ត ឬរាជធានី។",
+  "Enter a Telegram username, like @goldenphoto.": "សូមបញ្ចូលឈ្មោះអ្នកប្រើ Telegram ដូចជា @goldenphoto។",
+  "Paste a Facebook link that starts with https://facebook.com/": "សូមដាក់តំណ Facebook ដែលចាប់ផ្តើមដោយ https://facebook.com/",
+  "Vendor not found.": "រកមិនឃើញអ្នកផ្តល់សេវា។",
+  "Review not found.": "រកមិនឃើញការវាយតម្លៃ។",
+  "This listing is already sent for review or published.": "ព័ត៌មាននេះបានផ្ញើឱ្យពិនិត្យ ឬបានផ្សព្វផ្សាយរួចហើយ។",
+  "Describe your services.": "សូមពិពណ៌នាអំពីសេវាកម្មរបស់អ្នក។",
+  "Add a phone number or Telegram username.": "សូមបន្ថែមលេខទូរស័ព្ទ ឬឈ្មោះ Telegram។",
+  "Add at least one photo of your work.": "សូមបន្ថែមរូបថតស្នាដៃរបស់អ្នកយ៉ាងហោចណាស់មួយ។",
+  "Complete your listing before sending it for review.": "សូមបំពេញព័ត៌មានឱ្យគ្រប់ មុនផ្ញើឱ្យពិនិត្យ។",
+  "That date is not valid.": "កាលបរិច្ឆេទនោះមិនត្រឹមត្រូវ។",
+  "Write a message.": "សូមសរសេរសារ។",
+  "Keep the message under 2000 characters.": "សារត្រូវតិចជាង ២០០០ តួអក្សរ។",
+  "Too many enquiries. Try again later.": "សួរច្រើនដងពេក។ សូមព្យាយាមពេលក្រោយ។",
+  "Choose 1 to 5 stars.": "សូមជ្រើសរើសពី ១ ដល់ ៥ ផ្កាយ។",
+  "Write a reply.": "សូមសរសេរការឆ្លើយតប។",
+  "You can't review your own business.": "អ្នកមិនអាចវាយតម្លៃអាជីវកម្មផ្ទាល់ខ្លួនបានទេ។",
+  "Send this vendor an enquiry before reviewing them.": "សូមផ្ញើសំណួរទៅអ្នកផ្តល់សេវានេះ មុនពេលវាយតម្លៃ។",
+  "This listing has changed. Reload and try again.": "ព័ត៌មាននេះបានផ្លាស់ប្តូរ។ សូមផ្ទុកឡើងវិញ ហើយព្យាយាមម្តងទៀត។",
 };
 
 const KHMER_DIGITS = "០១២៣៤៥៦៧៨៩";
@@ -121,6 +142,7 @@ const khmerNumber = (n: string) => n.replace(/\d/g, (d) => KHMER_DIGITS[Number(d
 // Messages with a number in them.
 const kmPatterns: [RegExp, (n: string) => string][] = [
   [/^At most (\d+) tickets of this type per order\.$/, (n) => `យ៉ាងច្រើន ${khmerNumber(n)} សំបុត្រប្រភេទនេះ ក្នុងការកុម្ម៉ង់មួយ។`],
+  [/^A vendor can have up to (\d+) photos\.$/, (n) => `អ្នកផ្តល់សេវាម្នាក់អាចមានរូបថតបានច្រើនបំផុត ${khmerNumber(n)}។`],
   [/^This invitation is for up to (\d+) people\.$/, (n) => `លិខិតអញ្ជើញនេះសម្រាប់មនុស្សយ៉ាងច្រើន ${khmerNumber(n)} នាក់។`],
 ];
 

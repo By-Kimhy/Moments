@@ -172,3 +172,27 @@ export type OrderPage = {
     planner: Planner;
   };
 };
+
+export type VendorCategory = import("./lib/vendor-catalog.js").VendorCategory;
+export type VendorStatus = "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "SUSPENDED";
+export type VendorCard = ReturnType<typeof import("./lib/vendors.js")["vendorCard"]>;
+export type VendorProfile = ReturnType<typeof import("./lib/vendors.js")["vendorProfile"]>;
+export type OwnVendor = ReturnType<typeof import("./lib/vendors.js")["ownerVendorView"]>;
+export type VendorReview = { id: string; rating: number; text: string | null; reply: string | null; repliedAt: Date | null; author: string; hidden: boolean; createdAt: Date };
+export type VendorDirectoryResponse = { vendors: VendorCard[]; total: number; page: number; pageSize: number };
+export type VendorPageResponse = {
+  vendor: VendorProfile;
+  reviews: VendorReview[];
+  viewer: { isOwner: boolean; enquired: boolean; canReview: boolean; myReview: { rating: number; text: string | null } | null } | null;
+};
+export type MyVendorsResponse = { vendors: (OwnVendor & { unreadEnquiries: number })[] };
+export type MyVendorResponse = { vendor: OwnVendor; reviews: VendorReview[] };
+export type VendorEnquiriesResponse = { enquiries: { id: string; name: string; phone: string; eventDate: Date | null; message: string; read: boolean; createdAt: Date }[] };
+export type AdminVendor = OwnVendor & { owner: { name: string; phone: string | null }; enquiries: number };
+export type AdminVendorsResponse = { vendors: AdminVendor[]; counts: Partial<Record<VendorStatus, number>> };
+export type AdminReviewsResponse = {
+  reviews: { id: string; rating: number; text: string | null; author: string; vendor: { name: string; slug: string }; hidden: boolean; createdAt: Date }[];
+};
+export type EventVendorsResponse = {
+  vendors: { vendorId: string; status: "CONSIDERING" | "BOOKED"; note: string | null; listed: boolean; vendor: VendorCard & { phone: string | null; telegram: string | null } }[];
+};

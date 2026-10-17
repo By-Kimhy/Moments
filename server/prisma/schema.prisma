@@ -81,12 +81,16 @@ model User {
   phone      String?  @unique @db.VarChar(20) // E.164, e.g. +85512345678
   telegramId BigInt?  @unique
   language   Language @default(KM)
+  isAdmin    Boolean  @default(false) // platform admin: reviews vendors, confirms plan payments
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  ownedEvents   Event[]              @relation("EventOwner")
-  memberships   EventMember[]
-  organizations OrganizationMember[]
+  ownedEvents     Event[]              @relation("EventOwner")
+  memberships     EventMember[]
+  organizations   OrganizationMember[]
+  vendors         Vendor[]
+  vendorEnquiries VendorEnquiry[]
+  vendorReviews   VendorReview[]
 }
 
 model Event {
@@ -120,20 +124,22 @@ model Event {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
-  owner        User          @relation("EventOwner", fields: [ownerId], references: [id])
-  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  template     Template?     @relation(fields: [templateId], references: [id])
-  members      EventMember[]
-  guests       Guest[]
-  gifts        Gift[]
-  payments     Payment[]
-  checkins     Checkin[]
-  auditLogs    AuditLog[]
-  tables       DiningTable[]
-  thankYous    ThankYou[]
-  ticketTypes  TicketType[]
-  orders       Order[]
-  tickets      Ticket[]
+  owner           User            @relation("EventOwner", fields: [ownerId], references: [id])
+  organization    Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  template        Template?       @relation(fields: [templateId], references: [id])
+  members         EventMember[]
+  guests          Guest[]
+  gifts           Gift[]
+  payments        Payment[]
+  checkins        Checkin[]
+  auditLogs       AuditLog[]
+  tables          DiningTable[]
+  thankYous       ThankYou[]
+  ticketTypes     TicketType[]
+  orders          Order[]
+  tickets         Ticket[]
+  vendorEnquiries VendorEnquiry[]
+  eventVendors    EventVendor[]
 
   @@index([ownerId])
   @@index([organizationId, startsAt])
@@ -465,4 +471,116 @@ model Ticket {
   checkedInBy EventMember? @relation(fields: [checkedInById], references: [id])
 
   @@index([eventId])
+}
+
+// Vendor marketplace ------------------------------------------------------------------------
+
+enum VendorCategory {
+  PHOTOGRAPHY
+  VIDEO
+  DECORATION
+  VENUE
+  MAKEUP
+  ATTIRE
+  CATERING
+  MUSIC
+  MC
+  PRINTING
+  OTHER
+}
+
+enum VendorStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  SUSPENDED
+}
+
+model Vendor {
+  id            String         @id @default(uuid()) @db.Uuid
+  ownerId       String         @db.Uuid
+  slug          String         @unique @db.VarChar(60)
+  name          String         @db.VarChar(120)
+  category      VendorCategory
+  province      String         @db.VarChar(40) // see lib/vendors.ts PROVINCES
+  descriptionKm String?        @db.VarChar(4000)
+  descriptionEn String?        @db.VarChar(4000)
+  priceFrom     Int? // minor units of priceCurrency
+  priceCurrency Currency       @default(USD)
+  phone         String?        @db.VarChar(20)
+  telegram      String?        @db.VarChar(40) // username, without @
+  facebookUrl   String?        @db.VarChar(300)
+  logoKey       String?        @db.VarChar(300)
+  photos        Json           @default("[]")
+  status        VendorStatus   @default(DRAFT)
+  reviewNote    String?        @db.VarChar(300) // why it was suspended or sent back
+  featuredUntil DateTime? // paid placement: listed first until then
+  publishedAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  owner     User            @relation(fields: [ownerId], references: [id])
+  enquiries VendorEnquiry[]
+  reviews   VendorReview[]
+  events    EventVendor[]
+
+  @@index([status, category, province])
+  @@index([ownerId])
+}
+
+model VendorEnquiry {
+  id        String    @id @default(uuid()) @db.Uuid
+  vendorId  String    @db.Uuid
+  userId    String    @db.Uuid
+  eventId   String?   @db.Uuid
+  name      String    @db.VarChar(120)
+  phone     String    @db.VarChar(20)
+  eventDate DateTime?
+  message   String    @db.VarChar(2000)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+  event  Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@index([vendorId, createdAt])
+  @@index([userId])
+}
+
+model VendorReview {
+  id        String    @id @default(uuid()) @db.Uuid
+  vendorId  String    @db.Uuid
+  userId    String    @db.Uuid
+  rating    Int // 1–5
+  text      String?   @db.VarChar(2000)
+  reply     String?   @db.VarChar(2000) // the vendor's answer
+  repliedAt DateTime?
+  hiddenAt  DateTime? // hidden by an admin
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([vendorId, userId])
+}
+
+enum EventVendorStatus {
+  CONSIDERING
+  BOOKED
+}
+
+model EventVendor {
+  id        String            @id @default(uuid()) @db.Uuid
+  eventId   String            @db.Uuid
+  vendorId  String            @db.Uuid
+  status    EventVendorStatus @default(CONSIDERING)
+  note      String?           @db.VarChar(300)
+  createdAt DateTime          @default(now())
+
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, vendorId])
 }

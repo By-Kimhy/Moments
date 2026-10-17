@@ -1,5 +1,6 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizePhone } from "./lib/phone.js";
 
 // The repository root, from both src/ (tsx) and dist/ (built). Relative paths in .env resolve from here.
 const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
@@ -32,6 +33,12 @@ export const config = {
   telegramPolling: () => process.env.TELEGRAM_POLLING === "true",
   // Platform fee on ticket sales, in percent (recorded per order for billing).
   platformFeePercent: () => Number(process.env.PLATFORM_FEE_PERCENT ?? 4),
+  // Comma-separated phone numbers (any format) of platform admins.
+  adminPhones: () =>
+    (process.env.ADMIN_PHONES ?? "")
+      .split(",")
+      .map((p) => normalizePhone(p))
+      .filter((p): p is string => Boolean(p)),
   uploadDir: () => path.resolve(repoRoot, process.env.UPLOAD_DIR || "./uploads"),
   s3: () =>
     process.env.S3_BUCKET

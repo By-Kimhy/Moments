@@ -18,6 +18,9 @@ export default async function Home() {
         <Link href="/desk" className={secondaryButtonClass}>
           {t.home.helperCta}
         </Link>
+        <Link href="/vendors" className="text-sm text-muted underline">
+          {t.vendors.find}
+        </Link>
       </div>
     </div>
   );

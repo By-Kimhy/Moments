@@ -31,6 +31,11 @@ export function formatDateTime(d: Date, locale: "km" | "en") {
   }).format(d);
 }
 
+/** A calendar day stored as midnight UTC (like an enquiry's event date), without a time. */
+export function formatDay(d: Date, locale: "km" | "en") {
+  return new Intl.DateTimeFormat(locale === "km" ? "km-KH" : "en-GB", { timeZone: "UTC", dateStyle: "full" }).format(d);
+}
+
 /** The parts of an invitation date: "ថ្ងៃអាទិត្យ ២០ ធ្នូ ២០២៦" and "០៧:០០" in Khmer, with Khmer digits. */
 export function invitationDate(d: Date, locale: "km" | "en") {
   const tag = locale === "km" ? "km-KH-u-nu-khmr" : "en-GB";

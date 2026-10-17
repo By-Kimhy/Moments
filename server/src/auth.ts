@@ -14,7 +14,7 @@ export const DESK_COOKIE = "desk";
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 days, in seconds
 export const DESK_MAX_AGE = 60 * 60 * 24 * 7; // a wedding weekend, with room to spare
 
-export type CurrentUser = { id: string; name: string; phone: string | null; telegramId: string | null; language: Language };
+export type CurrentUser = { id: string; name: string; phone: string | null; telegramId: string | null; language: Language; isAdmin: boolean };
 export type CurrentHelper = { memberId: string; eventId: string; displayName: string };
 export type CurrentMember = { id: string; eventId: string; role: MemberRole; displayName: string };
 
@@ -85,7 +85,16 @@ export const toCurrentUser = (u: {
   phone: string | null;
   telegramId: bigint | null;
   language: Language;
-}): CurrentUser => ({ id: u.id, name: u.name, phone: u.phone, telegramId: u.telegramId?.toString() ?? null, language: u.language });
+  isAdmin: boolean;
+}): CurrentUser => ({
+  id: u.id,
+  name: u.name,
+  phone: u.phone,
+  telegramId: u.telegramId?.toString() ?? null,
+  language: u.language,
+  // Platform admins: marked in the database, or listed by phone in ADMIN_PHONES.
+  isAdmin: u.isAdmin || (u.phone !== null && config.adminPhones().includes(u.phone)),
+});
 
 /** Loads the signed-in user and/or desk helper onto the request. */
 export async function loadAuth(req: Request, _res: Response, next: NextFunction) {
@@ -109,6 +118,12 @@ export async function loadAuth(req: Request, _res: Response, next: NextFunction)
 
 export function requireUser(req: Request, _res: Response, next: NextFunction) {
   if (!req.user) throw new HttpError(401, "Sign in first.");
+  next();
+}
+
+export function requireAdmin(req: Request, _res: Response, next: NextFunction) {
+  if (!req.user) throw new HttpError(401, "Sign in first.");
+  if (!req.user.isAdmin) throw new HttpError(404, "Not found.");
   next();
 }
 

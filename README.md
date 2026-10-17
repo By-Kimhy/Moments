@@ -42,6 +42,8 @@ Open http://localhost:3000. Both parts read the one `.env` at the repository roo
 | Helper | Go to `/desk`, helper code `123456`, any name |
 | Concert door | Go to `/desk`, helper code `654321` |
 | Ticket buyer | Open `/e/khmer-music-night` |
+| Platform admin | The host above (`012 345 678`) is also an admin: `/admin` |
+| Vendor | Phone `077 777 777` (owns the demo listings at `/vendors`) |
 
 With `SMS_PROVIDER="mock"` (the default) no SMS is sent: the code is printed in the API log
 and shown on the login screen.
@@ -274,6 +276,27 @@ The event then has its own tabs: overview, tickets and door.
 
 The seed adds a demo concert at `/e/khmer-music-night` (door helper code `654321`).
 
+## Vendor marketplace
+
+- **Directory** `/vendors` (public, server-rendered): photographers, video, decoration, venues,
+  makeup, attire, catering, music, MCs, invitation printing and more, filtered by category and
+  province (all 25) and searched by name. Featured vendors come first, then the best rated.
+- **Profile** `/vendors/<slug>`: photos, description (Khmer/English), "price from", call,
+  Telegram and Facebook buttons, and reviews.
+- **Vendors** sign in like hosts and create their page at `/vendor`: details, logo, up to 12
+  photos, then "send for review". A platform admin approves it (or sends it back with a note,
+  or suspends it); only published listings are public.
+- **Enquiries:** a signed-in host sends their name, phone, event date and a message, optionally
+  for one of their events. The vendor gets an SMS and sees it in their inbox. Each enquiry is
+  kept, so referrals can be counted.
+- **Reviews:** one per host per vendor (sending again edits it), 1–5 stars, only from hosts who
+  sent that vendor an enquiry. The vendor can reply; admins can hide a review. The rating is
+  the average of visible reviews.
+- **Event shortlist:** "Save to an event" on a profile adds the vendor to the event's
+  "អ្នកផ្តល់សេវា" tab as considering or booked, with a note and their contact details.
+- **Admins** (`User.isAdmin`, or phone numbers in `ADMIN_PHONES`) use `/admin`: the review
+  queue by status, approve, send back, suspend, feature for a number of days, hide reviews.
+
 ## Telegram
 
 One bot does both the hosts' Telegram login and their alerts.
@@ -416,6 +439,20 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | GET | `/api/public/events/:slug` | anyone |
 | POST | `/api/public/events/:slug/orders` `{ buyerName, buyerPhone, items }` | anyone |
 | GET | `/api/orders/:token`, `/api/orders/:token/tickets/:code/qr.svg` | anyone with the order link |
+| GET | `/api/vendors` (`?category=&province=&q=&page=`), `/api/vendors/:slug` | anyone |
+| POST | `/api/vendors/:slug/enquiries` `{ name, phone, eventDate?, message, eventId? }` | signed in |
+| PUT | `/api/vendors/:slug/reviews` `{ rating, text }` | signed in, after an enquiry |
+| GET, POST | `/api/vendors/mine` | signed in |
+| GET, PATCH | `/api/vendors/mine/:vendorId` | vendor owner |
+| POST, DELETE | `/api/vendors/mine/:vendorId/photos[/:key]`; PUT `/logo` | vendor owner |
+| POST | `/api/vendors/mine/:vendorId/submit` | vendor owner |
+| GET | `/api/vendors/mine/:vendorId/enquiries`; POST `/enquiries/read` | vendor owner |
+| PUT | `/api/vendors/mine/:vendorId/reviews/:reviewId/reply` `{ reply }` | vendor owner |
+| GET | `/api/events/:eventId/vendors` | owner |
+| PUT, DELETE | `/api/events/:eventId/vendors/:vendorId` `{ status, note }` | owner |
+| GET | `/api/admin/vendors` (`?status=`), `/api/admin/reviews` | platform admin |
+| POST | `/api/admin/vendors/:vendorId/approve`, `/return`, `/suspend` `{ note }`, `/feature` `{ days }` | platform admin |
+| POST | `/api/admin/reviews/:reviewId/hide`, `/show` | platform admin |
 | GET, DELETE | `/api/events/:eventId/telegram` | owner |
 | POST | `/api/events/:eventId/telegram/link` | owner |
 | POST | `/api/events/:eventId/telegram/test` | owner |
@@ -435,7 +472,7 @@ CSV/Excel import and export, invitation page with three templates, RSVP and link
 MVP in `docs/PROPOSAL.md`.
 
 Phase 2 (`docs/PHASE2.md`) is done too: seating plan, thank-you messages, planner dashboard
-and ticketing.
+and ticketing. Phase 3 (`docs/PHASE3.md`): the vendor marketplace is built; paid plans are next.
 
 Before a real wedding: connect a real SMS gateway (`server/src/providers/sms.ts`), set up the
 Telegram bot, S3/R2 storage and Chromium on the server, and run the app over https (the camera

@@ -59,6 +59,19 @@ export default async function Dashboard() {
           {t.planner.forPlanners}
         </Link>
       )}
+      <div className="flex flex-col gap-2 text-sm">
+        <Link href="/vendors" className="font-medium underline">
+          {t.vendors.find} →
+        </Link>
+        <Link href="/vendor" className="text-muted underline">
+          {t.vendors.forVendors}
+        </Link>
+        {user.isAdmin && (
+          <Link href="/admin" className="text-muted underline">
+            {t.admin.link}
+          </Link>
+        )}
+      </div>
       <div className="flex flex-col items-start gap-3">
         <InstallButton label={t.pwa.install} iosHint={t.pwa.iosHint} />
         <SignOutButton action={logout} label={t.common.signOut} unsentWarning={t.pwa.unsent} />

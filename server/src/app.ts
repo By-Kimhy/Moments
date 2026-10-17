@@ -6,9 +6,11 @@ import { eventAccess } from "./access.js";
 import { loadAuth } from "./auth.js";
 import { config } from "./config.js";
 import { errorHandler, notFound } from "./errors.js";
+import { adminRouter } from "./routes/admin.js";
 import { authRouter } from "./routes/auth.js";
 import { checkinsRouter } from "./routes/checkins.js";
 import { deskRouter } from "./routes/desk.js";
+import { eventVendorsRouter } from "./routes/event-vendors.js";
 import { eventRouter, eventsRouter } from "./routes/events.js";
 import { giftsRouter } from "./routes/gifts.js";
 import { guestsRouter } from "./routes/guests.js";
@@ -22,6 +24,7 @@ import { eventTelegramRouter, telegramWebhookRouter } from "./routes/telegram.js
 import { templatesRouter } from "./routes/templates.js";
 import { thankYouRouter } from "./routes/thank-you.js";
 import { ticketingRouter } from "./routes/ticketing.js";
+import { vendorsRouter } from "./routes/vendors.js";
 
 export function createApp() {
   const app = express();
@@ -48,10 +51,12 @@ export function createApp() {
   app.use("/api/telegram", telegramWebhookRouter);
   app.use("/api/public/events", publicEventsRouter);
   app.use("/api/orders", ordersRouter);
+  app.use("/api/vendors", vendorsRouter);
+  app.use("/api/admin", adminRouter);
   // Everything about one event: eventAccess checks the caller belongs to it first.
   const event = Router({ mergeParams: true });
   event.use(eventAccess);
-  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter, seatingRouter, thankYouRouter, ticketingRouter);
+  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter, seatingRouter, thankYouRouter, ticketingRouter, eventVendorsRouter);
   app.use("/api/events/:eventId", event);
 
   app.use(notFound);

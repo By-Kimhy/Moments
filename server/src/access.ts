@@ -41,7 +41,7 @@ async function plannerFor(eventId: string, userId: string) {
  * ends when they leave the organization; the membership row exists so their actions are logged
  * under their name like any host's.
  */
-async function hostMembership(eventId: string, user: { id: string; name: string }) {
+export async function hostMembership(eventId: string, user: { id: string; name: string }) {
   const existing = await prisma.eventMember.findFirst({ where: { eventId, userId: user.id } });
   if (existing && !existing.revokedAt && !existing.viaOrganization) return existing;
   if (!(await plannerFor(eventId, user.id))) return null;

@@ -108,15 +108,15 @@ export async function removeShortlisted(eventId: string, vendorId: string) {
 
 export async function moderateVendor(vendorId: string, action: "approve" | "return" | "suspend", formData: FormData) {
   await api.post(`/admin/vendors/${vendorId}/${action}`, { note: field(formData, "note") });
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }
 
 export async function featureVendor(vendorId: string, formData: FormData) {
   await api.post(`/admin/vendors/${vendorId}/feature`, { days: field(formData, "days") || "0" });
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }
 
 export async function setReviewHidden(reviewId: string, hidden: boolean) {
   await api.post(`/admin/reviews/${reviewId}/${hidden ? "hide" : "show"}`);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }

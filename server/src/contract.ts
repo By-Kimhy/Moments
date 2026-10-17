@@ -211,3 +211,5 @@ export type PlanResponse = {
 export type AdminPlanOrdersResponse = {
   orders: (PlanOrderView & { event: { id: string; titleKm: string; titleEn: string | null; plan: Plan }; owner: { name: string; phone: string | null } })[];
 };
+
+export type AdminStats = Awaited<ReturnType<typeof import("./lib/admin-stats.js")["adminStats"]>>;

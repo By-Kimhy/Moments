@@ -1,164 +1,93 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { AdminPlanOrdersResponse, AdminReviewsResponse, AdminVendorsResponse, VendorStatus } from "@api/contract";
+import type { AdminStats } from "@api/contract";
 import { formatAmount } from "@api/lib/money";
-import { confirmPlanOrder, rejectPlanOrder } from "@/app/actions/plans";
-import { featureVendor, moderateVendor, setReviewHidden } from "@/app/actions/vendors";
-import { buttonClass, secondaryButtonClass } from "@/components/form";
-import { categoryName, provinceName } from "@/components/vendor-card";
 import { getLocale, getMessages } from "@/i18n";
 import { fill } from "@/i18n/format";
 import { apiGet } from "@/lib/api";
 import { requireUser } from "@/lib/dal";
-import { formatDateTime } from "@/lib/dates";
+import { localDigits } from "@/lib/dates";
+import { AdminHeader } from "./admin-header";
 
-const STATUSES: VendorStatus[] = ["PENDING_REVIEW", "PUBLISHED", "SUSPENDED", "DRAFT"];
-const smallInput = "rounded-lg border border-line bg-white px-2 py-1.5 text-sm dark:bg-zinc-900";
-
-// Platform admins: approve vendor listings, feature them, hide reviews.
-export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
+// The platform at a glance: users, events, vendors and income.
+export default async function AdminOverview() {
   const user = await requireUser();
   if (!user.isAdmin) notFound();
-  const { status: raw } = await searchParams;
-  const status = STATUSES.find((s) => s === raw) ?? "PENDING_REVIEW";
-  const [t, locale, { vendors, counts }, { reviews }, { orders }] = await Promise.all([
-    getMessages(),
-    getLocale(),
-    apiGet<AdminVendorsResponse>(`/admin/vendors?status=${status}`),
-    apiGet<AdminReviewsResponse>("/admin/reviews"),
-    apiGet<AdminPlanOrdersResponse>("/admin/plan-orders"),
-  ]);
+  const [t, locale, stats] = await Promise.all([getMessages(), getLocale(), apiGet<AdminStats>("/admin/stats")]);
+  const km = locale === "km";
+  const n = (value: number) => localDigits(value.toLocaleString("en-US"), locale);
+  const money = (m: { USD: number; KHR: number }) =>
+    [m.USD || !m.KHR ? formatAmount(m.USD, "USD", km) : null, m.KHR ? formatAmount(m.KHR, "KHR", km) : null].filter(Boolean).join(" + ");
+  const monthName = (key: string) => new Intl.DateTimeFormat(km ? "km-KH" : "en-GB", { month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${key}-01T00:00:00Z`));
+  const tiles = [
+    { label: t.admin.users, value: n(stats.users.total), note: fill(t.admin.newUsers, { count: n(stats.users.last30Days) }) },
+    { label: t.admin.weddings, value: n(stats.events.byType.WEDDING ?? 0), note: fill(t.admin.upcoming, { count: n(stats.events.upcoming30Days) }) },
+    { label: t.admin.ticketed, value: n(stats.events.byType.TICKETED ?? 0), note: "" },
+    { label: t.admin.organizations, value: n(stats.organizations), note: "" },
+    {
+      label: t.admin.vendorsPublished,
+      value: n(stats.vendors.byStatus.PUBLISHED ?? 0),
+      note: [fill(t.admin.enquiries30, { count: n(stats.vendors.enquiries30Days) }), stats.vendors.byStatus.PENDING_REVIEW ? fill(t.admin.pendingReview, { count: n(stats.vendors.byStatus.PENDING_REVIEW) }) : ""]
+        .filter(Boolean)
+        .join(" · "),
+    },
+  ];
   return (
     <div className="flex flex-col gap-6 py-8">
-      <div>
-        <Link href="/dashboard" className="text-sm text-muted">
-          ← {t.dashboard.title}
-        </Link>
-        <h1 className="mt-1 text-2xl font-semibold">{t.admin.title}</h1>
-      </div>
+      <AdminHeader active="overview" t={t} />
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3" data-testid="admin-stats">
+        {tiles.map((tile) => (
+          <div key={tile.label} className="flex flex-col gap-1 rounded-xl border border-line p-3">
+            <dt className="text-sm text-muted">{tile.label}</dt>
+            <dd className="text-2xl font-semibold">{tile.value}</dd>
+            {tile.note && <dd className="text-xs text-muted">{tile.note}</dd>}
+          </div>
+        ))}
+      </dl>
+
       <section className="flex flex-col gap-3">
-        <h2 className="font-semibold">{t.plans.adminTitle}</h2>
-        {orders.length === 0 && <p className="text-sm text-muted">{t.admin.empty}</p>}
-        <ul className="flex flex-col gap-2">
-          {orders.map((o) => (
-            <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line p-3" data-testid="plan-order">
-              <div className="flex flex-col text-sm">
-                <span className="font-medium">
-                  {fill(t.plans.adminOrder, {
-                    reference: o.reference,
-                    event: locale === "en" && o.event.titleEn ? o.event.titleEn : o.event.titleKm,
-                    plan: t.plans.names[o.plan],
-                    price: formatAmount(o.amount, o.currency, locale === "km"),
-                  })}
-                </span>
-                <span className="text-muted">
-                  {fill(t.admin.owner, { name: o.owner.name, phone: o.owner.phone ?? "" })} · {formatDateTime(o.createdAt, locale)}
-                </span>
-              </div>
-              <div className="flex gap-2">
-                <form action={confirmPlanOrder.bind(null, o.id)}>
-                  <button className={buttonClass}>{t.plans.confirm}</button>
-                </form>
-                <form action={rejectPlanOrder.bind(null, o.id)}>
-                  <button className={secondaryButtonClass}>{t.plans.cancel}</button>
-                </form>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <h2 className="font-semibold">{t.admin.income}</h2>
+        <dl className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl bg-emerald-50 p-3 text-emerald-950">
+            <dt className="text-sm">{t.admin.planIncome}</dt>
+            <dd className="text-xl font-semibold" data-testid="plan-income">{money(stats.income.plans)}</dd>
+          </div>
+          <div className="rounded-xl bg-sky-50 p-3 text-sky-950">
+            <dt className="text-sm">{t.admin.ticketFees}</dt>
+            <dd className="text-xl font-semibold">{money(stats.income.ticketFees)}</dd>
+          </div>
+        </dl>
+        <div className="-mx-4 overflow-x-auto px-4">
+          <table className="w-full min-w-[30rem] text-sm">
+            <thead className="text-left text-muted">
+              <tr>
+                <th className="py-2 font-normal">{t.admin.month}</th>
+                <th className="py-2 text-right font-normal">{t.admin.users}</th>
+                <th className="py-2 text-right font-normal">{t.admin.newEvents}</th>
+                <th className="py-2 text-right font-normal">{t.admin.planIncome}</th>
+                <th className="py-2 text-right font-normal">{t.admin.ticketFees}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {[...stats.months].reverse().map((m) => (
+                <tr key={m.month}>
+                  <td className="py-2">{monthName(m.month)}</td>
+                  <td className="py-2 text-right tabular-nums">{n(m.users)}</td>
+                  <td className="py-2 text-right tabular-nums">{n(m.events)}</td>
+                  <td className="py-2 text-right tabular-nums">{money(m.plans)}</td>
+                  <td className="py-2 text-right tabular-nums">{money(m.ticketFees)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
-      <section className="flex flex-col gap-3">
-        <h2 className="font-semibold">{t.admin.vendors}</h2>
-        <nav className="-mx-4 flex gap-1 overflow-x-auto border-b border-line px-4">
-          {STATUSES.map((s) => (
-            <Link
-              key={s}
-              href={`/admin?status=${s}`}
-              className={`shrink-0 border-b-2 px-3 py-2 text-sm ${s === status ? "border-accent font-semibold text-accent" : "border-transparent text-muted"}`}
-            >
-              {t.vendors.status[s]} ({counts[s] ?? 0})
-            </Link>
-          ))}
-        </nav>
-        {vendors.length === 0 && <p className="text-sm text-muted">{t.admin.empty}</p>}
-        <ul className="flex flex-col gap-3">
-          {vendors.map((v) => (
-            <li key={v.id} className="flex flex-col gap-2 rounded-xl border border-line p-4" data-testid="admin-vendor">
-              <div className="flex gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element -- stored photos are already resized WebP */}
-                {v.photos[0] && <img src={`/api/files/${v.photos[0].key}`} alt="" className="h-20 w-28 shrink-0 rounded-lg object-cover" />}
-                <div className="flex min-w-0 flex-col">
-                  <span className="font-semibold">{v.name}</span>
-                  <span className="text-sm text-muted">
-                    {categoryName(v.category, locale)} · {provinceName(v.province, locale)} · {fill(t.admin.enquiries, { count: v.enquiries })}
-                  </span>
-                  <span className="text-sm text-muted">{fill(t.admin.owner, { name: v.owner.name, phone: v.owner.phone ?? "" })}</span>
-                  {v.featuredUntil && v.featuredUntil > new Date() && (
-                    <span className="text-sm text-amber-700">{fill(t.admin.featuredUntil, { date: formatDateTime(v.featuredUntil, locale) })}</span>
-                  )}
-                </div>
-              </div>
-              {(v.descriptionKm || v.descriptionEn) && <p className="line-clamp-3 text-sm">{v.descriptionKm || v.descriptionEn}</p>}
-              <div className="flex flex-wrap items-end gap-2">
-                {v.status !== "PUBLISHED" && v.status !== "DRAFT" && (
-                  <form action={moderateVendor.bind(null, v.id, "approve")}>
-                    <button className={buttonClass}>{t.admin.approve}</button>
-                  </form>
-                )}
-                {v.status === "PUBLISHED" && (
-                  <>
-                    <Link href={`/vendors/${v.slug}`} className={secondaryButtonClass}>
-                      {t.vendors.viewPage}
-                    </Link>
-                    <form action={featureVendor.bind(null, v.id)} className="flex items-center gap-1">
-                      <input name="days" type="number" min={0} max={366} defaultValue={30} aria-label={t.admin.days} className={`${smallInput} w-16`} />
-                      <button className={secondaryButtonClass}>{t.admin.feature}</button>
-                    </form>
-                  </>
-                )}
-              </div>
-              {v.status !== "SUSPENDED" && (
-                <details>
-                  <summary className="cursor-pointer text-sm text-muted">
-                    {v.status === "PENDING_REVIEW" ? `${t.admin.return} / ${t.admin.suspend}` : t.admin.suspend}
-                  </summary>
-                  <form className="mt-2 flex flex-col gap-2">
-                    <input name="note" placeholder={t.admin.note} className={smallInput} />
-                    <div className="flex gap-2">
-                      {v.status === "PENDING_REVIEW" && (
-                        <button formAction={moderateVendor.bind(null, v.id, "return")} className={secondaryButtonClass}>
-                          {t.admin.return}
-                        </button>
-                      )}
-                      <button formAction={moderateVendor.bind(null, v.id, "suspend")} className={`${secondaryButtonClass} text-red-700`}>
-                        {t.admin.suspend}
-                      </button>
-                    </div>
-                  </form>
-                </details>
-              )}
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section className="flex flex-col gap-3">
-        <h2 className="font-semibold">{t.admin.reviews}</h2>
-        {reviews.length === 0 && <p className="text-sm text-muted">{t.admin.empty}</p>}
-        <ul className="flex flex-col divide-y divide-line">
-          {reviews.map((r) => (
-            <li key={r.id} className={`flex items-start justify-between gap-3 py-3 ${r.hidden ? "opacity-50" : ""}`}>
-              <div className="flex flex-col">
-                <span className="text-sm">
-                  <span className="text-amber-500">{"★".repeat(r.rating)}</span> {r.author} →{" "}
-                  <Link href={`/vendors/${r.vendor.slug}`} className="underline">
-                    {r.vendor.name}
-                  </Link>
-                </span>
-                {r.text && <p className="text-sm">{r.text}</p>}
-              </div>
-              <form action={setReviewHidden.bind(null, r.id, !r.hidden)}>
-                <button className="text-sm text-muted underline">{r.hidden ? t.admin.show : t.admin.hide}</button>
-              </form>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="font-semibold">{t.admin.byPlan}</h2>
+        <ul className="flex flex-wrap gap-2 text-sm">
+          {(["FREE", "STANDARD", "PREMIUM"] as const).map((p) => (
+            <li key={p} className="rounded-full bg-black/5 px-3 py-1">
+              {t.plans.names[p]}: {n(stats.events.weddingsByPlan[p] ?? 0)}
             </li>
           ))}
         </ul>

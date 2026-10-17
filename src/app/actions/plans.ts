@@ -17,10 +17,10 @@ export async function cancelPlanOrder(eventId: string, orderId: string) {
 
 export async function confirmPlanOrder(orderId: string) {
   await api.post(`/admin/plan-orders/${orderId}/confirm`);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }
 
 export async function rejectPlanOrder(orderId: string) {
   await api.post(`/admin/plan-orders/${orderId}/cancel`);
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }

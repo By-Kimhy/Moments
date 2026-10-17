@@ -7,6 +7,7 @@ import { currentUser, requireAdmin } from "../auth.js";
 import { isUuid } from "../access.js";
 import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
+import { adminStats } from "../lib/admin-stats.js";
 import { audit } from "../lib/audit.js";
 import { PLAN_ORDER } from "../lib/plans.js";
 import { ownerVendorView, ratings } from "../lib/vendors.js";
@@ -15,6 +16,10 @@ import { planOrderView } from "./plans.js";
 
 export const adminRouter = Router();
 adminRouter.use(requireAdmin);
+
+adminRouter.get("/stats", async (_req, res) => {
+  res.json(await adminStats());
+});
 
 const listSchema = z.object({ status: z.enum(["DRAFT", "PENDING_REVIEW", "PUBLISHED", "SUSPENDED"]).default("PENDING_REVIEW").catch("PENDING_REVIEW") });
 const noteSchema = z.object({ note: z.string().trim().max(300).nullish().transform((v) => v || null) });

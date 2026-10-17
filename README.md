@@ -46,8 +46,8 @@ Open http://localhost:3000. Both parts read the one `.env` at the repository roo
 | Plans | The demo wedding is on Premium; new events start on Free |
 | Vendor | Phone `077 777 777` (owns the demo listings at `/vendors`) |
 
-Without a Telegram bot (`TELEGRAM_BOT_TOKEN` empty) and outside production, the login page
-shows a test form instead: type one of the phone numbers above. With a bot, sign in with the
+Without a Telegram bot (`TELEGRAM_BOT_TOKEN` empty) and with `ALLOW_TEST_LOGIN=true` (never in
+production; it is ignored there), the login page shows a test form instead: type one of the phone numbers above. With a bot, sign in with the
 Telegram account whose phone number matches.
 
 ## How sign-in works
@@ -55,7 +55,9 @@ Telegram account whose phone number matches.
 - **Hosts, planners and vendors sign in with Telegram only** — no passwords, no SMS. "Sign in
   with Telegram" opens the bot with a one-time token (`t.me/<bot>?start=login_<token>`, valid
   10 minutes). In Telegram they press Start, then "Share my phone number"; Telegram vouches for
-  the number, and the bot accepts only the person's own contact. The login page asks every two
+  the number, and the bot accepts only the person's own contact. The bot warns people to share
+  only if they pressed "Sign in" themselves, since a link someone sends them would sign the
+  sender in. The login page asks every two
   seconds and signs in as soon as the bot has confirmed.
 - Accounts are found by Telegram id, then by phone number, so someone added by phone (a
   co-host, planner staff, a planner's client) finds their events the first time they sign in.
@@ -544,7 +546,7 @@ its test form:
 
 ```bash
 npm run db:seed
-npm run build && TELEGRAM_BOT_TOKEN= npm start   # in another terminal
+npm run build && TELEGRAM_BOT_TOKEN= ALLOW_TEST_LOGIN=true npm start   # in another terminal
 npm run e2e
 ```
 

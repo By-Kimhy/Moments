@@ -66,7 +66,7 @@ export const badCodeMessage =
   "លេខកូដនេះមិនត្រឹមត្រូវ ឬផុតកំណត់ហើយ។ សូមបង្កើតលេខកូដថ្មីនៅលើទំព័រកម្មវិធី។\n\nThis code is wrong or expired. Make a new one on the event page.";
 
 export const loginAskContact =
-  "សូមចុចប៊ូតុង «ចែករំលែកលេខទូរស័ព្ទ» ខាងក្រោម ដើម្បីចូល Moments។\n\nPress “Share my phone number” below to sign in to Moments.";
+  "សូមចុចប៊ូតុង «ចែករំលែកលេខទូរស័ព្ទ» ខាងក្រោម ដើម្បីចូល Moments។\n⚠️ ធ្វើបែបនេះ លុះត្រាតែអ្នកទើបតែចុច «ចូលតាម Telegram» ដោយខ្លួនឯង។ បើនរណាម្នាក់ផ្ញើតំណនេះមកអ្នក កុំចែករំលែក — ពួកគេនឹងចូលគណនីរបស់អ្នក។\n\nPress “Share my phone number” below to sign in to Moments.\n⚠️ Only do this if you just pressed “Sign in with Telegram” yourself. If someone sent you this link, don't share — they would get into your account.";
 export const loginShareButton = "📱 ចែករំលែកលេខទូរស័ព្ទ · Share my phone number";
 export const loginDone = "✅ បានចូលហើយ! សូមត្រឡប់ទៅកម្មវិធីរុករកវិញ។\n\nSigned in! Go back to your browser.";
 export const loginExpired =

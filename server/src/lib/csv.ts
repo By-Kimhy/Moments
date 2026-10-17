@@ -42,6 +42,9 @@ export function parseCsv(text: string): string[][] {
 
 /** Quotes a value for a CSV file when it needs it. */
 export function csvCell(value: string | number | null | undefined) {
-  const s = value === null || value === undefined ? "" : String(value);
+  let s = value === null || value === undefined ? "" : String(value);
+  // A cell starting like a formula (=, @, or + / - not followed by a digit, e.g. "=HYPERLINK(…)")
+  // would run in Excel: keep it as text. Phone numbers like +855… stay as they are.
+  if (/^[=@\t\r]/.test(s) || /^[+-](?!\d)/.test(s)) s = `'${s}`;
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }

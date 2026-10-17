@@ -29,7 +29,9 @@ const updateMeSchema = z.object({
   language: z.enum(["KM", "EN"]).optional(),
 });
 
-const devLogin = () => !telegram() && !config.production;
+// Only when switched on by name, never in production, and only without a bot: it signs anyone in
+// as any phone number.
+const devLogin = () => !telegram() && !config.production && (config.test || process.env.ALLOW_TEST_LOGIN === "true");
 
 // Step 1: a one-time login token and the bot link to open with it.
 authRouter.post("/telegram/start", async (req, res) => {

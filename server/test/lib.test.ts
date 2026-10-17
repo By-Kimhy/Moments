@@ -22,3 +22,16 @@ describe("normalizePhone", () => {
     expect(normalizePhone(input)).toBeNull();
   });
 });
+
+import { csvCell } from "../src/lib/csv.js";
+
+describe("csvCell", () => {
+  it("keeps formulas from running in Excel, but leaves phone numbers alone", () => {
+    expect(csvCell("=HYPERLINK(\"x\")")).toBe(`"'=HYPERLINK(""x"")"`);
+    expect(csvCell("@SUM(A1)")).toBe("'@SUM(A1)");
+    expect(csvCell("-cmd")).toBe("'-cmd");
+    expect(csvCell("+85512345678")).toBe("+85512345678");
+    expect(csvCell("-5")).toBe("-5");
+    expect(csvCell("សុខ ដារ៉ា")).toBe("សុខ ដារ៉ា");
+  });
+});

@@ -1,6 +1,6 @@
 // Browser tests of the main journeys, on a phone-sized screen. They need the seeded database
 // (`npm run db:seed`) and the built app running without a Telegram bot, so the login page
-// offers its test form: `npm run build && TELEGRAM_BOT_TOKEN= npm start`, then `npm run e2e`.
+// offers its test form: `npm run build && TELEGRAM_BOT_TOKEN= ALLOW_TEST_LOGIN=true npm start`, then `npm run e2e`.
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({

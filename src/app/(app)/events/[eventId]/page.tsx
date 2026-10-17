@@ -9,13 +9,17 @@ import { apiGet } from "@/lib/api";
 import { formatDateTime } from "@/lib/dates";
 import { CohostForm } from "./cohost-form";
 import { MediaSection } from "./media-section";
+import { TelegramSection } from "./telegram-section";
 
 export default async function EventPage({ params }: PageProps<"/events/[eventId]">) {
   const { eventId } = await params;
   const [t, locale, data] = await Promise.all([getMessages(), getLocale(), apiGet<{ event: HostEvent; role: string }>(`/events/${eventId}`)]);
   if (data.role !== "OWNER") notFound();
   const { event } = data;
-  const { members } = await apiGet<MembersResponse>(`/events/${eventId}/members`);
+  const [{ members }, telegram] = await Promise.all([
+    apiGet<MembersResponse>(`/events/${eventId}/members`),
+    apiGet<{ enabled: boolean; connected: boolean; botUsername: string | null }>(`/events/${eventId}/telegram`),
+  ]);
   const hosts = members.filter((m) => m.role === "OWNER");
   const helpers = members.filter((m) => m.role === "HELPER");
   const title = locale === "en" && event.titleEn ? event.titleEn : event.titleKm;
@@ -62,6 +66,8 @@ export default async function EventPage({ params }: PageProps<"/events/[eventId]
           </div>
         )}
       </dl>
+
+      <TelegramSection eventId={eventId} status={telegram} t={t.telegram} />
 
       <MediaSection event={event} t={t.media} removeLabel={t.common.remove} />
 

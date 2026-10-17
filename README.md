@@ -190,6 +190,38 @@ side). Downloads, in Khmer or English:
 Only confirmed gifts are counted; cancelled and rejected gifts appear only in the "every gift"
 sheet, and KHQR gifts still waiting are shown separately.
 
+## Telegram
+
+One bot does both the hosts' Telegram login and their alerts.
+
+1. Create a bot with [@BotFather](https://t.me/BotFather); put its token in `TELEGRAM_BOT_TOKEN` and its
+   username in `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME`.
+2. For the login button, send `/setdomain` to BotFather with your site's domain.
+3. For alerts, Telegram must reach the API. In production set `TELEGRAM_WEBHOOK_SECRET` and
+   register the webhook once:
+   ```bash
+   curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+     -d url=https://your-domain/api/telegram/webhook -d secret_token=$TELEGRAM_WEBHOOK_SECRET
+   ```
+   In development, set `TELEGRAM_POLLING=true` instead (no public URL needed).
+
+**Connecting an event:** on the event page, "ភ្ជាប់ Telegram" gives a one-time code (30 minutes).
+Open the bot link and tap Start for private alerts, or add the bot to the family's Telegram
+group and send `/link <code>` there. The bot replies when the chat is connected; "Send a test
+message" checks it any time. If the bot is removed from the group, the event is unlinked
+(and logged) instead of retrying forever.
+
+**What is sent** (in the event creator's language):
+
+- every RSVP, with the guest's wish and the running number of people coming;
+- every KHQR gift a guest reports, with a link to confirm it;
+- gifts recorded at the desk, as one summary per 15 minutes (count, amount in that window,
+  and the running total), so a busy desk doesn't flood the chat.
+
+With Redis, alerts go through a BullMQ queue (`notifications`) and are retried with backoff
+when Telegram fails; the worker runs inside the API process. Without Redis they are sent in the
+background directly.
+
 ## Offline desk
 
 Venue wifi is often weak, so the desk saves everything on the phone first (IndexedDB,
@@ -261,6 +293,10 @@ Venue wifi is often weak, so the desk saves everything on the phone first (Index
 | GET | `/api/events/:eventId/reports/summary` (`?side=`) | owner |
 | GET | `/api/events/:eventId/reports/gift-book.xlsx` (`?side=&lang=`) | owner |
 | GET | `/api/events/:eventId/reports/gift-book.pdf` (`?side=&lang=`) | owner |
+| GET, DELETE | `/api/events/:eventId/telegram` | owner |
+| POST | `/api/events/:eventId/telegram/link` | owner |
+| POST | `/api/events/:eventId/telegram/test` | owner |
+| POST | `/api/telegram/webhook` (header `X-Telegram-Bot-Api-Secret-Token`) | Telegram |
 
 ## Tests
 
@@ -272,6 +308,6 @@ Each test signs in with fresh random phone numbers, so tests don't disturb other
 
 Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers and
 co-hosts, access control, event create/edit, photo and KHQR uploads, guest list with
-CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports.
+CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts.
 
-Next, in order: Telegram notifications, PWA.
+Next: PWA (installable app, desk opens without internet).

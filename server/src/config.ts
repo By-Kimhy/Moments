@@ -24,6 +24,12 @@ export const config = {
   redisUrl: () => process.env.REDIS_URL || null,
   smsProvider: () => process.env.SMS_PROVIDER ?? "mock",
   telegramBotToken: () => process.env.TELEGRAM_BOT_TOKEN || null,
+  telegramBotUsername: () => (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "").replace(/^@/, "") || null,
+  telegramApiBase: () => process.env.TELEGRAM_API_URL || "https://api.telegram.org",
+  // Checked on every webhook call, so only Telegram can post updates.
+  telegramWebhookSecret: () => process.env.TELEGRAM_WEBHOOK_SECRET || null,
+  // For development without a public URL: the API asks Telegram for updates instead.
+  telegramPolling: () => process.env.TELEGRAM_POLLING === "true",
   uploadDir: () => path.resolve(repoRoot, process.env.UPLOAD_DIR || "./uploads"),
   s3: () =>
     process.env.S3_BUCKET

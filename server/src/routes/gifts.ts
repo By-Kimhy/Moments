@@ -11,6 +11,7 @@ import { HttpError, parse } from "../errors.js";
 import { audit } from "../lib/audit.js";
 import { giftTotals } from "../lib/gifts.js";
 import { MAX_AMOUNT } from "../lib/money.js";
+import { scheduleDeskDigest } from "../jobs/notifications.js";
 import { paymentProvider } from "../providers/payment.js";
 
 /** Mounted on /api/events/:eventId (after eventAccess). */
@@ -161,6 +162,7 @@ giftsRouter.post("/gifts", async (req, res) => {
     await audit(tx, { eventId: member.eventId, entity: "gift", entityId: created.id, action: "create", actorId: member.id, after: giftView(created) });
     return created;
   });
+  await scheduleDeskDigest(member.eventId);
   res.status(201).json({ gift: giftView(gift) });
 });
 

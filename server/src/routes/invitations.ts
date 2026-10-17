@@ -7,6 +7,7 @@ import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
 import { audit } from "../lib/audit.js";
 import { inviteUrl } from "../lib/guests.js";
+import { notify } from "../jobs/notifications.js";
 import { MAX_AMOUNT } from "../lib/money.js";
 import { publicEventView, publicGuestView, rsvpOpen, rsvpSchema } from "../lib/invitations.js";
 import { rateLimit } from "../store.js";
@@ -68,12 +69,14 @@ invitationsRouter.post("/:token/gift", async (req, res) => {
   if (event.status === "ARCHIVED" || !event.khqrImageKey) throw new HttpError(409, "This event no longer accepts gifts here.");
   const data = parse(giftSchema, req.body);
   await rateLimit(`guest-gift:${guest.id}`, 5, 60 * 60, "Too many gifts sent. Try again later.");
-  await prisma.$transaction(async (tx) => {
+  const gift = await prisma.$transaction(async (tx) => {
     const gift = await tx.gift.create({
       data: { eventId: guest.eventId, guestId: guest.id, amount: data.amount, currency: data.currency, method: "KHQR", status: "PENDING", source: "GUEST", note: data.note },
     });
     await audit(tx, { eventId: guest.eventId, entity: "gift", entityId: gift.id, action: "guest_submit", actorId: null, after: { amount: data.amount, currency: data.currency, note: data.note } });
+    return gift;
   });
+  await notify({ kind: "guest_gift", giftId: gift.id });
   res.status(201).json({ gifts: await guestGifts(guest.id) });
 });
 
@@ -115,6 +118,7 @@ invitationsRouter.post("/:token/rsvp", async (req, res) => {
     });
     return after;
   });
+  await notify({ kind: "rsvp", guestId: guest.id });
   res.json({ guest: publicGuestView(updated) });
 });
 

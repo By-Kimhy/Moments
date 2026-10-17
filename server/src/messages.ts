@@ -79,6 +79,8 @@ const km: Record<string, string> = {
   "Too many gifts sent. Try again later.": "បានផ្ញើច្រើនដងពេក។ សូមព្យាយាមពេលក្រោយ។",
   "This event no longer accepts gifts here.": "កម្មវិធីនេះលែងទទួលចំណងដៃតាមទីនេះទៀតហើយ។",
   "PDF export is not set up on this server.": "ការនាំចេញ PDF មិនទាន់បានរៀបចំនៅលើម៉ាស៊ីនមេនេះទេ។",
+  "Telegram is not set up on this server.": "Telegram មិនទាន់បានរៀបចំនៅលើម៉ាស៊ីនមេនេះទេ។",
+  "Connect a Telegram chat first.": "សូមភ្ជាប់ Telegram ជាមុនសិន។",
 };
 
 const KHMER_DIGITS = "០១២៣៤៥៦៧៨៩";

@@ -15,6 +15,7 @@ import { guestsRouter } from "./routes/guests.js";
 import { invitationsRouter } from "./routes/invitations.js";
 import { filesRouter, mediaRouter } from "./routes/media.js";
 import { reportsRouter } from "./routes/reports.js";
+import { eventTelegramRouter, telegramWebhookRouter } from "./routes/telegram.js";
 import { templatesRouter } from "./routes/templates.js";
 
 export function createApp() {
@@ -38,10 +39,11 @@ export function createApp() {
   app.use("/api/events", eventsRouter);
   app.use("/api/files", filesRouter);
   app.use("/api/invitations", invitationsRouter);
+  app.use("/api/telegram", telegramWebhookRouter);
   // Everything about one event: eventAccess checks the caller belongs to it first.
   const event = Router({ mergeParams: true });
   event.use(eventAccess);
-  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter);
+  event.use(eventRouter, mediaRouter, guestsRouter, checkinsRouter, giftsRouter, reportsRouter, eventTelegramRouter);
   app.use("/api/events/:eventId", event);
 
   app.use(notFound);

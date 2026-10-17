@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { EventsResponse } from "@api/contract";
 import { logout } from "@/app/actions/auth";
 import { buttonClass } from "@/components/form";
+import { InstallButton } from "@/components/pwa";
+import { SignOutButton } from "@/components/sign-out";
 import { getLocale, getMessages } from "@/i18n";
 import { fill } from "@/i18n/format";
 import { apiGet } from "@/lib/api";
@@ -43,9 +45,10 @@ export default async function Dashboard() {
           ))}
         </ul>
       )}
-      <form action={logout}>
-        <button className="text-sm text-muted underline">{t.common.signOut}</button>
-      </form>
+      <div className="flex flex-col items-start gap-3">
+        <InstallButton label={t.pwa.install} iosHint={t.pwa.iosHint} />
+        <SignOutButton action={logout} label={t.common.signOut} unsentWarning={t.pwa.unsent} />
+      </div>
     </div>
   );
 }

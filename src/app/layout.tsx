@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Battambang, Kantumruy_Pro, Moul } from "next/font/google";
+import { ServiceWorker } from "@/components/pwa";
 import { getLocale } from "@/i18n";
 import "./globals.css";
 
@@ -11,6 +12,8 @@ export const metadata: Metadata = {
   title: "Moments",
   description: "លិខិតអញ្ជើញ ការឆ្លើយតប និងសៀវភៅចំណងដៃ · Invitations, RSVPs and the gift book",
   metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
+  appleWebApp: { capable: true, title: "Moments", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = { themeColor: "#9b2c2c", width: "device-width", initialScale: 1 };
@@ -19,7 +22,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
   return (
     <html lang={locale} className={`${kantumruy.variable} ${battambang.variable} ${moul.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">
+        {children}
+        <ServiceWorker />
+      </body>
     </html>
   );
 }

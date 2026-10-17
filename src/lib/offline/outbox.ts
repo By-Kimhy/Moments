@@ -103,3 +103,15 @@ export function flush(eventId: string): Promise<FlushResult> {
   });
   return flushing;
 }
+
+/** Removes everything the desk kept on this phone (guest lists and unsent writes). */
+export async function clearDeskData() {
+  const database = await db();
+  await database.clear("snapshots");
+  await database.clear("outbox");
+}
+
+/** Unsent writes for any event, so leaving the desk can warn before they are lost. */
+export async function allPendingCount() {
+  return (await db()).count("outbox");
+}

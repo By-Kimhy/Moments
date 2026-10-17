@@ -7,6 +7,7 @@ import type { Messages } from "@/i18n/km";
 import { fill } from "@/i18n/format";
 import { ClientApiError, clientApi, hashToken, tokenFromQr } from "@/lib/client-api";
 import { type OutboxOp, enqueue, flush, loadSnapshot, pendingOps, removeOp, saveSnapshot } from "@/lib/offline/outbox";
+import { warmOfflineCache } from "@/components/pwa";
 import { QrScanner } from "./qr-scanner";
 
 type Props = {
@@ -129,6 +130,9 @@ export function DeskApp({ eventId, memberName, canSeeAllGifts, t, sides, rsvp }:
     await refreshOps();
     if (result.sent || result.conflicts.length) await loadList();
   }, [eventId, flash, loadList, refreshOps, t.conflict]);
+
+  // Keep this page on the phone so the desk opens even if the venue wifi is down.
+  useEffect(() => warmOfflineCache(), []);
 
   useEffect(() => {
     const first = setTimeout(async () => {

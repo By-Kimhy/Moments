@@ -251,6 +251,11 @@ export const en: Messages = {
     testSent: "Test message sent.",
     disconnect: "Disconnect",
   },
+  pwa: {
+    install: "Install the app on this phone",
+    iosHint: "On iPhone: tap Share, then “Add to Home Screen” to install.",
+    unsent: "Some check-ins or gifts haven't been sent yet. Leaving now will lose them. Leave anyway?",
+  },
   desk: {
     online: "Online",
     offline: "Offline — saving on this phone",

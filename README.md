@@ -237,8 +237,22 @@ Venue wifi is often weak, so the desk saves everything on the phone first (Index
   an item (not a network problem), it stays on the phone with the reason until someone discards
   it; it is never dropped silently. A check-in another phone already made is dropped with a
   message.
-- Opening the desk page itself without internet needs the PWA service worker (module 10); a
-  desk that is already open keeps working.
+- The desk page itself opens without internet too (see "Install as an app").
+
+## Install as an app (PWA)
+
+Moments can be installed from the browser (Android/desktop Chrome: "Install the app" on the
+dashboard or desk; iPhone: Share → Add to Home Screen). `src/app/manifest.ts` describes the app
+and `public/sw.js` is the service worker (registered only in production builds):
+
+- app files, icons and uploaded images are cached the first time they load;
+- the desk pages (`/desk`, `/events/<id>/checkin`) are saved on each visit, so a helper can
+  reload or reopen the desk at a venue with no internet; the desk's data comes from IndexedDB;
+- other pages need the internet and show a small offline page when there is none.
+
+Signing out or leaving the desk clears the guest list, unsent items (after a warning) and the
+saved pages from the phone, because phones get passed around at weddings. After changing
+`public/sw.js`, bump `VERSION` in it so phones drop the old caches.
 
 ## API
 
@@ -308,6 +322,9 @@ Each test signs in with fresh random phone numbers, so tests don't disturb other
 
 Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers and
 co-hosts, access control, event create/edit, photo and KHQR uploads, guest list with
-CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts.
+CSV/Excel import and export, invitation page with three templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts, installable PWA. This completes the
+MVP in `docs/PROPOSAL.md`.
 
-Next: PWA (installable app, desk opens without internet).
+Before a real wedding: connect a real SMS gateway (`server/src/providers/sms.ts`), set up the
+Telegram bot, S3/R2 storage and Chromium on the server, and run the app over https (the camera
+scanner and the service worker need it).

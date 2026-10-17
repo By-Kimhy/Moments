@@ -4,6 +4,8 @@ import { getMessages } from "@/i18n";
 import { fill } from "@/i18n/format";
 import { ApiError, api } from "@/lib/api";
 import { DeskApp } from "@/components/desk/desk-app";
+import { InstallButton } from "@/components/pwa";
+import { SignOutButton } from "@/components/sign-out";
 import { JoinForm } from "./join-form";
 
 // Helpers land here: the join form, or (once joined) the desk for their event.
@@ -33,9 +35,10 @@ export default async function DeskPage() {
         <h1 className="text-xl font-semibold">{desk.event.titleKm}</h1>
       </div>
       <DeskApp eventId={desk.event.id} memberName={desk.helper.displayName} canSeeAllGifts={false} t={t.desk} sides={t.side} rsvp={t.rsvp} />
-      <form action={leaveDesk} className="mt-6">
-        <button className="text-sm text-muted underline">{t.desk.leave}</button>
-      </form>
+      <div className="mt-6 flex flex-col items-start gap-3">
+        <InstallButton label={t.pwa.install} iosHint={t.pwa.iosHint} />
+        <SignOutButton action={leaveDesk} label={t.desk.leave} unsentWarning={t.pwa.unsent} />
+      </div>
     </div>
   );
 }

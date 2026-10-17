@@ -5,6 +5,7 @@ import { type Request, Router } from "express";
 import { z } from "zod";
 import { currentUser, requireUser } from "../auth.js";
 import { isUuid } from "../access.js";
+import { config } from "../config.js";
 import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
 import { audit } from "../lib/audit.js";
@@ -12,6 +13,8 @@ import { hostView, uniqueHelperCode } from "../lib/events.js";
 import { giftTotals } from "../lib/gifts.js";
 import { imageKey, processPhoto } from "../lib/images.js";
 import { organizationView } from "../lib/organizations.js";
+import { cancelOrder, orderView, placeOrder } from "../lib/platform-orders.js";
+import { PLANNER_PACKAGES, PLANNER_TRIAL_DAYS } from "../lib/plans.js";
 import { normalizePhone } from "../lib/phone.js";
 import { storage } from "../providers/storage.js";
 import { imageUpload } from "../uploads.js";
@@ -71,7 +74,7 @@ organizationsRouter.get("/", async (req, res) => {
 organizationsRouter.post("/", async (req, res) => {
   const data = parse(orgSchema, req.body);
   const organization = await prisma.organization.create({
-    data: { ...data, members: { create: { userId: currentUser(req).id, role: "OWNER" } } },
+    data: { ...data, paidUntil: new Date(Date.now() + PLANNER_TRIAL_DAYS * 86_400_000), members: { create: { userId: currentUser(req).id, role: "OWNER" } } },
   });
   res.status(201).json({ organization: organizationView(organization) });
 });
@@ -140,6 +143,42 @@ organizationsRouter.delete("/:orgId/members/:memberId", async (req, res) => {
   res.status(204).end();
 });
 
+/** Client events can be added while the subscription (or the trial) runs. */
+function requireSubscription(org: { paidUntil: Date | null }) {
+  if (!org.paidUntil || org.paidUntil <= new Date()) throw new HttpError(402, "Your planner subscription has ended. Renew it to add client events.");
+}
+
+const subscriptionSchema = z.object({ months: z.coerce.number().int() });
+
+organizationsRouter.get("/:orgId/subscription", async (req, res) => {
+  const member = await membership(req);
+  const orders = await prisma.planOrder.findMany({ where: { organizationId: member.organizationId }, orderBy: { createdAt: "desc" } });
+  res.json({
+    paidUntil: member.organization.paidUntil,
+    active: Boolean(member.organization.paidUntil && member.organization.paidUntil > new Date()),
+    packages: PLANNER_PACKAGES,
+    pending: orders.filter((o) => o.status === "PENDING").map(orderView)[0] ?? null,
+    orders: orders.map(orderView),
+    platformKhqr: Boolean(config.platformKhqrImage()),
+  });
+});
+
+organizationsRouter.post("/:orgId/subscription/orders", async (req, res) => {
+  const member = await membership(req, ["OWNER"]);
+  const { months } = parse(subscriptionSchema, req.body);
+  const pack = PLANNER_PACKAGES.find((p) => p.units === months);
+  if (!pack) throw new HttpError(400, "Choose a package.", { months: ["Choose a package."] });
+  const order = await placeOrder({ purpose: "PLANNER_SUBSCRIPTION", organizationId: member.organizationId, units: pack.units, amount: pack.price, userId: member.userId });
+  res.status(201).json({ order: orderView(order) });
+});
+
+organizationsRouter.post("/:orgId/subscription/orders/:orderId/cancel", async (req, res) => {
+  const member = await membership(req, ["OWNER"]);
+  const id = req.params.orderId;
+  await cancelOrder(isUuid(id) ? await prisma.planOrder.findFirst({ where: { id, organizationId: member.organizationId } }) : null);
+  res.status(204).end();
+});
+
 /** The planner's dashboard: every event with its numbers, upcoming first. */
 organizationsRouter.get("/:orgId/events", async (req, res) => {
   const member = await membership(req);
@@ -179,6 +218,7 @@ organizationsRouter.get("/:orgId/events", async (req, res) => {
 // A new event for a client: the organization runs it, the client is a co-host.
 organizationsRouter.post("/:orgId/events", async (req, res) => {
   const member = await membership(req);
+  requireSubscription(member.organization);
   const { clientName, clientPhone, ...data } = parse(clientEventSchema, req.body);
   const user = currentUser(req);
   const event = await prisma.$transaction(async (tx) => {
@@ -212,6 +252,7 @@ organizationsRouter.post("/:orgId/events/:eventId/attach", async (req, res) => {
     ? await prisma.eventMember.findFirst({ where: { eventId, userId: member.userId, role: "OWNER", revokedAt: null, viaOrganization: false } })
     : null;
   if (!own) throw new HttpError(404, "Event not found.");
+  requireSubscription(member.organization);
   await prisma.$transaction(async (tx) => {
     await tx.event.update({ where: { id: eventId }, data: { organizationId: member.organizationId } });
     await audit(tx, { eventId, entity: "event", entityId: eventId, action: "attach_organization", actorId: own.id, after: { organizationId: member.organizationId } });

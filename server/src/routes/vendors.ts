@@ -5,10 +5,13 @@ import { type Request, Router } from "express";
 import { z } from "zod";
 import { currentUser, requireUser } from "../auth.js";
 import { hostMembership, isUuid } from "../access.js";
+import { config } from "../config.js";
 import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
 import { notify } from "../jobs/notifications.js";
 import { imageKey, processPhoto } from "../lib/images.js";
+import { cancelOrder, orderView, placeOrder } from "../lib/platform-orders.js";
+import { FEATURED_PACKAGES } from "../lib/plans.js";
 import type { Photo } from "../lib/events.js";
 import { normalizePhone } from "../lib/phone.js";
 import { CATEGORY_KEYS, PROVINCE_KEYS } from "../lib/vendor-catalog.js";
@@ -285,6 +288,39 @@ vendorsRouter.put("/mine/:vendorId/reviews/:reviewId/reply", requireUser, async 
   if (!review) throw new HttpError(404, "Review not found.");
   const updated = await prisma.vendorReview.update({ where: { id: review.id }, data: { reply, repliedAt: new Date() }, include: { user: { select: { name: true } } } });
   res.json({ review: reviewView(updated) });
+});
+
+// Paying to be listed first: an order paid to the platform's KHQR, confirmed by an admin.
+const featuredSchema = z.object({ days: z.coerce.number().int() });
+
+vendorsRouter.get("/mine/:vendorId/featured", requireUser, async (req, res) => {
+  const vendor = await ownVendor(req);
+  const orders = await prisma.planOrder.findMany({ where: { vendorId: vendor.id }, orderBy: { createdAt: "desc" } });
+  res.json({
+    featuredUntil: vendor.featuredUntil,
+    canBuy: vendor.status === "PUBLISHED",
+    packages: FEATURED_PACKAGES,
+    pending: orders.filter((o) => o.status === "PENDING").map(orderView)[0] ?? null,
+    orders: orders.map(orderView),
+    platformKhqr: Boolean(config.platformKhqrImage()),
+  });
+});
+
+vendorsRouter.post("/mine/:vendorId/featured/orders", requireUser, async (req, res) => {
+  const vendor = await ownVendor(req);
+  const { days } = parse(featuredSchema, req.body);
+  const pack = FEATURED_PACKAGES.find((p) => p.units === days);
+  if (!pack) throw new HttpError(400, "Choose a package.", { days: ["Choose a package."] });
+  if (vendor.status !== "PUBLISHED") throw new HttpError(409, "Only published listings can be featured.");
+  const order = await placeOrder({ purpose: "VENDOR_FEATURED", vendorId: vendor.id, units: pack.units, amount: pack.price, userId: currentUser(req).id });
+  res.status(201).json({ order: orderView(order) });
+});
+
+vendorsRouter.post("/mine/:vendorId/featured/orders/:orderId/cancel", requireUser, async (req, res) => {
+  const vendor = await ownVendor(req);
+  const id = req.params.orderId;
+  await cancelOrder(isUuid(id) ? await prisma.planOrder.findFirst({ where: { id, vendorId: vendor.id } }) : null);
+  res.status(204).end();
 });
 
 // --- Profiles, enquiries and reviews ----------------------------------------------------------

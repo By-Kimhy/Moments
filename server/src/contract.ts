@@ -86,7 +86,7 @@ export type ThankYouResponse = {
   guests: { id: string; name: string; phone: string | null; inviteUrl: string; attended: boolean; gift: string; text: string; shared: ThankYouRecord | null }[];
 };
 
-export type OrganizationSummary = { id: string; name: string; brandColor: string; logoKey: string | null; createdAt: Date };
+export type OrganizationSummary = { id: string; name: string; brandColor: string; logoKey: string | null; paidUntil: Date | null; createdAt: Date };
 export type OrganizationsResponse = { organizations: (OrganizationSummary & { role: "OWNER" | "STAFF"; eventCount: number })[] };
 export type OrganizationResponse = {
   organization: OrganizationSummary;
@@ -208,8 +208,14 @@ export type PlanResponse = {
   orders: PlanOrderView[];
   platformKhqr: boolean;
 };
-export type AdminPlanOrdersResponse = {
-  orders: (PlanOrderView & { event: { id: string; titleKm: string; titleEn: string | null; plan: Plan }; owner: { name: string; phone: string | null } })[];
+export type AdminPlanOrdersResponse = { orders: Awaited<ReturnType<typeof import("./lib/platform-orders.js")["describeOrders"]>> };
+export type PlatformPurchase = {
+  packages: { units: number; price: number }[];
+  pending: PlanOrderView | null;
+  orders: PlanOrderView[];
+  platformKhqr: boolean;
 };
+export type VendorFeaturedResponse = PlatformPurchase & { featuredUntil: Date | null; canBuy: boolean };
+export type SubscriptionResponse = PlatformPurchase & { paidUntil: Date | null; active: boolean };
 
 export type AdminStats = Awaited<ReturnType<typeof import("./lib/admin-stats.js")["adminStats"]>>;

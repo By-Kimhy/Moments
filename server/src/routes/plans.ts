@@ -1,16 +1,15 @@
 // An event's plan: what it includes, and upgrading by paying the platform's KHQR. A platform
 // admin confirms the payment (routes/admin.ts), which applies the plan.
-import type { PlanOrder } from "@prisma/client";
 import { Router } from "express";
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
+import { currentUser } from "../auth.js";
 import { currentMember, isUuid, ownersOnly } from "../access.js";
 import { config } from "../config.js";
 import { prisma } from "../db.js";
 import { HttpError, parse } from "../errors.js";
-import { audit } from "../lib/audit.js";
 import { PLANS, PLAN_ORDER, effectivePlan, featuresOf, upgradePrice } from "../lib/plans.js";
-import { newReference } from "../lib/tickets.js";
+import { cancelOrder, orderView, placeOrder } from "../lib/platform-orders.js";
 
 /** Mounted on /api/events/:eventId (after eventAccess). */
 export const eventPlanRouter = Router({ mergeParams: true });
@@ -20,16 +19,7 @@ export const platformRouter = Router();
 
 const upgradeSchema = z.object({ plan: z.enum(["STANDARD", "PREMIUM"], { message: "Choose a plan." }) });
 
-export const planOrderView = (o: PlanOrder) => ({
-  id: o.id,
-  plan: o.plan,
-  amount: o.amount,
-  currency: o.currency,
-  reference: o.reference,
-  status: o.status,
-  paidAt: o.paidAt,
-  createdAt: o.createdAt,
-});
+export const planOrderView = orderView;
 
 eventPlanRouter.get("/plan", async (req, res) => {
   const member = currentMember(req);
@@ -58,14 +48,7 @@ eventPlanRouter.post("/plan/orders", async (req, res) => {
   if (effectivePlan(event) === "PLANNER" || event.type === "TICKETED") throw new HttpError(409, "This event already has every feature.");
   const amount = upgradePrice(event.plan, plan);
   if (amount === null) throw new HttpError(409, "The event is already on this plan or a higher one.");
-  const order = await prisma.$transaction(async (tx) => {
-    await tx.planOrder.updateMany({ where: { eventId: event.id, status: "PENDING" }, data: { status: "CANCELLED", cancelledAt: new Date() } });
-    let reference = newReference();
-    while (await tx.planOrder.findUnique({ where: { reference } })) reference = newReference();
-    const created = await tx.planOrder.create({ data: { eventId: event.id, plan, amount, currency: "USD", reference, requestedById: member.id } });
-    await audit(tx, { eventId: event.id, entity: "event", entityId: event.id, action: "plan_order", actorId: member.id, after: planOrderView(created) });
-    return created;
-  });
+  const order = await placeOrder({ purpose: "EVENT_PLAN", eventId: event.id, plan, amount, userId: currentUser(req).id, requestedById: member.id });
   res.status(201).json({ order: planOrderView(order) });
 });
 
@@ -73,12 +56,7 @@ eventPlanRouter.post("/plan/orders/:orderId/cancel", async (req, res) => {
   const member = currentMember(req);
   const id = req.params.orderId;
   const order = isUuid(id) ? await prisma.planOrder.findFirst({ where: { id, eventId: member.eventId } }) : null;
-  if (!order) throw new HttpError(404, "Order not found.");
-  if (order.status !== "PENDING") throw new HttpError(409, "Only orders waiting for payment can be cancelled.");
-  await prisma.$transaction(async (tx) => {
-    await tx.planOrder.update({ where: { id: order.id }, data: { status: "CANCELLED", cancelledAt: new Date() } });
-    await audit(tx, { eventId: order.eventId, entity: "event", entityId: order.eventId, action: "plan_order_cancel", actorId: member.id, before: planOrderView(order) });
-  });
+  await cancelOrder(order, member.id);
   res.status(204).end();
 });
 

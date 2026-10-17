@@ -140,6 +140,9 @@ const km: Record<string, string> = {
   "This event already has every feature.": "កម្មវិធីនេះមានមុខងារទាំងអស់រួចហើយ។",
   "The event is already on this plan or a higher one.": "កម្មវិធីនេះស្ថិតក្នុងគម្រោងនេះ ឬខ្ពស់ជាងរួចហើយ។",
   "Only orders waiting for payment can be cancelled.": "អាចលុបចោលបានតែការកុម្ម៉ង់ដែលកំពុងរង់ចាំការបង់ប្រាក់ប៉ុណ្ណោះ។",
+  "Choose a package.": "សូមជ្រើសរើសកញ្ចប់។",
+  "Only published listings can be featured.": "អាចដាក់ជាពិសេសបានតែទំព័រដែលបានផ្សព្វផ្សាយប៉ុណ្ណោះ។",
+  "Your planner subscription has ended. Renew it to add client events.": "ការជាវសម្រាប់អ្នករៀបចំកម្មវិធីបានផុតកំណត់។ សូមបន្តការជាវ ដើម្បីបន្ថែមកម្មវិធីអតិថិជន។",
   "This order has changed. Reload and try again.": "ការកុម្ម៉ង់នេះបានផ្លាស់ប្តូរ។ សូមផ្ទុកឡើងវិញ ហើយព្យាយាមម្តងទៀត។",
   "This listing has changed. Reload and try again.": "ព័ត៌មាននេះបានផ្លាស់ប្តូរ។ សូមផ្ទុកឡើងវិញ ហើយព្យាយាមម្តងទៀត។",
 };

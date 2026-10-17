@@ -42,3 +42,29 @@ export function upgradePrice(from: Plan, to: Plan): number | null {
   if (PLAN_ORDER.indexOf(to) <= PLAN_ORDER.indexOf(from)) return null;
   return PLANS[to].price - PLANS[from].price;
 }
+
+// Other things the platform sells, paid the same way as plans (platform KHQR, admin confirms).
+
+/** A vendor listed first in the directory, for this many days. */
+export const FEATURED_PACKAGES = [
+  { units: 30, price: 1500 },
+  { units: 90, price: 4000 },
+];
+
+/** A planner organization's subscription, for this many months. New organizations get a trial. */
+export const PLANNER_PACKAGES = [
+  { units: 1, price: 3000 },
+  { units: 12, price: 30000 },
+];
+export const PLANNER_TRIAL_DAYS = 30;
+
+/** Adds calendar months, keeping the day where it can (31 January + 1 month = 28/29 February). */
+export function addMonths(date: Date, months: number) {
+  const d = new Date(date);
+  const day = d.getUTCDate();
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() + months);
+  const last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+  d.setUTCDate(Math.min(day, last));
+  return d;
+}

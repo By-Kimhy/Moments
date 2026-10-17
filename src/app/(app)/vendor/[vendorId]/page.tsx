@@ -1,5 +1,8 @@
 import Link from "next/link";
-import type { MyVendorResponse, VendorEnquiriesResponse } from "@api/contract";
+import type { MyVendorResponse, VendorEnquiriesResponse, VendorFeaturedResponse } from "@api/contract";
+import { formatAmount } from "@api/lib/money";
+import { cancelFeatured, orderFeatured } from "@/app/actions/platform";
+import { PendingPayment } from "@/components/platform-payment";
 import { markEnquiriesRead, removeVendorPhoto, uploadVendorPhotos } from "@/app/actions/vendors";
 import { secondaryButtonClass } from "@/components/form";
 import { UploadForm } from "@/components/upload-form";
@@ -19,12 +22,14 @@ const statusStyle = {
 
 export default async function MyVendorPage({ params }: PageProps<"/vendor/[vendorId]">) {
   const { vendorId } = await params;
-  const [t, locale, { vendor, reviews }, { enquiries }] = await Promise.all([
+  const [t, locale, { vendor, reviews }, { enquiries }, featured] = await Promise.all([
     getMessages(),
     getLocale(),
     apiGet<MyVendorResponse>(`/vendors/mine/${vendorId}`),
     apiGet<VendorEnquiriesResponse>(`/vendors/mine/${vendorId}/enquiries`),
+    apiGet<VendorFeaturedResponse>(`/vendors/mine/${vendorId}/featured`),
   ]);
+  const featuredUntil = featured.featuredUntil && featured.featuredUntil > new Date() ? featured.featuredUntil : null;
   const unread = enquiries.filter((e) => !e.read).length;
   return (
     <div className="flex flex-col gap-8 py-8">
@@ -45,6 +50,32 @@ export default async function MyVendorPage({ params }: PageProps<"/vendor/[vendo
           <Link href={`/vendors/${vendor.slug}`} className={`${secondaryButtonClass} self-start bg-white`}>
             {t.vendors.viewPage}
           </Link>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-3" data-testid="featured">
+        <h2 className="font-semibold">{t.vendors.featuredTitle}</h2>
+        <p className="text-sm text-muted">{t.vendors.featuredHint}</p>
+        {featuredUntil && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{fill(t.vendors.featuredUntil, { date: formatDateTime(featuredUntil, locale) })}</p>}
+        {featured.pending ? (
+          <PendingPayment
+            order={featured.pending}
+            title={fill(t.vendors.featuredPay, { days: featured.pending.units ?? 0 })}
+            platformKhqr={featured.platformKhqr}
+            cancel={cancelFeatured.bind(null, vendor.id, featured.pending.id)}
+            t={t.plans}
+            locale={locale}
+          />
+        ) : featured.canBuy ? (
+          <div className="flex flex-wrap gap-2">
+            {featured.packages.map((p) => (
+              <form key={p.units} action={orderFeatured.bind(null, vendor.id, p.units)}>
+                <button className={secondaryButtonClass}>{fill(t.vendors.featuredDays, { days: p.units, price: formatAmount(p.price, "USD", locale === "km") })}</button>
+              </form>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted">{t.vendors.featuredAfterPublish}</p>
         )}
       </section>
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getMessages } from "@/i18n";
 import { fill } from "@/i18n/format";
@@ -26,15 +27,22 @@ export default async function AdminPaymentsPage({ searchParams }: PageProps<"/ad
             <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line p-3" data-testid="plan-order">
               <div className="flex flex-col text-sm">
                 <span className="font-medium">
-                  {fill(t.plans.adminOrder, {
-                    reference: o.reference,
-                    event: locale === "en" && o.event.titleEn ? o.event.titleEn : o.event.titleKm,
-                    plan: t.plans.names[o.plan],
-                    price: formatAmount(o.amount, o.currency, locale === "km"),
-                  })}
+                  {o.reference} · {t.plans.purposes[o.purpose]} ·{" "}
+                  {o.target.link ? (
+                    <Link href={o.target.link} className="underline">
+                      {locale === "en" && o.target.titleEn ? o.target.titleEn : o.target.titleKm}
+                    </Link>
+                  ) : (
+                    o.target.titleKm
+                  )}
+                  {o.plan ? ` → ${t.plans.names[o.plan]}` : ""}
+                  {o.units ? ` · ${fill(o.purpose === "VENDOR_FEATURED" ? t.plans.days : t.plans.monthsCount, { count: o.units })}` : ""}
+                  {" · "}
+                  {formatAmount(o.amount, o.currency, locale === "km")}
                 </span>
                 <span className="text-muted">
-                  {fill(t.admin.owner, { name: o.owner.name, phone: o.owner.phone ?? "" })} · {formatDateTime(o.createdAt, locale)}
+                  {o.payer && `${fill(t.plans.payer, { name: o.payer.name, phone: o.payer.phone ?? "" })} · `}
+                  {formatDateTime(o.createdAt, locale)}
                 </span>
               </div>
               <div className="flex gap-2">

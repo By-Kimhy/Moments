@@ -238,7 +238,7 @@ model Gift {
 
 model Payment {
   id              String        @id @default(uuid()) @db.Uuid
-  eventId         String        @db.Uuid
+  eventId         String?       @db.Uuid // empty for payments to the platform not tied to an event
   provider        String        @db.VarChar(40) // "manual", "bakong", ...
   reference       String        @db.VarChar(120)
   amount          Int
@@ -248,7 +248,7 @@ model Payment {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  event     Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event     Event?     @relation(fields: [eventId], references: [id], onDelete: Cascade)
   gift      Gift?
   order     Order?
   planOrder PlanOrder?
@@ -359,15 +359,17 @@ enum OrgRole {
 
 // A wedding planner or venue running many events for clients.
 model Organization {
-  id         String   @id @default(uuid()) @db.Uuid
-  name       String   @db.VarChar(120)
-  brandColor String   @default("#9b2c2c") @db.VarChar(7)
-  logoKey    String?  @db.VarChar(300)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id         String    @id @default(uuid()) @db.Uuid
+  name       String    @db.VarChar(120)
+  brandColor String    @default("#9b2c2c") @db.VarChar(7)
+  logoKey    String?   @db.VarChar(300)
+  paidUntil  DateTime? // planner subscription: client events can be added until then
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  members OrganizationMember[]
-  events  Event[]
+  members    OrganizationMember[]
+  events     Event[]
+  planOrders PlanOrder[]
 }
 
 model OrganizationMember {
@@ -522,10 +524,11 @@ model Vendor {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  owner     User            @relation(fields: [ownerId], references: [id])
-  enquiries VendorEnquiry[]
-  reviews   VendorReview[]
-  events    EventVendor[]
+  owner      User            @relation(fields: [ownerId], references: [id])
+  enquiries  VendorEnquiry[]
+  reviews    VendorReview[]
+  events     EventVendor[]
+  planOrders PlanOrder[]
 
   @@index([status, category, province])
   @@index([ownerId])
@@ -604,24 +607,39 @@ enum PlanOrderStatus {
 
 // A host's request to move an event to a paid plan, paid to the platform's KHQR and confirmed
 // by a platform admin.
-model PlanOrder {
-  id            String          @id @default(uuid()) @db.Uuid
-  eventId       String          @db.Uuid
-  plan          Plan
-  amount        Int // minor units: the new plan's price less what the event already paid
-  currency      Currency        @default(USD)
-  reference     String          @unique @db.VarChar(12) // written in the payment note
-  status        PlanOrderStatus @default(PENDING)
-  requestedById String          @db.Uuid // EventMember
-  confirmedById String?         @db.Uuid // the admin (User)
-  paymentId     String?         @unique @db.Uuid
-  paidAt        DateTime?
-  cancelledAt   DateTime?
-  createdAt     DateTime        @default(now())
+enum PlanOrderPurpose {
+  EVENT_PLAN // an event moves to a paid plan
+  VENDOR_FEATURED // a vendor is listed first for some days
+  PLANNER_SUBSCRIPTION // a planner organization pays for some months
+}
 
-  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  payment Payment? @relation(fields: [paymentId], references: [id])
+model PlanOrder {
+  id             String           @id @default(uuid()) @db.Uuid
+  purpose        PlanOrderPurpose @default(EVENT_PLAN)
+  eventId        String?          @db.Uuid // EVENT_PLAN
+  plan           Plan? // EVENT_PLAN
+  vendorId       String?          @db.Uuid // VENDOR_FEATURED
+  organizationId String?          @db.Uuid // PLANNER_SUBSCRIPTION
+  units          Int? // days featured, or months of subscription
+  amount         Int // minor units (for a plan: the new plan's price less what the event already paid)
+  currency       Currency         @default(USD)
+  reference      String           @unique @db.VarChar(12) // written in the payment note
+  status         PlanOrderStatus  @default(PENDING)
+  requestedById  String?          @db.Uuid // EventMember, for event plans
+  userId         String?          @db.Uuid // who asked (User)
+  confirmedById  String?          @db.Uuid // the admin (User)
+  paymentId      String?          @unique @db.Uuid
+  paidAt         DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime         @default(now())
+
+  event        Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  vendor       Vendor?       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payment      Payment?      @relation(fields: [paymentId], references: [id])
 
   @@index([status, createdAt])
   @@index([eventId])
+  @@index([vendorId])
+  @@index([organizationId])
 }

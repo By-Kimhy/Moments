@@ -5,6 +5,7 @@ export const organizationView = (o: Organization) => ({
   name: o.name,
   brandColor: o.brandColor,
   logoKey: o.logoKey,
+  paidUntil: o.paidUntil,
   createdAt: o.createdAt,
 });
 

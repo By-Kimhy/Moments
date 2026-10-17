@@ -317,6 +317,14 @@ Prices and limits live in `server/src/lib/plans.ts` (US cents, per event):
   KHQR (`PLATFORM_KHQR_IMAGE`). A platform admin checks the bank and taps "Money received" in
   `/admin`, which records the payment, moves the event up (never down) and writes the audit log.
   Hosts can cancel a waiting order; a new one replaces it.
+- **Vendors pay to be featured** on their page at `/vendor/<id>` (30 days $15, 90 days $40),
+  once their listing is published. Confirmed days add on to a placement that is still running.
+- **Planner subscription** ($30 a month or $300 a year, on the planner dashboard; owners pay).
+  A new organization gets a 30-day trial; organizations that existed before got 30 days. Without
+  an active subscription, planners can't add or attach client events (402); events they already
+  run keep every feature.
+- All of these are paid the same way and confirmed in `/admin/payments`; prices are in
+  `server/src/lib/plans.ts`.
 
 ## Telegram
 
@@ -472,6 +480,11 @@ saved pages from the phone, because phones get passed around at weddings. After 
 | GET | `/api/platform/khqr` | anyone |
 | GET | `/api/admin/plan-orders` (`?status=`) | platform admin |
 | POST | `/api/admin/plan-orders/:orderId/confirm`, `/cancel` | platform admin |
+| GET | `/api/admin/stats` | platform admin |
+| GET | `/api/vendors/mine/:vendorId/featured` | vendor owner |
+| POST | `/api/vendors/mine/:vendorId/featured/orders` `{ days }`, `/featured/orders/:orderId/cancel` | vendor owner |
+| GET | `/api/organizations/:orgId/subscription` | org member |
+| POST | `/api/organizations/:orgId/subscription/orders` `{ months }`, `/subscription/orders/:orderId/cancel` | org owner |
 | GET | `/api/events/:eventId/vendors` | owner |
 | PUT, DELETE | `/api/events/:eventId/vendors/:vendorId` `{ status, note }` | owner |
 | GET | `/api/admin/vendors` (`?status=`), `/api/admin/reviews` | platform admin |

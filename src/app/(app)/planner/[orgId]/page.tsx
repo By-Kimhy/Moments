@@ -1,7 +1,10 @@
 import Link from "next/link";
-import type { OrganizationResponse, PlannerEvent, PlannerEventsResponse } from "@api/contract";
+import type { OrganizationResponse, PlannerEvent, PlannerEventsResponse, SubscriptionResponse } from "@api/contract";
 import { formatAmount } from "@api/lib/money";
+import { cancelSubscription, orderSubscription } from "@/app/actions/platform";
 import { removeStaff } from "@/app/actions/planner";
+import { secondaryButtonClass } from "@/components/form";
+import { PendingPayment } from "@/components/platform-payment";
 import { getLocale, getMessages } from "@/i18n";
 import type { Messages } from "@/i18n/km";
 import { fill } from "@/i18n/format";
@@ -11,11 +14,12 @@ import { AddStaffForm, ClientEventForm, OrganizationSettings } from "../forms";
 
 export default async function PlannerDashboard({ params }: PageProps<"/planner/[orgId]">) {
   const { orgId } = await params;
-  const [t, locale, org, events] = await Promise.all([
+  const [t, locale, org, events, sub] = await Promise.all([
     getMessages(),
     getLocale(),
     apiGet<OrganizationResponse>(`/organizations/${orgId}`),
     apiGet<PlannerEventsResponse>(`/organizations/${orgId}/events`),
+    apiGet<SubscriptionResponse>(`/organizations/${orgId}/subscription`),
   ]);
   const p = t.planner;
   return (
@@ -37,12 +41,18 @@ export default async function PlannerDashboard({ params }: PageProps<"/planner/[
 
       <EventList title={p.upcoming} events={events.upcoming} t={t} locale={locale} />
 
-      <details className="rounded-xl border border-line p-4" open={events.upcoming.length === 0}>
-        <summary className="cursor-pointer font-semibold">{p.newEvent}</summary>
-        <div className="mt-4">
-          <ClientEventForm orgId={orgId} t={p} dateLabel={t.eventForm.date} timeLabel={t.eventForm.time} titleLabel={t.eventForm.titleKm} />
-        </div>
-      </details>
+      {sub.active ? (
+        <details className="rounded-xl border border-line p-4" open={events.upcoming.length === 0}>
+          <summary className="cursor-pointer font-semibold">{p.newEvent}</summary>
+          <div className="mt-4">
+            <ClientEventForm orgId={orgId} t={p} dateLabel={t.eventForm.date} timeLabel={t.eventForm.time} titleLabel={t.eventForm.titleKm} />
+          </div>
+        </details>
+      ) : (
+        <p className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900" data-testid="subscription-ended">
+          {p.ended}
+        </p>
+      )}
 
       {events.past.length > 0 && <EventList title={p.past} events={events.past} t={t} locale={locale} />}
 
@@ -73,6 +83,33 @@ export default async function PlannerDashboard({ params }: PageProps<"/planner/[
             </div>
           </details>
         )}
+      </section>
+
+      <section className="flex flex-col gap-3" data-testid="subscription">
+        <h2 className="font-semibold">{p.subscription}</h2>
+        <p className={`text-sm ${sub.active ? "" : "text-red-700"}`}>
+          {sub.active && sub.paidUntil ? fill(p.activeUntil, { date: formatDateTime(sub.paidUntil, locale) }) : p.ended}
+        </p>
+        <p className="text-sm text-muted">{p.subscriptionHint}</p>
+        {org.role === "OWNER" &&
+          (sub.pending ? (
+            <PendingPayment
+              order={sub.pending}
+              title={fill(p.payTitle, { months: sub.pending.units ?? 0 })}
+              platformKhqr={sub.platformKhqr}
+              cancel={cancelSubscription.bind(null, orgId, sub.pending.id)}
+              t={t.plans}
+              locale={locale}
+            />
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {sub.packages.map((pack) => (
+                <form key={pack.units} action={orderSubscription.bind(null, orgId, pack.units)}>
+                  <button className={secondaryButtonClass}>{fill(p.months, { months: pack.units, price: formatAmount(pack.price, "USD", locale === "km") })}</button>
+                </form>
+              ))}
+            </div>
+          ))}
       </section>
 
       {org.role === "OWNER" && (

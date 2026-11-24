@@ -12,6 +12,12 @@ import { RsvpForm } from "./rsvp-form";
 
 const fileUrl = (key: string) => `/api/files/${key}`;
 
+/** A faint diamond weave in the accent colour, like Khmer silk (hol). */
+const SILK: CSSProperties = {
+  backgroundImage:
+    "repeating-linear-gradient(45deg, color-mix(in srgb, var(--inv-accent) 9%, transparent) 0 2px, transparent 2px 14px), repeating-linear-gradient(-45deg, color-mix(in srgb, var(--inv-accent) 9%, transparent) 0 2px, transparent 2px 14px)",
+};
+
 const FONT_CLASS: Record<string, string> = { Moul: "font-moul", Battambang: "font-serif", "Kantumruy Pro": "font-sans" };
 
 type Props = {
@@ -46,7 +52,7 @@ export function Invitation({ event, guest, gifts, thankYou, token, locale, t, la
   const sectionTitle = `${heading} mb-3 text-center text-lg text-[var(--inv-accent)]`;
 
   return (
-    <div style={theme} className={`${body} min-h-full flex-1 bg-[var(--inv-bg)] text-[var(--inv-text)]`}>
+    <div style={{ ...theme, ...(config.pattern === "silk" ? SILK : {}) }} className={`${body} min-h-full flex-1 bg-[var(--inv-bg)] text-[var(--inv-text)]`}>
       {notice && <p className="bg-amber-100 px-4 py-2 text-center text-sm text-amber-900">{notice}</p>}
       <div className="mx-auto flex max-w-md flex-col gap-6 px-4 pb-12 pt-4">
         <div className="flex justify-end">{langSwitch}</div>

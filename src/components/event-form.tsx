@@ -3,10 +3,10 @@
 import { useActionState } from "react";
 import type { HostEvent } from "@api/contract";
 import { Field, Message, Select, TextArea, buttonClass } from "@/components/form";
+import { TemplatePicker, type TemplateOption } from "@/components/template-picker";
 import type { FormState } from "@/lib/api";
 import type { Messages } from "@/i18n/km";
 
-type Template = { id: string; slug: string; name: string };
 
 /** Create and edit form for an event. Dates are entered in Phnom Penh time. */
 export function EventForm({
@@ -22,7 +22,7 @@ export function EventForm({
   action: (state: FormState, formData: FormData) => Promise<FormState>;
   t: Messages["eventForm"];
   status?: Messages["status"];
-  templates: Template[];
+  templates: TemplateOption[];
   event?: HostEvent;
   dateTime?: { date: string; time: string };
   submitLabel: string;
@@ -65,15 +65,7 @@ export function EventForm({
         </div>
       </details>
       <Field label={t.khqrAccountName} name="khqrAccountName" defaultValue={value("khqrAccountName")} errors={e?.khqrAccountName} />
-      <Select label={t.template} name="templateId" defaultValue={value("templateId")} errors={e?.templateId}>
-        <option value="">—</option>
-        {templates.map((tpl) => (
-          <option key={tpl.id} value={tpl.id} disabled={Boolean(paidTemplateLabel) && tpl.slug !== "traditional"}>
-            {tpl.name}
-            {paidTemplateLabel && tpl.slug !== "traditional" ? ` ${paidTemplateLabel}` : ""}
-          </option>
-        ))}
-      </Select>
+      <TemplatePicker label={t.template} templates={templates} defaultValue={value("templateId")} errors={e?.templateId} paidLabel={paidTemplateLabel} />
       {status && event && (
         <Select label={t.status} name="status" defaultValue={v?.status ?? event.status}>
           {(["DRAFT", "PUBLISHED", "ARCHIVED"] as const).map((s) => (

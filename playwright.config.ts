@@ -15,5 +15,7 @@ export default defineConfig({
     ...devices["Pixel 7"],
     locale: "km-KH",
     trace: "retain-on-failure",
+    // A Chromium of another version than Playwright's own, if needed (e.g. a system install).
+    ...(process.env.E2E_CHROMIUM_PATH ? { launchOptions: { executablePath: process.env.E2E_CHROMIUM_PATH } } : {}),
   },
 });

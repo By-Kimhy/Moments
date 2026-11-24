@@ -1,6 +1,7 @@
-// Decorations drawn in the template's accent colour: a kbach-style scroll, a lotus, or the towers
-// of Angkor. Inline SVG, so they stay sharp on any screen and need no download.
-export type OrnamentName = "kbach" | "lotus" | "angkor";
+// Decorations drawn in the template's accent colour: a kbach-style scroll, a lotus, the towers
+// of Angkor, a spray of romdoul flowers or a naga. Inline SVG, so they stay sharp on any screen
+// and need no download.
+export type OrnamentName = "kbach" | "lotus" | "angkor" | "romdoul" | "naga";
 
 function Kbach() {
   return (
@@ -49,11 +50,67 @@ function Angkor() {
   );
 }
 
+function Romdoul() {
+  // Cambodia's national flower: small three-petalled blossoms on a curved stem with leaves.
+  const blossom = (x: number, y: number, r: number) => (
+    <g key={`${x}-${y}`} transform={`translate(${x} ${y})`}>
+      {[0, 120, 240].map((a) => (
+        <ellipse key={a} cx="0" cy={-r} rx={r * 0.62} ry={r} transform={`rotate(${a})`} fillOpacity=".85" />
+      ))}
+      <circle r={r * 0.35} fill="var(--inv-bg)" />
+    </g>
+  );
+  return (
+    <svg viewBox="0 0 200 52" className="h-11 w-full max-w-[12rem]" fill="currentColor" aria-hidden>
+      <path d="M20 40C60 20 140 20 180 40" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      {[
+        [48, 29, -30],
+        [152, 29, 30],
+        [78, 25, -15],
+        [122, 25, 15],
+      ].map(([x, y, a]) => (
+        <ellipse key={`${x}`} cx={x} cy={y + 8} rx="9" ry="3.5" transform={`rotate(${a} ${x} ${y + 8})`} fillOpacity=".45" />
+      ))}
+      {blossom(100, 16, 7)}
+      {blossom(64, 24, 5.5)}
+      {blossom(136, 24, 5.5)}
+      {blossom(34, 34, 4.2)}
+      {blossom(166, 34, 4.2)}
+    </svg>
+  );
+}
+
+function Naga() {
+  // A seven-headed naga, its hood fanned out above a wave-shaped body that runs to both sides,
+  // as on the balustrades of Angkor.
+  const heads = [-54, -36, -18, 0, 18, 36, 54];
+  return (
+    <svg viewBox="0 0 220 60" className="h-12 w-full max-w-[13rem]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      {/* The hood: each head a pointed leaf on a ring around the neck. */}
+      {heads.map((angle) => (
+        <path
+          key={angle}
+          d="M110 44 C104 34 105 22 110 14 C115 22 116 34 110 44 Z"
+          transform={`rotate(${angle} 110 46)`}
+          fill="currentColor"
+          fillOpacity={angle === 0 ? 0.9 : 0.55}
+        />
+      ))}
+      <path d="M92 46 Q110 38 128 46" strokeWidth="2" />
+      {/* The body, waving out to each side. */}
+      <path d="M92 48 C80 54 72 42 60 48 S40 54 28 48 S12 44 6 50" />
+      <path d="M128 48 C140 54 148 42 160 48 S180 54 192 48 S208 44 214 50" />
+      <circle cx="6" cy="50" r="1.8" fill="currentColor" />
+      <circle cx="214" cy="50" r="1.8" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function Ornament({ name, flip = false }: { name: OrnamentName | undefined; flip?: boolean }) {
   if (!name) return null;
   return (
     <div className={`flex justify-center text-[var(--inv-accent)] ${flip ? "rotate-180" : ""}`} data-testid={`ornament-${name}`}>
-      {name === "kbach" ? <Kbach /> : name === "lotus" ? <Lotus /> : <Angkor />}
+      {name === "kbach" ? <Kbach /> : name === "lotus" ? <Lotus /> : name === "romdoul" ? <Romdoul /> : name === "naga" ? <Naga /> : <Angkor />}
     </div>
   );
 }

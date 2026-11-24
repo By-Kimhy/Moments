@@ -25,7 +25,7 @@ docker compose up -d          # PostgreSQL + Redis (skip if you run them yoursel
 cp .env.example .env          # then set SESSION_SECRET (openssl rand -base64 32)
 npm install
 npm run db:migrate            # create the tables
-npm run db:seed               # 7 templates + a demo wedding with 50 guests
+npm run db:seed               # 13 templates + a demo wedding with 50 guests
 npm run dev                   # API on :4000, web app on :3000
 ```
 
@@ -109,11 +109,26 @@ Cloudflare R2 or MinIO. The S3 code path has not yet been run against a real buc
 
 ### Invitation templates
 
-Seven templates (the free plan uses Traditional): Traditional, Modern, Minimal, and four with an
-ornament drawn in the accent colour — Royal gold (deep green and gold, kbach scroll), Lotus
-(pink, lotus flower), Angkor (sandstone, the temple towers) and Midnight (navy and gold).
-Templates are colours, fonts, a layout style and an optional ornament, stored in the database
-and upserted by `npm run db:seed`.
+Thirteen templates, chosen from cards showing each one's colours and ornament (the free plan
+uses Traditional; the others show locked):
+
+| Template | Look |
+| -------- | ---- |
+| Traditional, Modern, Minimal | the original three |
+| Royal gold | deep green and gold, kbach scroll |
+| Lotus | pink, lotus flower |
+| Angkor | sandstone, the temple towers |
+| Midnight | navy and gold, kbach scroll |
+| Romdoul | ivory and olive gold, romdoul flowers |
+| Naga | royal blue and silver, seven-headed naga |
+| Khmer silk | maroon and gold on a woven-silk pattern |
+| Garden | sage green, romdoul flowers |
+| Sunset | peach and coral, lotus flower |
+| White & gold | white and gold on a silk pattern, kbach scroll |
+
+A template is colours, fonts, a layout style, an optional ornament (`kbach`, `lotus`, `angkor`,
+`romdoul`, `naga`, drawn in `src/components/invitation/ornaments.tsx`) and an optional `silk`
+background. They live in the database and `npm run db:seed` adds or updates them, in its order.
 
 ## Guests
 
@@ -579,11 +594,14 @@ npm run build && TELEGRAM_BOT_TOKEN= ALLOW_TEST_LOGIN=true npm start   # in anot
 npm run e2e
 ```
 
+If Playwright's own browser isn't installed, point it at another Chromium with
+`E2E_CHROMIUM_PATH=/path/to/chromium npm run e2e`.
+
 ## Status
 
 Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers and
 co-hosts, access control, event create/edit, photo and KHQR uploads, guest list with
-CSV/Excel import and export, invitation page with seven templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts, installable PWA. This completes the
+CSV/Excel import and export, invitation page with thirteen templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts, installable PWA. This completes the
 MVP in `docs/PROPOSAL.md`.
 
 Phase 2 (`docs/PHASE2.md`) is done too: seating plan, thank-you messages, planner dashboard

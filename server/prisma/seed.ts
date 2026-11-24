@@ -1,4 +1,4 @@
-// Seven invitation templates, plus (outside production) one demo wedding with 50 guests.
+// Thirteen invitation templates, plus (outside production) one demo wedding with 50 guests.
 // Safe to run again: templates are upserted and the demo wedding is rebuilt.
 import { PrismaClient, type Currency, type GiftMethod, type RsvpStatus, type Side } from "@prisma/client";
 import sharp from "sharp";
@@ -50,6 +50,42 @@ const templates = [
     style: "MINIMAL" as const,
     config: { background: "#101827", accent: "#e5c07b", text: "#f3f4f6", headingFont: "Kantumruy Pro", bodyFont: "Kantumruy Pro", ornament: "kbach" },
   },
+  {
+    slug: "romdoul",
+    name: "Romdoul / រំដួល",
+    style: "MODERN" as const,
+    config: { background: "#fbf7ec", accent: "#8a7a2e", text: "#3a3420", headingFont: "Moul", bodyFont: "Kantumruy Pro", ornament: "romdoul" },
+  },
+  {
+    slug: "naga",
+    name: "Naga / នាគ",
+    style: "TRADITIONAL" as const,
+    config: { background: "#14285c", accent: "#c9d3e6", text: "#f2f5fb", headingFont: "Moul", bodyFont: "Battambang", ornament: "naga" },
+  },
+  {
+    slug: "silk",
+    name: "Khmer silk / សូត្រខ្មែរ",
+    style: "TRADITIONAL" as const,
+    config: { background: "#5c1424", accent: "#e2b84a", text: "#fbf0dc", headingFont: "Moul", bodyFont: "Battambang", ornament: "kbach", pattern: "silk" },
+  },
+  {
+    slug: "garden",
+    name: "Garden / សួនច្បារ",
+    style: "MINIMAL" as const,
+    config: { background: "#eef3ea", accent: "#4f7a55", text: "#24362a", headingFont: "Kantumruy Pro", bodyFont: "Kantumruy Pro", ornament: "romdoul" },
+  },
+  {
+    slug: "sunset",
+    name: "Sunset / ពេលល្ងាច",
+    style: "MODERN" as const,
+    config: { background: "#fdece2", accent: "#d9683f", text: "#4a2618", headingFont: "Moul", bodyFont: "Kantumruy Pro", ornament: "lotus" },
+  },
+  {
+    slug: "white-gold",
+    name: "White & gold / សនិងមាស",
+    style: "TRADITIONAL" as const,
+    config: { background: "#ffffff", accent: "#b8912f", text: "#2a2418", headingFont: "Moul", bodyFont: "Battambang", ornament: "kbach", pattern: "silk" },
+  },
 ];
 
 const DEMO_PHONE = "+85512345678";
@@ -79,8 +115,8 @@ const givens = [
 const groups = ["គ្រួសារ", "មិត្តភក្តិ", "មិត្តរួមការងារ", "អ្នកជិតខាង"];
 
 async function main() {
-  for (const t of templates) {
-    await prisma.template.upsert({ where: { slug: t.slug }, update: { name: t.name, style: t.style, config: t.config }, create: t });
+  for (const [sortOrder, t] of templates.entries()) {
+    await prisma.template.upsert({ where: { slug: t.slug }, update: { name: t.name, style: t.style, config: t.config, sortOrder }, create: { ...t, sortOrder } });
   }
   console.log(`Templates: ${templates.length}`);
 

@@ -1,4 +1,4 @@
-// Thirteen invitation templates, plus (outside production) one demo wedding with 50 guests.
+// Twenty invitation templates, plus (outside production) one demo wedding with 50 guests.
 // Safe to run again: templates are upserted and the demo wedding is rebuilt.
 import { PrismaClient, type Currency, type GiftMethod, type RsvpStatus, type Side } from "@prisma/client";
 import sharp from "sharp";
@@ -85,6 +85,48 @@ const templates = [
     name: "White & gold / សនិងមាស",
     style: "TRADITIONAL" as const,
     config: { background: "#ffffff", accent: "#b8912f", text: "#2a2418", headingFont: "Moul", bodyFont: "Battambang", ornament: "kbach", pattern: "silk" },
+  },
+  {
+    slug: "sugar-palm",
+    name: "Sugar palm / ដើមត្នោត",
+    style: "MODERN" as const,
+    config: { background: "#f6f1e1", accent: "#5b7a2e", text: "#2f3a1c", headingFont: "Moul", bodyFont: "Kantumruy Pro", ornament: "palm" },
+  },
+  {
+    slug: "starry-night",
+    name: "Starry night / រាត្រីផ្កាយ",
+    style: "MINIMAL" as const,
+    config: { background: "#1e1538", accent: "#f2d27a", text: "#f1ecfb", headingFont: "Moul", bodyFont: "Kantumruy Pro", ornament: "stars" },
+  },
+  {
+    slug: "champagne",
+    name: "Champagne / ស្រាសំប៉ាញ",
+    style: "MODERN" as const,
+    config: { background: "#f5ebdd", accent: "#a67c52", text: "#3d2e22", headingFont: "Moul", bodyFont: "Kantumruy Pro", ornament: "lotus" },
+  },
+  {
+    slug: "ruby",
+    name: "Ruby / ត្បូងទទឹម",
+    style: "TRADITIONAL" as const,
+    config: { background: "#7d0f1f", accent: "#f0c75e", text: "#fdf2e0", headingFont: "Moul", bodyFont: "Battambang", ornament: "angkor", pattern: "silk" },
+  },
+  {
+    slug: "jade",
+    name: "Jade / ត្បូងមរកត",
+    style: "TRADITIONAL" as const,
+    config: { background: "#0e4a45", accent: "#e6c27a", text: "#eef7f4", headingFont: "Moul", bodyFont: "Battambang", ornament: "romdoul", pattern: "silk" },
+  },
+  {
+    slug: "ocean",
+    name: "Ocean / សមុទ្រ",
+    style: "MINIMAL" as const,
+    config: { background: "#e8f4f4", accent: "#1f7a85", text: "#163a40", headingFont: "Kantumruy Pro", bodyFont: "Kantumruy Pro", ornament: "palm" },
+  },
+  {
+    slug: "blush",
+    name: "Blush / ផ្កាឈូកស្រាល",
+    style: "MINIMAL" as const,
+    config: { background: "#fbeff0", accent: "#b06b78", text: "#3e2a2e", headingFont: "Kantumruy Pro", bodyFont: "Kantumruy Pro", ornament: "stars" },
   },
 ];
 

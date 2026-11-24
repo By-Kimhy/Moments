@@ -25,7 +25,7 @@ docker compose up -d          # PostgreSQL + Redis (skip if you run them yoursel
 cp .env.example .env          # then set SESSION_SECRET (openssl rand -base64 32)
 npm install
 npm run db:migrate            # create the tables
-npm run db:seed               # 13 templates + a demo wedding with 50 guests
+npm run db:seed               # 20 templates + a demo wedding with 50 guests
 npm run dev                   # API on :4000, web app on :3000
 ```
 
@@ -109,7 +109,7 @@ Cloudflare R2 or MinIO. The S3 code path has not yet been run against a real buc
 
 ### Invitation templates
 
-Thirteen templates, chosen from cards showing each one's colours and ornament (the free plan
+Twenty templates, chosen from cards showing each one's colours and ornament (the free plan
 uses Traditional; the others show locked):
 
 | Template | Look |
@@ -125,9 +125,16 @@ uses Traditional; the others show locked):
 | Garden | sage green, romdoul flowers |
 | Sunset | peach and coral, lotus flower |
 | White & gold | white and gold on a silk pattern, kbach scroll |
+| Sugar palm | cream and rice-field green, sugar palms |
+| Starry night | deep purple and gold, moon and stars (evening receptions) |
+| Champagne | champagne beige and bronze, lotus |
+| Ruby | ruby red and gold on silk, the temple towers |
+| Jade | jade green and gold on silk, romdoul flowers |
+| Ocean | sea blue and teal, sugar palms (beach weddings) |
+| Blush | soft pink, moon and stars |
 
 A template is colours, fonts, a layout style, an optional ornament (`kbach`, `lotus`, `angkor`,
-`romdoul`, `naga`, drawn in `src/components/invitation/ornaments.tsx`) and an optional `silk`
+`romdoul`, `naga`, `palm`, `stars`, drawn in `src/components/invitation/ornaments.tsx`) and an optional `silk`
 background. They live in the database and `npm run db:seed` adds or updates them, in its order.
 
 ## Guests
@@ -601,7 +608,7 @@ If Playwright's own browser isn't installed, point it at another Chromium with
 
 Built: project setup, schema and seed, sign-in (phone code, Telegram), helpers and
 co-hosts, access control, event create/edit, photo and KHQR uploads, guest list with
-CSV/Excel import and export, invitation page with thirteen templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts, installable PWA. This completes the
+CSV/Excel import and export, invitation page with twenty templates, RSVP and link previews, guest desk with QR check-in, gift book with KHQR confirmation, offline desk, Excel and PDF reports, Telegram alerts, installable PWA. This completes the
 MVP in `docs/PROPOSAL.md`.
 
 Phase 2 (`docs/PHASE2.md`) is done too: seating plan, thank-you messages, planner dashboard

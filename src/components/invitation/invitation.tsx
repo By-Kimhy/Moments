@@ -98,7 +98,8 @@ export function Invitation({ event, guest, gifts, thankYou, token, locale, t, la
           ) : (
             <h1 className={`${heading} text-2xl`}>{pick(event.titleKm, event.titleEn)}</h1>
           )}
-          {config.ornament !== "angkor" && <Ornament name={config.ornament} flip />}
+          {/* Buildings and trees don't turn upside down: those show at the top only. */}
+          {config.ornament !== "angkor" && config.ornament !== "palm" && <Ornament name={config.ornament} flip />}
         </section>
 
         {thankYou && (

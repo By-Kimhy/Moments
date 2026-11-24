@@ -13,7 +13,7 @@ export type TemplateConfig = {
   headingFont: string;
   bodyFont: string;
   /** A decoration above and below the names (see the web app's ornaments). */
-  ornament?: "kbach" | "lotus" | "angkor" | "romdoul" | "naga";
+  ornament?: "kbach" | "lotus" | "angkor" | "romdoul" | "naga" | "palm" | "stars";
   /** A faint woven-silk background behind the whole page. */
   pattern?: "silk";
 };

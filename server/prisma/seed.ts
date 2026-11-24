@@ -1,4 +1,4 @@
-// Twenty invitation templates, plus (outside production) one demo wedding with 50 guests.
+// Thirty invitation templates, plus (outside production) one demo wedding with 50 guests.
 // Safe to run again: templates are upserted and the demo wedding is rebuilt.
 import { PrismaClient, type Currency, type GiftMethod, type RsvpStatus, type Side } from "@prisma/client";
 import sharp from "sharp";
@@ -127,6 +127,65 @@ const templates = [
     name: "Blush / ផ្កាឈូកស្រាល",
     style: "MINIMAL" as const,
     config: { background: "#fbeff0", accent: "#b06b78", text: "#3e2a2e", headingFont: "Kantumruy Pro", bodyFont: "Kantumruy Pro", ornament: "stars" },
+  },  {
+    slug: "champa",
+    name: "Champa / ផ្កាចំប៉ា",
+    style: "MODERN" as const,
+    config: { background: "#fffdf5", accent: "#d4a017", text: "#3d3418", headingFont: "Moul", bodyFont: "Kantumruy Pro", ornament: "champa" },
+  },
+  {
+    slug: "golden-rings",
+    name: "Golden rings / ចិញ្ចៀនមាស",
+    style: "MINIMAL" as const,
+    config: { background: "#fbf8f1", accent: "#b08d3c", text: "#2e2718", headingFont: "Kantumruy Pro", bodyFont: "Kantumruy Pro", ornament: "rings" },
+  },
+  {
+    slug: "lavender",
+    name: "Lavender / ឡាវេនឌ័រ",
+    style: "MODERN" as const,
+    config: { background: "#f3eefa", accent: "#7b5aa6", text: "#2f2540", headingFont: "Moul", bodyFont: "Kantumruy Pro", ornament: "champa" },
+  },
+  {
+    slug: "emerald-night",
+    name: "Emerald night / រាត្រីមរកត",
+    style: "MINIMAL" as const,
+    config: { background: "#0b2e24", accent: "#e8c66a", text: "#eef6f1", headingFont: "Moul", bodyFont: "Kantumruy Pro", ornament: "stars" },
+  },
+  {
+    slug: "terracotta",
+    name: "Terracotta / ដីឥដ្ឋ",
+    style: "TRADITIONAL" as const,
+    config: { background: "#f3e2d3", accent: "#a5502c", text: "#3a2017", headingFont: "Moul", bodyFont: "Battambang", ornament: "angkor" },
+  },
+  {
+    slug: "peacock",
+    name: "Peacock / ក្ងោក",
+    style: "TRADITIONAL" as const,
+    config: { background: "#0b3a4a", accent: "#d9b75b", text: "#eaf5f7", headingFont: "Moul", bodyFont: "Battambang", ornament: "kbach", pattern: "silk" },
+  },
+  {
+    slug: "rose-gold",
+    name: "Rose gold / មាសផ្កាឈូក",
+    style: "MINIMAL" as const,
+    config: { background: "#fff5f3", accent: "#b76e79", text: "#3f2a2d", headingFont: "Kantumruy Pro", bodyFont: "Kantumruy Pro", ornament: "rings" },
+  },
+  {
+    slug: "mekong",
+    name: "Mekong / ទន្លេមេគង្គ",
+    style: "TRADITIONAL" as const,
+    config: { background: "#e6efe9", accent: "#2e6b5a", text: "#1d3029", headingFont: "Moul", bodyFont: "Battambang", ornament: "naga" },
+  },
+  {
+    slug: "ivory-lace",
+    name: "Ivory lace / ស្រលេះភ្លុក",
+    style: "TRADITIONAL" as const,
+    config: { background: "#fbf6ea", accent: "#9c7b4a", text: "#33291b", headingFont: "Moul", bodyFont: "Battambang", ornament: "kbach", pattern: "silk" },
+  },
+  {
+    slug: "mango",
+    name: "Mango / ស្វាយ",
+    style: "MODERN" as const,
+    config: { background: "#fff6dc", accent: "#d98e04", text: "#40300c", headingFont: "Moul", bodyFont: "Kantumruy Pro", ornament: "romdoul" },
   },
 ];
 

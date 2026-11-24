@@ -1,7 +1,7 @@
 // Decorations drawn in the template's accent colour: a kbach-style scroll, a lotus, the towers
-// of Angkor, a spray of romdoul flowers, a naga, sugar palms or stars. Inline SVG, so they stay sharp on any screen
+// of Angkor, a spray of romdoul flowers, a naga, sugar palms, stars, wedding rings or champa. Inline SVG, so they stay sharp on any screen
 // and need no download.
-export type OrnamentName = "kbach" | "lotus" | "angkor" | "romdoul" | "naga" | "palm" | "stars";
+export type OrnamentName = "kbach" | "lotus" | "angkor" | "romdoul" | "naga" | "palm" | "stars" | "rings" | "champa";
 
 function Kbach() {
   return (
@@ -151,11 +151,47 @@ function Stars() {
   );
 }
 
+function Rings() {
+  // Two interlocked wedding rings with a small diamond, between two fine lines.
+  return (
+    <svg viewBox="0 0 200 52" className="h-11 w-full max-w-[12rem]" fill="none" stroke="currentColor" strokeLinecap="round" aria-hidden>
+      <path d="M20 30 H72 M128 30 H180" strokeWidth="1.2" strokeOpacity=".6" />
+      <circle cx="91" cy="31" r="13" strokeWidth="2.6" />
+      <circle cx="109" cy="31" r="13" strokeWidth="2.6" strokeOpacity=".75" />
+      <path d="M86 14 L91 8 L96 14 L91 19 Z" fill="currentColor" strokeWidth="1" />
+      <circle cx="20" cy="30" r="1.6" fill="currentColor" />
+      <circle cx="180" cy="30" r="1.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+function Champa() {
+  // Champa (frangipani) blossoms: five rounded petals, each overlapping the next.
+  const flower = (x: number, y: number, r: number, turn: number, opacity = 1) => (
+    <g key={`${x}`} transform={`translate(${x} ${y}) rotate(${turn})`} fillOpacity={opacity}>
+      {[0, 72, 144, 216, 288].map((a) => (
+        <ellipse key={a} cx={r * 0.55} cy={-r * 0.35} rx={r * 0.62} ry={r * 0.34} transform={`rotate(${a})`} />
+      ))}
+      <circle r={r * 0.22} fill="var(--inv-bg)" fillOpacity=".7" />
+    </g>
+  );
+  return (
+    <svg viewBox="0 0 200 52" className="h-11 w-full max-w-[12rem]" fill="currentColor" aria-hidden>
+      <path d="M40 40 C70 30 130 30 160 40" fill="none" stroke="currentColor" strokeWidth="1.3" strokeOpacity=".5" strokeLinecap="round" />
+      {flower(100, 24, 15, 0)}
+      {flower(68, 32, 10, 20, 0.7)}
+      {flower(132, 32, 10, -20, 0.7)}
+      {flower(42, 38, 6, 40, 0.45)}
+      {flower(158, 38, 6, -40, 0.45)}
+    </svg>
+  );
+}
+
 export function Ornament({ name, flip = false }: { name: OrnamentName | undefined; flip?: boolean }) {
   if (!name) return null;
   return (
     <div className={`flex justify-center text-[var(--inv-accent)] ${flip ? "rotate-180" : ""}`} data-testid={`ornament-${name}`}>
-      {name === "kbach" ? <Kbach /> : name === "lotus" ? <Lotus /> : name === "romdoul" ? <Romdoul /> : name === "naga" ? <Naga /> : name === "palm" ? <Palm /> : name === "stars" ? <Stars /> : <Angkor />}
+      {name === "kbach" ? <Kbach /> : name === "lotus" ? <Lotus /> : name === "romdoul" ? <Romdoul /> : name === "naga" ? <Naga /> : name === "palm" ? <Palm /> : name === "stars" ? <Stars /> : name === "rings" ? <Rings /> : name === "champa" ? <Champa /> : <Angkor />}
     </div>
   );
 }

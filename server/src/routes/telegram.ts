@@ -23,6 +23,7 @@ import { completeLogin, pendingLoginForChat, startLoginInChat } from "../lib/tel
 import { notify } from "../jobs/notifications.js";
 import { telegram } from "../providers/telegram.js";
 import { store } from "../store.js";
+import { reportError } from "../monitoring.js";
 
 /** Mounted on /api/events/:eventId (after eventAccess). */
 export const eventTelegramRouter = Router({ mergeParams: true });
@@ -142,7 +143,7 @@ telegramWebhookRouter.post("/webhook", async (req, res) => {
   try {
     await handleTelegramUpdate(req.body as Update);
   } catch (e) {
-    console.error("telegram update failed", e);
+    reportError(e, { where: "telegram-webhook" });
   }
   // Always 200: otherwise Telegram keeps re-sending the same update.
   res.json({ ok: true });

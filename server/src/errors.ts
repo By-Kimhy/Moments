@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import multer from "multer";
 import { z } from "zod";
 import { translate, translateFields } from "./messages.js";
+import { reportError } from "./monitoring.js";
 
 export class HttpError extends Error {
   constructor(
@@ -43,6 +44,15 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     res.status(400).json({ error: translate("Request body is not valid JSON.", language) });
     return;
   }
-  console.error(err);
+  reportError(err, { where: "api", method: req.method, route: routeLabel(req) });
   res.status(500).json({ error: translate("Something went wrong.", language) });
+}
+
+/** The route without ids or tokens, e.g. "/api/events/:id/gifts", so reports group and leak nothing. */
+export function routeLabel(req: Request) {
+  const path = `${req.baseUrl}${typeof req.route?.path === "string" ? req.route.path : req.path}`;
+  return path
+    .split("/")
+    .map((segment) => (segment.length >= 8 && /\d/.test(segment) && !segment.startsWith(":") ? ":id" : segment))
+    .join("/");
 }

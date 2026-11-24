@@ -445,10 +445,80 @@ Signing out or leaving the desk clears the guest list, unsent items (after a war
 saved pages from the phone, because phones get passed around at weddings. After changing
 `public/sw.js`, bump `VERSION` in it so phones drop the old caches.
 
+## Running in production
+
+### Health checks
+
+- `GET /api/health` answers `{ "ok": true }` while the API process is up. It checks nothing
+  else, so use it as the liveness check (restart the process when it fails).
+- `GET /api/health/ready` also checks that PostgreSQL and Redis answer within 3 seconds:
+  `{ "ok": true, "checks": { "database": "ok", "redis": "ok" } }`, or status 503 with the one
+  that is `"down"`. Redis shows `"not configured"` without `REDIS_URL`. Point the load
+  balancer and an uptime monitor at this one. It says nothing about why a check failed; the
+  reason goes to the log and to Sentry.
+
+On SIGTERM (a deploy or restart) the API stops taking new connections, finishes the requests
+in flight, closes the notification worker and the database connection, and exits (after 10
+seconds at most).
+
+### Error monitoring
+
+Set `SENTRY_DSN` to send unexpected errors to [Sentry](https://sentry.io) (its free plan is
+enough): 500s from any route, background jobs that gave up (Telegram alerts after their last
+retry, reminders, Bakong checks, Telegram updates), failed health checks, failed backups, and
+crashes. `SENTRY_ENVIRONMENT` (default `production` or `development`) and `SENTRY_RELEASE`
+(e.g. the git commit) label them. Without a DSN the same errors are only written to the log.
+
+Guests' names, phone numbers and gift amounts must not leave the server, so events carry no
+request data at all: no bodies, cookies, headers, query strings, IP addresses or breadcrumbs.
+Each one has the error and its stack, plus tags: `where` (api, notification, reminder, bakong,
+health, backup…), and for API errors the method and the route with ids replaced, e.g.
+`/api/events/:id/gifts`.
+
+### Backups
+
+`npm run db:backup` (on a built server: `cd server && node --env-file=../.env dist/bin/backup.js`)
+dumps the database with `pg_dump`, reads the dump back with `pg_restore --list` to make sure it
+is whole, and stores it as `moments-<UTC time>.dump`:
+
+- with `BACKUP_S3_BUCKET`: in that bucket under `BACKUP_S3_PREFIX` (default `db/`), using the
+  `S3_*` settings. Use a different bucket from the photos, with no public access;
+- otherwise: in `BACKUP_DIR` (default `./backups`). Only for development: a backup on the
+  same server as the database is lost with it.
+
+It then deletes old backups: it keeps every backup from the last `BACKUP_KEEP_DAYS` days
+(default 14), the first of each month for `BACKUP_KEEP_MONTHS` months (default 12), and
+always the newest one. On failure it exits 1 and reports to Sentry. It needs `pg_dump` and
+`pg_restore` of the same major version as the database (or newer) on the machine running it.
+
+Run it at least daily, e.g. at 02:00 Cambodia time (19:00 UTC on a server clock in UTC) with cron:
+
+```cron
+0 19 * * * cd /srv/moments/server && node --env-file=../.env dist/bin/backup.js >> /var/log/moments-backup.log 2>&1
+```
+
+During wedding season, consider every few hours: a gift book entered on the day can't be
+typed in again. Backups hold the database only; with S3/R2 storage the photos and KHQR images
+are already off the server (turn on versioning in that bucket so deleted files can be
+recovered).
+
+**Restoring.** Restore into a new, empty database first, check it, then point `DATABASE_URL`
+at it:
+
+```bash
+createdb moments_restored
+pg_restore --no-owner --dbname=postgresql://moments@localhost:5432/moments_restored moments-2026-11-24T19-00-00Z.dump
+psql postgresql://moments@localhost:5432/moments_restored -c 'select count(*) from "Guest"'
+```
+
+Try a restore like this once before the first real wedding, and again every few months: a
+backup that has never been restored is only a hope.
+
 ## API
 
 | Method | Path | Who |
 | ------ | ---- | --- |
+| GET | `/api/health`, `/api/health/ready` | anyone (liveness, readiness) |
 | POST | `/api/auth/telegram/start` | anyone |
 | POST | `/api/auth/telegram/poll` `{ token }` (202 while waiting) | anyone with the token |
 | POST | `/api/auth/telegram/dev-confirm` `{ token, phone, name? }` | development without a bot |
@@ -589,5 +659,7 @@ MVP in `docs/PROPOSAL.md`.
 Phase 2 (`docs/PHASE2.md`) is done too: seating plan, thank-you messages, planner dashboard
 and ticketing. Phase 3 (`docs/PHASE3.md`) is done: the vendor marketplace and paid plans.
 
-Before a real wedding: set up the Telegram bot (sign-in needs it), S3/R2 storage and Chromium on the server, and run the app over https (the camera
+Before a real wedding: set up the Telegram bot (sign-in needs it), S3/R2 storage and Chromium on the server,
+daily backups to a separate bucket (and one test restore), `SENTRY_DSN`, an uptime monitor on
+`/api/health/ready`, and run the app over https (the camera
 scanner and the service worker need it).

@@ -14,13 +14,16 @@ const POLL_MS = 2000;
 export function TelegramLogin({ t, next }: { t: Messages["login"]; next: string }) {
   const [start, setStart] = useState<Start | null>(null);
   const [state, setState] = useState<"ready" | "waiting" | "expired" | "unavailable">("ready");
+  // Why sign-in can't start: the API's own message (e.g. too many tries), or "not set up".
+  const [problem, setProblem] = useState<string | null>(null);
   const [devError, setDevError] = useState<{ message?: string; fields?: Record<string, string[] | undefined> }>({});
 
   const begin = useCallback(async () => {
     try {
       setStart(await clientApi<Start>("/auth/telegram/start", { method: "POST" }));
       setState("ready");
-    } catch {
+    } catch (e) {
+      setProblem(e instanceof ClientApiError && e.status === 429 ? e.message : null);
       setState("unavailable");
     }
   }, []);
@@ -62,7 +65,7 @@ export function TelegramLogin({ t, next }: { t: Messages["login"]; next: string 
     }
   }
 
-  if (state === "unavailable") return <Message text={t.unavailable} />;
+  if (state === "unavailable") return <Message text={problem ?? t.unavailable} />;
   if (state === "expired") {
     return (
       <div className="flex flex-col gap-3">

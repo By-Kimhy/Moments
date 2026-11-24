@@ -11,6 +11,7 @@ import { giftTotals } from "../lib/gifts.js";
 import { formatAmount } from "../lib/money.js";
 import { digestMessage, guestGiftMessage, rsvpMessage, testMessage } from "../lib/notification-messages.js";
 import { TelegramError, telegram } from "../providers/telegram.js";
+import { reportError } from "../monitoring.js";
 
 export const DIGEST_MINUTES = 15;
 
@@ -57,12 +58,12 @@ export async function notify(job: NotificationJob, options: { delay?: number; jo
     }
     track(handle(job));
   } catch (e) {
-    console.error("notify failed", e);
+    reportError(e, { where: "notify", kind: job.kind });
   }
 }
 
 function track(p: Promise<unknown>) {
-  const tracked = p.catch((e) => console.error("notification failed", e)).finally(() => inFlight.delete(tracked));
+  const tracked = p.catch((e) => reportError(e, { where: "notification" })).finally(() => inFlight.delete(tracked));
   inFlight.add(tracked);
 }
 
@@ -194,6 +195,10 @@ export function startNotificationWorker() {
   if (!queueEnabled()) return null;
   // At most 10 messages a second, to stay inside Telegram's limits.
   const worker = new Worker<NotificationJob>(QUEUE, (job) => handle(job.data), { connection: connection(), concurrency: 5, limiter: { max: 10, duration: 1000 } });
-  worker.on("failed", (job, err) => console.error(`notification ${job?.name} failed (attempt ${job?.attemptsMade})`, err.message));
+  worker.on("failed", (job, err) => {
+    // Retries are normal (Telegram rate limits, network blips); report only the last attempt.
+    if (job && job.attemptsMade < (job.opts.attempts ?? 1)) console.error(`notification ${job.name} failed (attempt ${job.attemptsMade})`, err.message);
+    else reportError(err, { where: "notification", kind: job?.name, attempts: job?.attemptsMade });
+  });
   return worker;
 }

@@ -10,9 +10,14 @@ export interface TtlStore {
   del(key: string): Promise<void>;
   /** Adds 1 and returns the new count; the TTL starts when the key is created. */
   incr(key: string, ttlSeconds: number): Promise<number>;
+  /** "ok" when the store answers; the in-memory store always does. */
+  ping(): Promise<"ok">;
+  /** Whether this is Redis (shared) or the in-memory fallback. */
+  readonly kind: "redis" | "memory";
 }
 
 class MemoryStore implements TtlStore {
+  readonly kind = "memory";
   private items = new Map<string, { value: string; expiresAt: number }>();
 
   private live(key: string) {
@@ -42,10 +47,20 @@ class MemoryStore implements TtlStore {
     this.items.set(key, { value: String(count), expiresAt: item?.expiresAt ?? Date.now() + ttlSeconds * 1000 });
     return count;
   }
+
+  async ping() {
+    return "ok" as const;
+  }
 }
 
 class RedisStore implements TtlStore {
+  readonly kind = "redis";
   constructor(private redis: Redis) {}
+
+  async ping() {
+    await this.redis.ping();
+    return "ok" as const;
+  }
 
   async get(key: string) {
     return this.redis.get(key);

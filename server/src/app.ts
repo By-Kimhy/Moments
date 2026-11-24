@@ -14,6 +14,7 @@ import { eventVendorsRouter } from "./routes/event-vendors.js";
 import { eventRouter, eventsRouter } from "./routes/events.js";
 import { giftsRouter } from "./routes/gifts.js";
 import { guestsRouter } from "./routes/guests.js";
+import { healthRouter } from "./routes/health.js";
 import { invitationsRouter } from "./routes/invitations.js";
 import { filesRouter, mediaRouter } from "./routes/media.js";
 import { organizationsRouter } from "./routes/organizations.js";
@@ -41,9 +42,7 @@ export function createApp() {
   app.use(cookieParser());
   app.use(loadAuth);
 
-  app.get("/api/health", (_req, res) => {
-    res.json({ ok: true });
-  });
+  app.use("/api/health", healthRouter);
   app.use("/api/auth", authRouter);
   app.use("/api/desk", deskRouter);
   app.use("/api/templates", templatesRouter);

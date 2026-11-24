@@ -12,6 +12,7 @@ import { newReference } from "./tickets.js";
 import { config } from "../config.js";
 import { type BakongPayment, bakong } from "../providers/bakong.js";
 import { buildKhqr, khqrMd5 } from "./khqr.js";
+import { reportError } from "../monitoring.js";
 
 export const orderView = (o: PlanOrder) => ({
   id: o.id,
@@ -171,12 +172,12 @@ export async function checkBakongPayment(order: PlanOrder) {
 /** Checks every waiting order with a QR from the last day. */
 export async function checkPendingBakongOrders() {
   const orders = await prisma.planOrder.findMany({ where: { status: "PENDING", khqrMd5: { not: null }, createdAt: { gte: new Date(Date.now() - 86_400_000) } } });
-  for (const order of orders) await checkBakongPayment(order).catch((e) => console.error("bakong check failed", order.reference, (e as Error).message));
+  for (const order of orders) await checkBakongPayment(order).catch((e) => reportError(e, { where: "bakong", order: order.reference }));
 }
 
 /** In the API process, with Bakong set up: look for payments every 30 seconds. */
 export function startBakongChecks() {
   if (!bakong() || config.test) return;
-  setInterval(() => void checkPendingBakongOrders(), 30_000).unref();
+  setInterval(() => void checkPendingBakongOrders().catch((e) => reportError(e, { where: "bakong" })), 30_000).unref();
   console.log("Checking Bakong for platform payments");
 }

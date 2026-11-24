@@ -8,6 +8,7 @@ import { prisma } from "../db.js";
 import { giftTotals } from "../lib/gifts.js";
 import { deskReminder, repliesReminder, thanksReminder } from "../lib/notification-messages.js";
 import { TelegramError, telegram } from "../providers/telegram.js";
+import { reportError } from "../monitoring.js";
 
 const HOUR = 3600_000;
 const DAY = 24 * HOUR;
@@ -76,7 +77,7 @@ export async function sendDueReminders(now = new Date()) {
         try {
           await client.sendMessage(chatId, text);
         } catch (e) {
-          if (!(e instanceof TelegramError && e.permanent)) console.error("reminder failed", event.id, kind, (e as Error).message);
+          if (!(e instanceof TelegramError && e.permanent)) reportError(e, { where: "reminder", eventId: event.id, kind });
         }
       }
       sent++;
@@ -88,7 +89,7 @@ export async function sendDueReminders(now = new Date()) {
 /** In the API process: look for due reminders every 15 minutes. */
 export function startReminders() {
   if (!telegram() || config.test) return;
-  const run = () => void sendDueReminders().catch((e) => console.error("reminders failed", e));
+  const run = () => void sendDueReminders().catch((e) => reportError(e, { where: "reminders" }));
   setInterval(run, 15 * 60_000).unref();
   run();
 }

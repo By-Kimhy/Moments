@@ -109,43 +109,35 @@ Cloudflare R2 or MinIO. The S3 code path has not yet been run against a real buc
 
 ### Invitation templates
 
-Thirty templates, chosen from cards showing each one's colours and ornament (the free plan
-uses Traditional; the others show locked):
+Thirty templates, chosen from cards that sketch each one's layout in its own colours, font and
+ornament (the free plan uses Traditional; the others show locked). No two templates share the
+same layout and ornament, so they differ in shape, not only in colour.
 
-| Template | Look |
-| -------- | ---- |
-| Traditional, Modern, Minimal | the original three |
-| Royal gold | deep green and gold, kbach scroll |
-| Lotus | pink, lotus flower |
-| Angkor | sandstone, the temple towers |
-| Midnight | navy and gold, kbach scroll |
-| Romdoul | ivory and olive gold, romdoul flowers |
-| Naga | royal blue and silver, seven-headed naga |
-| Khmer silk | maroon and gold on a woven-silk pattern |
-| Garden | sage green, romdoul flowers |
-| Sunset | peach and coral, lotus flower |
-| White & gold | white and gold on a silk pattern, kbach scroll |
-| Sugar palm | cream and rice-field green, sugar palms |
-| Starry night | deep purple and gold, moon and stars (evening receptions) |
-| Champagne | champagne beige and bronze, lotus |
-| Ruby | ruby red and gold on silk, the temple towers |
-| Jade | jade green and gold on silk, romdoul flowers |
-| Ocean | sea blue and teal, sugar palms (beach weddings) |
-| Blush | soft pink, moon and stars |
-| Champa | cream and golden yellow, champa (frangipani) flowers |
-| Golden rings | ivory and gold, wedding rings |
-| Lavender | lavender and purple, champa flowers |
-| Emerald night | dark emerald and gold, moon and stars |
-| Terracotta | warm clay and rust, the temple towers |
-| Peacock | peacock blue and gold on silk, kbach scroll |
-| Rose gold | blush and rose gold, wedding rings |
-| Mekong | river green, naga |
-| Ivory lace | ivory and antique gold on silk, kbach scroll |
-| Mango | mango yellow and amber, romdoul flowers |
+A template is made of:
 
-A template is colours, fonts, a layout style, an optional ornament (`kbach`, `lotus`, `angkor`,
-`romdoul`, `naga`, `palm`, `stars`, `rings`, `champa`, drawn in `src/components/invitation/ornaments.tsx`) and an optional `silk`
-background. They live in the database and `npm run db:seed` adds or updates them, in its order.
+- **layout** of the top of the invitation (`src/components/invitation/hero.tsx`): `classic`
+  (bordered, ornament above and below), `plain` (no border), `frame` (decorated corners),
+  `arch` (photo in a temple-style arch), `monogram` (the couple's initials in a ring), `split`
+  (groom and bride side by side), `ribbon` (names on banners), `poster` (names over a
+  full-width photo) or `stitched` (dotted, embroidered edge);
+- **heading font**: Moul, Koulen, Dangrek, Bayon, Hanuman, Siemreap or Kantumruy Pro;
+- **ornament** (`src/components/invitation/ornaments.tsx`): kbach, lotus, Angkor, romdoul,
+  naga, sugar palm, stars, rings or champa;
+- **colours**, and an optional woven-**silk** background.
+
+| Layout | Templates |
+| ------ | --------- |
+| classic | Traditional, Angkor, Khmer silk |
+| plain | Minimal, Garden |
+| frame | Royal gold, Ruby, Jade, Emerald night |
+| arch | Modern, Lotus, Ocean, Terracotta |
+| monogram | Midnight, Champa, Rose gold |
+| split | Sugar palm, Champagne, Golden rings, Mekong |
+| ribbon | Naga, White & gold, Mango |
+| poster | Sunset, Starry night, Peacock |
+| stitched | Romdoul, Blush, Lavender, Ivory lace |
+
+Templates live in the database; `npm run db:seed` adds or updates them, in its order.
 
 ## Guests
 

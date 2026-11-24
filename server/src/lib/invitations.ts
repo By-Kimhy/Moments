@@ -16,6 +16,8 @@ export type TemplateConfig = {
   ornament?: "kbach" | "lotus" | "angkor" | "romdoul" | "naga" | "palm" | "stars" | "rings" | "champa";
   /** A faint woven-silk background behind the whole page. */
   pattern?: "silk";
+  /** How the top of the invitation is arranged (see the web app's hero layouts). */
+  layout?: "classic" | "plain" | "frame" | "arch" | "monogram" | "split" | "ribbon" | "poster" | "stitched";
 };
 
 const DEFAULT_TEMPLATE = {

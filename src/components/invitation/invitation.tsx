@@ -7,7 +7,8 @@ import { invitationDate, localDigits } from "@/lib/dates";
 import { GuestGiftForm } from "./guest-gift-form";
 import { PhotoWall } from "./photo-wall";
 import { WishForm } from "./wish-form";
-import { Ornament } from "./ornaments";
+import { FONT_CLASS } from "./fonts";
+import { Hero } from "./hero";
 import { RsvpForm } from "./rsvp-form";
 
 const fileUrl = (key: string) => `/api/files/${key}`;
@@ -17,8 +18,6 @@ const SILK: CSSProperties = {
   backgroundImage:
     "repeating-linear-gradient(45deg, color-mix(in srgb, var(--inv-accent) 9%, transparent) 0 2px, transparent 2px 14px), repeating-linear-gradient(-45deg, color-mix(in srgb, var(--inv-accent) 9%, transparent) 0 2px, transparent 2px 14px)",
 };
-
-const FONT_CLASS: Record<string, string> = { Moul: "font-moul", Battambang: "font-serif", "Kantumruy Pro": "font-sans" };
 
 type Props = {
   event: InvitationEvent;
@@ -45,8 +44,11 @@ export function Invitation({ event, guest, gifts, thankYou, token, locale, t, la
   const [cover, ...gallery] = event.photos;
   const heading = FONT_CLASS[config.headingFont] ?? "font-moul";
   const body = FONT_CLASS[config.bodyFont] ?? "font-sans";
-  const traditional = style === "TRADITIONAL";
-  const theme = { "--inv-bg": config.background, "--inv-accent": config.accent, "--inv-text": config.text } as CSSProperties;
+  const theme = {
+    "--inv-bg": config.background,
+    "--inv-accent": config.accent,
+    "--inv-text": config.text,
+  } as CSSProperties;
 
   const card = "rounded-2xl p-5 bg-[color-mix(in_srgb,var(--inv-text)_7%,transparent)]";
   const sectionTitle = `${heading} mb-3 text-center text-lg text-[var(--inv-accent)]`;
@@ -57,50 +59,19 @@ export function Invitation({ event, guest, gifts, thankYou, token, locale, t, la
       <div className="mx-auto flex max-w-md flex-col gap-6 px-4 pb-12 pt-4">
         <div className="flex justify-end">{langSwitch}</div>
 
-        <section
-          className={`relative flex flex-col items-center gap-4 text-center ${
-            traditional ? "rounded-3xl border-2 border-[var(--inv-accent)] p-6 outline outline-1 outline-offset-4 outline-[var(--inv-accent)]" : ""
-          }`}
-        >
-          {cover && (
-            // eslint-disable-next-line @next/next/no-img-element -- stored photos are already resized WebP
-            <img
-              src={fileUrl(cover.key)}
-              alt=""
-              className={`w-full object-cover ${style === "MODERN" ? "aspect-[4/5] rounded-t-full" : style === "MINIMAL" ? "aspect-[4/3]" : "aspect-square rounded-2xl"}`}
-            />
-          )}
-          <Ornament name={config.ornament} />
-          <p className="text-sm opacity-80">{t.dear}</p>
-          <p className={`${heading} text-2xl text-[var(--inv-accent)]`}>{guestName}</p>
-          {guest.tableName && (
-            <p className="rounded-full border border-[var(--inv-accent)] px-4 py-1 text-sm text-[var(--inv-accent)]">
-              {t.yourTable.replace("{table}", localDigits(guest.tableName, locale))}
-            </p>
-          )}
-          <p className="text-sm opacity-80">{t.invitedTo}</p>
-          {groom || bride ? (
-            <div className="flex flex-col items-center gap-1">
-              {groom && (
-                <p className={`${heading} text-xl`}>
-                  <span className="block text-xs opacity-70">{t.groom}</span>
-                  {groom}
-                </p>
-              )}
-              {groom && bride && <span className="text-[var(--inv-accent)]">{t.and}</span>}
-              {bride && (
-                <p className={`${heading} text-xl`}>
-                  <span className="block text-xs opacity-70">{t.bride}</span>
-                  {bride}
-                </p>
-              )}
-            </div>
-          ) : (
-            <h1 className={`${heading} text-2xl`}>{pick(event.titleKm, event.titleEn)}</h1>
-          )}
-          {/* Buildings and trees don't turn upside down: those show at the top only. */}
-          {config.ornament !== "angkor" && config.ornament !== "palm" && <Ornament name={config.ornament} flip />}
-        </section>
+        <Hero
+          layout={config.layout ?? (style === "MODERN" ? "arch" : style === "MINIMAL" ? "plain" : "classic")}
+          ornament={config.ornament}
+          heading={heading}
+          coverKey={cover?.key ?? null}
+          guestName={guestName}
+          tableName={guest.tableName}
+          groom={groom}
+          bride={bride}
+          title={pick(event.titleKm, event.titleEn)}
+          locale={locale}
+          t={t}
+        />
 
         {thankYou && (
           <section className={`${card} flex flex-col gap-3 text-center`}>

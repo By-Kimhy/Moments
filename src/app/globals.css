@@ -17,6 +17,11 @@
   --font-sans: var(--font-kantumruy), system-ui, sans-serif;
   --font-serif: var(--font-battambang), serif;
   --font-moul: var(--font-moul), serif;
+  --font-koulen: var(--font-koulen), var(--font-moul), sans-serif;
+  --font-dangrek: var(--font-dangrek), var(--font-moul), serif;
+  --font-bayon: var(--font-bayon), var(--font-moul), sans-serif;
+  --font-hanuman: var(--font-hanuman), var(--font-battambang), serif;
+  --font-siemreap: var(--font-siemreap), var(--font-kantumruy), sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {

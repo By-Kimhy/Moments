@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Battambang, Kantumruy_Pro, Moul } from "next/font/google";
+import { Battambang, Bayon, Dangrek, Hanuman, Kantumruy_Pro, Koulen, Moul, Siemreap } from "next/font/google";
 import { ServiceWorker } from "@/components/pwa";
 import { getLocale } from "@/i18n";
 import "./globals.css";
@@ -7,6 +7,12 @@ import "./globals.css";
 const kantumruy = Kantumruy_Pro({ variable: "--font-kantumruy", subsets: ["khmer", "latin"] });
 const battambang = Battambang({ variable: "--font-battambang", subsets: ["khmer", "latin"], weight: ["400", "700"] });
 const moul = Moul({ variable: "--font-moul", subsets: ["khmer", "latin"], weight: "400" });
+// Display fonts some invitation templates use; loaded only on the pages that need them.
+const koulen = Koulen({ variable: "--font-koulen", subsets: ["khmer", "latin"], weight: "400", preload: false });
+const dangrek = Dangrek({ variable: "--font-dangrek", subsets: ["khmer", "latin"], weight: "400", preload: false });
+const bayon = Bayon({ variable: "--font-bayon", subsets: ["khmer", "latin"], weight: "400", preload: false });
+const hanuman = Hanuman({ variable: "--font-hanuman", subsets: ["khmer", "latin"], weight: ["400", "700"], preload: false });
+const siemreap = Siemreap({ variable: "--font-siemreap", subsets: ["khmer"], weight: "400", preload: false });
 
 export const metadata: Metadata = {
   title: "Moments",
@@ -21,7 +27,7 @@ export const viewport: Viewport = { themeColor: "#9b2c2c", width: "device-width"
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
   return (
-    <html lang={locale} className={`${kantumruy.variable} ${battambang.variable} ${moul.variable} h-full antialiased`}>
+    <html lang={locale} className={`${kantumruy.variable} ${battambang.variable} ${moul.variable} ${koulen.variable} ${dangrek.variable} ${bayon.variable} ${hanuman.variable} ${siemreap.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">
         {children}
         <ServiceWorker />
